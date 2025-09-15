@@ -85,8 +85,8 @@ export class FurniliWhatsAppBot {
   private createClient() {
     this.client = new Client({
       authStrategy: new LocalAuth({
-        clientId: `furnili-whatsapp-bot-${Date.now()}`,
-        dataPath: `/tmp/whatsapp-session-${Date.now()}`
+        clientId: 'furnili-bot',
+        dataPath: '/tmp/whatsapp-session'
       }),
       puppeteer: {
         headless: true,
@@ -98,7 +98,7 @@ export class FurniliWhatsAppBot {
           '--disable-gpu',
           '--disable-web-security',
           '--disable-extensions',
-          `--user-data-dir=/tmp/chrome-whatsapp-bot-${Date.now()}`,
+          `--user-data-dir=/tmp/chrome-whatsapp-bot-${process.pid}`,
           '--no-first-run',
           '--disable-default-apps',
           '--disable-features=VizDisplayCompositor',
@@ -107,9 +107,6 @@ export class FurniliWhatsAppBot {
           '--disable-renderer-backgrounding',
           '--disable-component-update',
           '--disable-ipc-flooding-protection',
-          '--user-data-dir=/tmp/chrome-whatsapp-bot',
-          '--single-process',
-          '--no-zygote',
           // Additional stability improvements
           '--disable-crash-reporter',
           '--disable-features=TranslateUI',
@@ -119,7 +116,7 @@ export class FurniliWhatsAppBot {
           '--disable-threaded-scrolling',
           '--memory-pressure-off'
         ],
-        timeout: 30000,
+        timeout: 60000,
         // Slow down operations to prevent detection
         slowMo: 100
       },
@@ -365,6 +362,12 @@ export class FurniliWhatsAppBot {
     this.reconnectTimer = setTimeout(async () => {
       try {
         console.log('📱 Attempting to reconnect WhatsApp bot...');
+        // Destroy existing client before creating new one
+        try {
+          await this.client.destroy();
+        } catch (e) {
+          console.log('Client already destroyed or not initialized');
+        }
         this.createClient();
         this.setupHandlers();
         await this.initialize();

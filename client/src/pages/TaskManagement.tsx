@@ -258,16 +258,16 @@ export default function TaskManagement() {
     }
   };
 
-  const getPriorityBadge = (priority: string) => {
+  const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case "high":
-        return <Badge className="bg-red-100 text-red-800 border-red-300">High</Badge>;
+        return <AlertCircle className="h-4 w-4 text-red-600" title="High Priority" />;
       case "medium":
-        return <Badge className="bg-orange-100 text-orange-800 border-orange-300">Medium</Badge>;
+        return <Clock className="h-4 w-4 text-orange-600" title="Medium Priority" />;
       case "low":
-        return <Badge className="bg-gray-100 text-gray-800 border-gray-300">Low</Badge>;
+        return <CheckCircle2 className="h-4 w-4 text-gray-600" title="Low Priority" />;
       default:
-        return <Badge variant="secondary">{priority}</Badge>;
+        return <Clock className="h-4 w-4 text-gray-400" title={priority} />;
     }
   };
 
@@ -717,25 +717,25 @@ export default function TaskManagement() {
                   {filteredTasks.map((task: any) => (
                     <TableRow 
                       key={task.id} 
-                      className="hover:bg-muted/50 transition-colors"
+                      className="hover:bg-muted/50 transition-colors border-b border-gray-100 dark:border-gray-800"
                       data-testid={`row-task-${task.id}`}
                     >
-                      <TableCell className="font-medium">
+                      <TableCell className="py-2">
                         <div>
                           <Button
                             variant="link"
-                            className="p-0 h-auto font-medium text-left justify-start"
+                            className="p-0 h-auto font-semibold text-left justify-start text-amber-800 dark:text-amber-700 hover:text-amber-900 dark:hover:text-amber-600"
                             onClick={() => handleTaskTitleClick(task)}
                             data-testid={`text-task-title-${task.id}`}
                           >
                             {task.title}
                           </Button>
-                          <div className="text-xs text-gray-500 truncate max-w-xs" title={task.description}>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs mt-0.5" title={task.description}>
                             {task.description || "No description"}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2">
                         {task.project ? (
                           <Badge variant="outline" className="text-xs">
                             {task.project.code}
@@ -744,18 +744,19 @@ export default function TaskManagement() {
                           <span className="text-xs text-gray-400">General Task</span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
+                      <TableCell className="py-2">
+                        <span className="text-sm">
                           {task.assignedUser?.name || "Unknown"}
-                        </div>
+                        </span>
                       </TableCell>
-                      <TableCell>{getStatusBadge(task.status)}</TableCell>
-                      <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                      <TableCell>
+                      <TableCell className="py-2">{getStatusBadge(task.status)}</TableCell>
+                      <TableCell className="py-2 text-center">
+                        {getPriorityIcon(task.priority)}
+                      </TableCell>
+                      <TableCell className="py-2">
                         <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          {formatDate(task.dueDate)}
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm">{formatDate(task.dueDate)}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -825,7 +826,7 @@ export default function TaskManagement() {
               <span>Task Details</span>
               <div className="flex items-center gap-2">
                 {selectedTask && getStatusBadge(selectedTask.status)}
-                {selectedTask && getPriorityBadge(selectedTask.priority)}
+                {selectedTask && getPriorityIcon(selectedTask.priority)}
               </div>
             </DialogTitle>
           </DialogHeader>

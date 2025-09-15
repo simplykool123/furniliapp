@@ -617,7 +617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (checkType && checkType !== 'all') filters.checkType = checkType as string;
       if (overallStatus && overallStatus !== 'all') filters.overallStatus = overallStatus as string;
       
-      const qualityChecks = await storage.getAllQualityChecks(filters);
+      const qualityChecks = await manufacturingStorage.getAllQualityChecks(filters);
       res.json(qualityChecks);
     } catch (error) {
       console.error("Quality checks error:", error);
@@ -627,7 +627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/quality-checks/stats", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const allChecks = await storage.getAllQualityChecks();
+      const allChecks = await manufacturingStorage.getAllQualityChecks();
       
       const stats = {
         totalChecks: allChecks.length,
@@ -647,7 +647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/quality-checks/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const qualityCheck = await storage.getQualityCheck(id);
+      const qualityCheck = await manufacturingStorage.getQualityCheck(id);
       
       if (!qualityCheck) {
         return res.status(404).json({ message: "Quality check not found" });
@@ -680,7 +680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const checkNumber = getNextQualityCheckNumber();
       
       // Verify work order exists
-      const workOrder = await storage.getWorkOrder(validationResult.data.workOrderId);
+      const workOrder = await manufacturingStorage.getWorkOrder(validationResult.data.workOrderId);
       if (!workOrder) {
         return res.status(400).json({ message: "Invalid work order reference" });
       }
@@ -738,7 +738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date()
       };
       
-      const updatedQualityCheck = await storage.updateQualityCheck(id, updates);
+      const updatedQualityCheck = await manufacturingStorage.updateQualityCheck(id, updates);
       
       if (!updatedQualityCheck) {
         return res.status(404).json({ message: "Quality check not found" });
@@ -777,7 +777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if quality check exists first
-      const existingCheck = await storage.getQualityCheck(id);
+      const existingCheck = await manufacturingStorage.getQualityCheck(id);
       if (!existingCheck) {
         return res.status(404).json({ message: "Quality check not found" });
       }
@@ -787,7 +787,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "Cannot change status from passed back to pending" });
       }
       
-      const updatedQualityCheck = await storage.updateQualityCheckStatus(id, status, req.user!.id);
+      const updatedQualityCheck = await manufacturingStorage.updateQualityCheckStatus(id, status, req.user!.id);
       
       if (!updatedQualityCheck) {
         return res.status(500).json({ message: "Failed to update quality check status" });
@@ -866,7 +866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify work order exists
-      const workOrder = await storage.getWorkOrder(validationResult.data.workOrderId);
+      const workOrder = await manufacturingStorage.getWorkOrder(validationResult.data.workOrderId);
       if (!workOrder) {
         return res.status(400).json({ message: "Invalid work order reference" });
       }

@@ -3,7 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText, Factory, CheckCircle, AlertTriangle, Play, Upload, FileImage, Download, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar, Clock, User, FileText, Factory, CheckCircle, AlertTriangle, Play, Upload, FileImage, Download, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -73,6 +76,8 @@ const getStatusIcon = (status: string) => {
 
 export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps) {
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadForm, setUploadForm] = useState({ title: '', file: null as File | null });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -89,15 +94,15 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
 
   const deliveryNotes = deliveryNotesData?.files || [];
 
-  // Delivery notes upload mutation
+  // Simple delivery notes upload mutation
   const deliveryNotesUploadMutation = useMutation({
-    mutationFn: async ({ files }: { files: File[] }) => {
+    mutationFn: async ({ title, file }: { title: string; file: File }) => {
       const formData = new FormData();
-      files.forEach(file => {
-        formData.append('files', file);
-      });
+      formData.append('files', file);
+      formData.append('type', 'delivery_chalan');
+      formData.append('title', title);
       
-      const response = await fetch(`/api/projects/${projectId}/files/delivery-chalans/multiple`, {
+      const response = await fetch(`/api/projects/${projectId}/files`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -107,28 +112,46 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to upload delivery notes');
+        throw new Error(error.message || 'Failed to upload delivery note');
       }
 
       return await response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files', 'delivery_chalan'] });
       setUploadingFiles(false);
+      setIsUploadModalOpen(false);
+      setUploadForm({ title: '', file: null });
       toast({
-        title: "Delivery notes uploaded successfully",
-        description: `${data.files?.length || 0} files uploaded`
+        title: "Delivery note uploaded successfully",
       });
     },
     onError: (error: any) => {
       setUploadingFiles(false);
       toast({
-        title: "Error uploading delivery notes",
+        title: "Error uploading delivery note",
         description: error.message,
         variant: "destructive",
       });
     },
   });
+
+  const handleSimpleUpload = () => {
+    if (!uploadForm.title || !uploadForm.file) {
+      toast({
+        title: "Missing fields",
+        description: "Please enter a title and select a file",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setUploadingFiles(true);
+    deliveryNotesUploadMutation.mutate({ 
+      title: uploadForm.title, 
+      file: uploadForm.file 
+    });
+  };
 
   if (isLoading) {
     return (
@@ -168,135 +191,134 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
 
   return (
     <div className="space-y-6">
-      {/* Delivery Notes Upload Section */}
+      {/* Delivery Notes Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <FileImage className="h-5 w-5" />
-            <span>Delivery Notes</span>
-            {deliveryNotes.length > 0 && (
-              <Badge variant="secondary">{deliveryNotes.length}</Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div 
-            className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 transition-colors hover:border-blue-400 mb-4"
-            onPaste={(e) => {
-              e.preventDefault();
-              const items = Array.from(e.clipboardData?.items || []);
-              const imageFiles = items
-                .filter(item => item.type.startsWith('image/'))
-                .map(item => item.getAsFile())
-                .filter(file => file !== null) as File[];
-              
-              if (imageFiles.length > 0) {
-                setUploadingFiles(true);
-                deliveryNotesUploadMutation.mutate({ files: imageFiles });
-                toast({
-                  title: "Images pasted",
-                  description: `${imageFiles.length} image(s) pasted from clipboard`
-                });
-              }
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.currentTarget.classList.add('border-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault();
-              e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
-              const files = Array.from(e.dataTransfer?.files || []);
-              if (files.length > 0) {
-                setUploadingFiles(true);
-                deliveryNotesUploadMutation.mutate({ files });
-              }
-            }}
-            tabIndex={0}
-            data-testid="delivery-notes-production-drop-zone"
-          >
-            <div className="text-center">
-              <Upload className="mx-auto h-8 w-8 text-gray-400" />
-              <div className="mt-4">
-                <label htmlFor="delivery-notes-production-upload" className="cursor-pointer">
-                  <span className="mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100">
-                    Drop delivery notes here, click to browse, or paste images (Ctrl+V)
-                  </span>
-                  <span className="mt-1 block text-xs text-gray-500">
-                    Images, PDFs, Excel files up to 10MB each • Supports clipboard paste for images
-                  </span>
-                </label>
-                <input
-                  id="delivery-notes-production-upload"
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf,.xlsx,.xls"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    if (files.length > 0) {
-                      setUploadingFiles(true);
-                      deliveryNotesUploadMutation.mutate({ files });
-                      e.target.value = ''; // Reset input
-                    }
-                  }}
-                  className="hidden"
-                  data-testid="input-delivery-notes-production"
-                />
-              </div>
-              {uploadingFiles && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-sm text-gray-600">Uploading delivery notes...</span>
-                  </div>
-                </div>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center space-x-2">
+              <FileImage className="h-5 w-5" />
+              <span>Delivery Notes</span>
+              {deliveryNotes.length > 0 && (
+                <Badge variant="secondary">{deliveryNotes.length}</Badge>
               )}
-            </div>
-          </div>
-
-          {/* Display uploaded delivery notes */}
-          {deliveryNotes.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {deliveryNotes.map((file: any) => (
-                <div 
-                  key={file.id} 
-                  className="flex items-center justify-between p-3 border rounded-lg bg-white dark:bg-gray-800"
-                  data-testid={`delivery-note-production-${file.id}`}
-                >
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    <FileImage className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                        {file.originalName}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(file.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
+            </CardTitle>
+            
+            <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center space-x-2" data-testid="button-quick-upload-delivery">
+                  <Plus className="h-4 w-4" />
+                  <span>Quick Upload Delivery Challan</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Upload Delivery Challan</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="delivery-type">Type *</Label>
+                    <Input 
+                      id="delivery-type" 
+                      value="Delivery Challan" 
+                      disabled 
+                      className="bg-gray-50"
+                    />
                   </div>
-                  <div className="flex items-center space-x-1 flex-shrink-0">
+                  
+                  <div>
+                    <Label htmlFor="delivery-title">Subject *</Label>
+                    <Input
+                      id="delivery-title"
+                      placeholder="Enter subject/description"
+                      value={uploadForm.title}
+                      onChange={(e) => setUploadForm(prev => ({ ...prev, title: e.target.value }))}
+                      data-testid="input-delivery-title"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="delivery-file">Select File *</Label>
+                    <Input
+                      id="delivery-file"
+                      type="file"
+                      accept="image/*,.pdf,.xlsx,.xls"
+                      onChange={(e) => setUploadForm(prev => ({ ...prev, file: e.target.files?.[0] || null }))}
+                      data-testid="input-delivery-file"
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2 pt-4">
                     <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => window.open(`/api/files/${file.id}/download`, '_blank')}
-                      data-testid={`button-download-production-${file.id}`}
+                      variant="outline" 
+                      onClick={() => setIsUploadModalOpen(false)}
+                      disabled={uploadingFiles}
                     >
-                      <Download className="h-4 w-4" />
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSimpleUpload}
+                      disabled={uploadingFiles || !uploadForm.title || !uploadForm.file}
+                      data-testid="button-upload-delivery"
+                    >
+                      {uploadingFiles ? "Uploading..." : "Upload File"}
                     </Button>
                   </div>
                 </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Display uploaded delivery notes */}
+          {deliveryNotes.length > 0 ? (
+            <div className="space-y-3">
+              {deliveryNotes.map((file: any) => (
+                <div 
+                  key={file.id} 
+                  className="flex items-start space-x-3 p-3 border rounded-lg bg-white dark:bg-gray-800"
+                  data-testid={`delivery-note-production-${file.id}`}
+                >
+                  <div className="flex-shrink-0">
+                    {file.fileType?.startsWith('image/') ? (
+                      <img 
+                        src={`/api/files/${file.id}/download`} 
+                        alt={file.originalName}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                        <FileText className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {file.title || file.originalName}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(file.createdAt).toLocaleDateString()}
+                    </p>
+                    {file.comments && (
+                      <p className="text-xs text-gray-600 mt-1">{file.comments}</p>
+                    )}
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => window.open(`/api/files/${file.id}/download`, '_blank')}
+                    data-testid={`button-download-production-${file.id}`}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
               ))}
             </div>
-          )}
-
-          {deliveryNotes.length === 0 && !uploadingFiles && (
-            <p className="text-center text-gray-500 text-sm">
-              No delivery notes uploaded yet. Upload your first delivery note above.
-            </p>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <FileImage className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-sm">No delivery notes uploaded yet.</p>
+              <p className="text-xs mt-1">Click "Quick Upload Delivery Challan" to add your first delivery note.</p>
+            </div>
           )}
         </CardContent>
       </Card>

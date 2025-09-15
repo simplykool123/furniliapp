@@ -413,5 +413,6 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
         </Card>
       ))}
     </div>
+  </div>
   );
 }

@@ -548,7 +548,7 @@ class DatabaseStorage implements IStorage {
           issuedBy: row.issued_by as number | null,
           status: row.status as 'pending' | 'approved' | 'issued' | 'cancelled',
           approvedAt: row.approved_at as Date | null,
-          issueDate: row.issued_at as Date | null,
+          issuedAt: row.issued_at as Date | null,
           notes: row.remarks as string | null,
           totalCost: Number(row.total_value) || 0,
           createdAt: row.created_at as Date,
@@ -983,12 +983,17 @@ class DatabaseStorage implements IStorage {
   }
 
   async deleteProject(id: number): Promise<boolean> {
-    // Delete project logs first to avoid foreign key constraint violation
-    await db.delete(projectLogs).where(eq(projectLogs.projectId, id));
+    // Instead of deleting, archive the project by setting isActive to false
+    // This preserves all relationships and data integrity
+    const result = await db.update(projects)
+      .set({ 
+        isActive: false,
+        updatedAt: new Date()
+      })
+      .where(eq(projects.id, id))
+      .returning();
     
-    // Then delete the project
-    await db.delete(projects).where(eq(projects.id, id));
-    return true;
+    return result.length > 0;
   }
 
   // Remove duplicate category operations - already defined earlier

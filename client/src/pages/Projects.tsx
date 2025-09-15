@@ -412,13 +412,19 @@ export default function Projects() {
         method: 'DELETE',
       }),
     onSuccess: () => {
-      toast({ title: "Project deleted successfully" });
+      toast({ 
+        title: activeProjectTab === "archive" 
+          ? "Project deleted permanently" 
+          : "Project archived successfully" 
+      });
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setProjectToDelete(null);
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to delete project",
+        title: activeProjectTab === "archive" 
+          ? "Failed to delete project" 
+          : "Failed to archive project",
         description: error.message,
         variant: "destructive",
       });
@@ -471,9 +477,13 @@ export default function Projects() {
     
     // Filter based on active tab
     const matchesTab = (activeProjectTab === "all" && 
+                       project.isActive !== false && 
                        !['completed', 'handover', 'lost'].includes(project.stage)) || 
                       (activeProjectTab === "completed" && 
-                       ['completed', 'handover', 'lost'].includes(project.stage));
+                       project.isActive !== false &&
+                       ['completed', 'handover', 'lost'].includes(project.stage)) ||
+                      (activeProjectTab === "archive" && 
+                       project.isActive === false);
     
     return matchesSearch && matchesStage && matchesClient && matchesTab;
   });
@@ -582,6 +592,12 @@ export default function Projects() {
                   className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-amber-900 rounded-none px-6 py-3"
                 >
                   Completed
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="archive" 
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-amber-900 rounded-none px-6 py-3"
+                >
+                  Archive
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -1820,9 +1836,14 @@ export default function Projects() {
       <AlertDialog open={!!projectToDelete} onOpenChange={() => setProjectToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you Freaking Sure?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {activeProjectTab === "archive" ? "Delete Project Permanently?" : "Archive Project?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project "{projectToDelete?.name}" and remove all associated data.
+              {activeProjectTab === "archive" 
+                ? `This will permanently delete the project "${projectToDelete?.name}" and all associated data. This action cannot be undone.`
+                : `This will archive the project "${projectToDelete?.name}" and move it to the Archive tab. You can restore it later if needed. This preserves all project data including tasks, quotes, and files.`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1834,7 +1855,10 @@ export default function Projects() {
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={deleteProjectMutation.isPending}
             >
-              {deleteProjectMutation.isPending ? "Deleting..." : "Yes, Delete"}
+              {deleteProjectMutation.isPending 
+                ? (activeProjectTab === "archive" ? "Deleting..." : "Archiving...") 
+                : (activeProjectTab === "archive" ? "Yes, Delete" : "Yes, Archive")
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

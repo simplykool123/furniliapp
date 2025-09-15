@@ -26,7 +26,11 @@ import {
   auditLogs,
   bomCalculations,
   bomItems,
-  bomSettings
+  bomSettings,
+  workOrders,
+  productionSchedules,
+  qualityChecks,
+  productionTasks
 } from "@shared/schema";
 import { eq, and, gte, lte, desc, asc, sql, like, or, inArray } from "drizzle-orm";
 import * as bcrypt from "bcryptjs";
@@ -84,6 +88,18 @@ import type {
   InsertBomItem,
   BomSettings,
   InsertBomSettings,
+  WorkOrder,
+  InsertWorkOrder,
+  ProductionSchedule,
+  InsertProductionSchedule,
+  QualityCheck,
+  InsertQualityCheck,
+  ProductionTask,
+  InsertProductionTask,
+  WorkOrderWithDetails,
+  ProductionScheduleWithDetails,
+  QualityCheckWithDetails,
+  ProductionTaskWithDetails,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -274,6 +290,47 @@ export interface IStorage {
   
   // Auto PO Generation
   generateAutoPurchaseOrders(userId: number): Promise<PurchaseOrder[]>;
+  
+  // Manufacturing Workflow Operations
+  
+  // Work Order operations
+  getAllWorkOrders(filters?: { status?: string; projectId?: number; priority?: string }): Promise<WorkOrderWithDetails[]>;
+  getWorkOrder(id: number): Promise<WorkOrderWithDetails | undefined>;
+  createWorkOrder(workOrder: InsertWorkOrder): Promise<WorkOrder>;
+  updateWorkOrder(id: number, updates: Partial<InsertWorkOrder>): Promise<WorkOrder | undefined>;
+  updateWorkOrderStatus(id: number, status: string, userId: number): Promise<WorkOrder | undefined>;
+  deleteWorkOrder(id: number): Promise<boolean>;
+  getWorkOrdersByProject(projectId: number): Promise<WorkOrder[]>;
+  getLastWorkOrderNumber(): Promise<string | undefined>;
+  
+  // Production Schedule operations
+  getAllProductionSchedules(filters?: { date?: string; workstationId?: string; status?: string }): Promise<ProductionScheduleWithDetails[]>;
+  getProductionSchedule(id: number): Promise<ProductionScheduleWithDetails | undefined>;
+  createProductionSchedule(schedule: InsertProductionSchedule): Promise<ProductionSchedule>;
+  updateProductionSchedule(id: number, updates: Partial<InsertProductionSchedule>): Promise<ProductionSchedule | undefined>;
+  updateProductionScheduleStatus(id: number, status: string): Promise<ProductionSchedule | undefined>;
+  deleteProductionSchedule(id: number): Promise<boolean>;
+  getProductionSchedulesByWorkOrder(workOrderId: number): Promise<ProductionSchedule[]>;
+  
+  // Quality Check operations
+  getAllQualityChecks(filters?: { workOrderId?: number; checkType?: string; overallStatus?: string }): Promise<QualityCheckWithDetails[]>;
+  getQualityCheck(id: number): Promise<QualityCheckWithDetails | undefined>;
+  createQualityCheck(qualityCheck: InsertQualityCheck): Promise<QualityCheck>;
+  updateQualityCheck(id: number, updates: Partial<InsertQualityCheck>): Promise<QualityCheck | undefined>;
+  updateQualityCheckStatus(id: number, status: string, userId: number): Promise<QualityCheck | undefined>;
+  deleteQualityCheck(id: number): Promise<boolean>;
+  getQualityChecksByWorkOrder(workOrderId: number): Promise<QualityCheck[]>;
+  getLastQualityCheckNumber(): Promise<string | undefined>;
+  
+  // Production Task operations
+  getAllProductionTasks(filters?: { workOrderId?: number; status?: string; assignedTo?: number }): Promise<ProductionTaskWithDetails[]>;
+  getProductionTask(id: number): Promise<ProductionTaskWithDetails | undefined>;
+  createProductionTask(task: InsertProductionTask): Promise<ProductionTask>;
+  updateProductionTask(id: number, updates: Partial<InsertProductionTask>): Promise<ProductionTask | undefined>;
+  updateProductionTaskStatus(id: number, status: string, userId: number): Promise<ProductionTask | undefined>;
+  deleteProductionTask(id: number): Promise<boolean>;
+  getProductionTasksByWorkOrder(workOrderId: number): Promise<ProductionTask[]>;
+  getLastProductionTaskNumber(): Promise<string | undefined>;
 }
 
 class DatabaseStorage implements IStorage {
@@ -2601,6 +2658,460 @@ class DatabaseStorage implements IStorage {
       };
       return await this.createBomSettings(newSetting);
     }
+  }
+
+  // ============================
+  // MANUFACTURING WORKFLOW OPERATIONS
+  // ============================
+
+  // Work Order operations
+  async getAllWorkOrders(filters?: { status?: string; projectId?: number; priority?: string }): Promise<WorkOrderWithDetails[]> {
+    let whereConditions: any = eq(workOrders.id, workOrders.id); // Always true condition
+    
+    if (filters?.status) {
+      whereConditions = and(whereConditions, eq(workOrders.status, filters.status));
+    }
+    if (filters?.projectId) {
+      whereConditions = and(whereConditions, eq(workOrders.projectId, filters.projectId));
+    }
+    if (filters?.priority) {
+      whereConditions = and(whereConditions, eq(workOrders.priority, filters.priority));
+    }
+
+    const result = await db.select({
+      workOrder: workOrders,
+      project: { name: projects.name, code: projects.code },
+      client: { name: clients.name },
+      createdByUser: { name: users.name }
+    })
+    .from(workOrders)
+    .innerJoin(projects, eq(workOrders.projectId, projects.id))
+    .innerJoin(clients, eq(workOrders.clientId, clients.id))
+    .innerJoin(users, eq(workOrders.createdBy, users.id))
+    .where(whereConditions)
+    .orderBy(desc(workOrders.createdAt));
+
+    return result.map(r => ({
+      ...r.workOrder,
+      project: r.project,
+      client: r.client,
+      createdByUser: r.createdByUser,
+      schedules: [],
+      tasks: [],
+      qualityChecks: []
+    }));
+  }
+
+  async getWorkOrder(id: number): Promise<WorkOrderWithDetails | undefined> {
+    const result = await db.select({
+      workOrder: workOrders,
+      project: { name: projects.name, code: projects.code },
+      client: { name: clients.name },
+      createdByUser: { name: users.name }
+    })
+    .from(workOrders)
+    .innerJoin(projects, eq(workOrders.projectId, projects.id))
+    .innerJoin(clients, eq(workOrders.clientId, clients.id))
+    .innerJoin(users, eq(workOrders.createdBy, users.id))
+    .where(eq(workOrders.id, id))
+    .limit(1);
+
+    if (!result[0]) return undefined;
+
+    const r = result[0];
+    return {
+      ...r.workOrder,
+      project: r.project,
+      client: r.client,
+      createdByUser: r.createdByUser,
+      schedules: [],
+      tasks: [],
+      qualityChecks: []
+    };
+  }
+
+  async createWorkOrder(workOrder: InsertWorkOrder): Promise<WorkOrder> {
+    const [newWorkOrder] = await db.insert(workOrders).values([workOrder]).returning();
+    return newWorkOrder;
+  }
+
+  async updateWorkOrder(id: number, updates: Partial<InsertWorkOrder>): Promise<WorkOrder | undefined> {
+    const [updatedWorkOrder] = await db.update(workOrders)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(workOrders.id, id))
+      .returning();
+    return updatedWorkOrder;
+  }
+
+  async updateWorkOrderStatus(id: number, status: string, userId: number): Promise<WorkOrder | undefined> {
+    const updateData: any = { status, updatedAt: new Date() };
+    
+    // Set timing fields based on status
+    if (status === 'in_progress') {
+      updateData.actualStartDate = new Date();
+    } else if (status === 'completed') {
+      updateData.actualEndDate = new Date();
+      updateData.completionPercentage = 100;
+    }
+
+    const [updatedWorkOrder] = await db.update(workOrders)
+      .set(updateData)
+      .where(eq(workOrders.id, id))
+      .returning();
+    
+    // Create audit log
+    await this.createAuditLog({
+      tableName: 'work_orders',
+      recordId: id,
+      action: 'status_change',
+      userId,
+      metadata: { oldStatus: 'previous_status', newStatus: status }
+    });
+    
+    return updatedWorkOrder;
+  }
+
+  async deleteWorkOrder(id: number): Promise<boolean> {
+    const result = await db.delete(workOrders).where(eq(workOrders.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getWorkOrdersByProject(projectId: number): Promise<WorkOrder[]> {
+    const result = await db.select().from(workOrders)
+      .where(eq(workOrders.projectId, projectId))
+      .orderBy(desc(workOrders.createdAt));
+    return result;
+  }
+
+  async getLastWorkOrderNumber(): Promise<string | undefined> {
+    const result = await db.select({ orderNumber: workOrders.orderNumber })
+      .from(workOrders)
+      .orderBy(desc(workOrders.createdAt))
+      .limit(1);
+    return result[0]?.orderNumber;
+  }
+
+  // Production Schedule operations
+  async getAllProductionSchedules(filters?: { date?: string; workstationId?: string; status?: string }): Promise<ProductionScheduleWithDetails[]> {
+    let whereConditions: any = eq(productionSchedules.id, productionSchedules.id);
+    
+    if (filters?.date) {
+      whereConditions = and(whereConditions, sql`DATE(${productionSchedules.scheduledDate}) = DATE(${filters.date})`);
+    }
+    if (filters?.workstationId) {
+      whereConditions = and(whereConditions, eq(productionSchedules.workstationId, filters.workstationId));
+    }
+    if (filters?.status) {
+      whereConditions = and(whereConditions, eq(productionSchedules.status, filters.status));
+    }
+
+    const result = await db.select({
+      schedule: productionSchedules,
+      workOrder: { orderNumber: workOrders.orderNumber, title: workOrders.title },
+      scheduledByUser: { name: users.name }
+    })
+    .from(productionSchedules)
+    .innerJoin(workOrders, eq(productionSchedules.workOrderId, workOrders.id))
+    .innerJoin(users, eq(productionSchedules.scheduledBy, users.id))
+    .where(whereConditions)
+    .orderBy(desc(productionSchedules.scheduledDate));
+
+    return result.map(r => ({
+      ...r.schedule,
+      workOrder: r.workOrder,
+      scheduledByUser: r.scheduledByUser,
+      assignedWorkerNames: []
+    }));
+  }
+
+  async getProductionSchedule(id: number): Promise<ProductionScheduleWithDetails | undefined> {
+    const result = await db.select({
+      schedule: productionSchedules,
+      workOrder: { orderNumber: workOrders.orderNumber, title: workOrders.title },
+      scheduledByUser: { name: users.name }
+    })
+    .from(productionSchedules)
+    .innerJoin(workOrders, eq(productionSchedules.workOrderId, workOrders.id))
+    .innerJoin(users, eq(productionSchedules.scheduledBy, users.id))
+    .where(eq(productionSchedules.id, id))
+    .limit(1);
+
+    if (!result[0]) return undefined;
+
+    const r = result[0];
+    return {
+      ...r.schedule,
+      workOrder: r.workOrder,
+      scheduledByUser: r.scheduledByUser,
+      assignedWorkerNames: []
+    };
+  }
+
+  async createProductionSchedule(schedule: InsertProductionSchedule): Promise<ProductionSchedule> {
+    const [newSchedule] = await db.insert(productionSchedules).values([schedule]).returning();
+    return newSchedule;
+  }
+
+  async updateProductionSchedule(id: number, updates: Partial<InsertProductionSchedule>): Promise<ProductionSchedule | undefined> {
+    const [updatedSchedule] = await db.update(productionSchedules)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(productionSchedules.id, id))
+      .returning();
+    return updatedSchedule;
+  }
+
+  async updateProductionScheduleStatus(id: number, status: string): Promise<ProductionSchedule | undefined> {
+    const updateData: any = { status, updatedAt: new Date() };
+    
+    if (status === 'in_progress') {
+      updateData.actualStartTime = new Date();
+    } else if (status === 'completed') {
+      updateData.actualEndTime = new Date();
+    }
+
+    const [updatedSchedule] = await db.update(productionSchedules)
+      .set(updateData)
+      .where(eq(productionSchedules.id, id))
+      .returning();
+    return updatedSchedule;
+  }
+
+  async deleteProductionSchedule(id: number): Promise<boolean> {
+    const result = await db.delete(productionSchedules).where(eq(productionSchedules.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getProductionSchedulesByWorkOrder(workOrderId: number): Promise<ProductionSchedule[]> {
+    const result = await db.select().from(productionSchedules)
+      .where(eq(productionSchedules.workOrderId, workOrderId))
+      .orderBy(desc(productionSchedules.scheduledDate));
+    return result;
+  }
+
+  // Quality Check operations
+  async getAllQualityChecks(filters?: { workOrderId?: number; checkType?: string; overallStatus?: string }): Promise<QualityCheckWithDetails[]> {
+    let whereConditions: any = eq(qualityChecks.id, qualityChecks.id);
+    
+    if (filters?.workOrderId) {
+      whereConditions = and(whereConditions, eq(qualityChecks.workOrderId, filters.workOrderId));
+    }
+    if (filters?.checkType) {
+      whereConditions = and(whereConditions, eq(qualityChecks.checkType, filters.checkType));
+    }
+    if (filters?.overallStatus) {
+      whereConditions = and(whereConditions, eq(qualityChecks.overallStatus, filters.overallStatus));
+    }
+
+    const result = await db.select({
+      qualityCheck: qualityChecks,
+      workOrder: { orderNumber: workOrders.orderNumber, title: workOrders.title },
+      inspectedByUser: { name: users.name }
+    })
+    .from(qualityChecks)
+    .innerJoin(workOrders, eq(qualityChecks.workOrderId, workOrders.id))
+    .innerJoin(users, eq(qualityChecks.inspectedBy, users.id))
+    .where(whereConditions)
+    .orderBy(desc(qualityChecks.inspectionDate));
+
+    return result.map(r => ({
+      ...r.qualityCheck,
+      workOrder: r.workOrder,
+      inspectedByUser: r.inspectedByUser
+    }));
+  }
+
+  async getQualityCheck(id: number): Promise<QualityCheckWithDetails | undefined> {
+    const result = await db.select({
+      qualityCheck: qualityChecks,
+      workOrder: { orderNumber: workOrders.orderNumber, title: workOrders.title },
+      inspectedByUser: { name: users.name }
+    })
+    .from(qualityChecks)
+    .innerJoin(workOrders, eq(qualityChecks.workOrderId, workOrders.id))
+    .innerJoin(users, eq(qualityChecks.inspectedBy, users.id))
+    .where(eq(qualityChecks.id, id))
+    .limit(1);
+
+    if (!result[0]) return undefined;
+
+    const r = result[0];
+    return {
+      ...r.qualityCheck,
+      workOrder: r.workOrder,
+      inspectedByUser: r.inspectedByUser
+    };
+  }
+
+  async createQualityCheck(qualityCheck: InsertQualityCheck): Promise<QualityCheck> {
+    const [newQualityCheck] = await db.insert(qualityChecks).values([qualityCheck]).returning();
+    return newQualityCheck;
+  }
+
+  async updateQualityCheck(id: number, updates: Partial<InsertQualityCheck>): Promise<QualityCheck | undefined> {
+    const [updatedQualityCheck] = await db.update(qualityChecks)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(qualityChecks.id, id))
+      .returning();
+    return updatedQualityCheck;
+  }
+
+  async updateQualityCheckStatus(id: number, status: string, userId: number): Promise<QualityCheck | undefined> {
+    const updateData: any = { overallStatus: status, updatedAt: new Date() };
+    
+    if (status === 'passed' || status === 'failed') {
+      updateData.approvalDate = new Date();
+      updateData.approvedBy = userId;
+    }
+
+    const [updatedQualityCheck] = await db.update(qualityChecks)
+      .set(updateData)
+      .where(eq(qualityChecks.id, id))
+      .returning();
+    
+    // Create audit log
+    await this.createAuditLog({
+      tableName: 'quality_checks',
+      recordId: id,
+      action: 'status_change',
+      userId,
+      metadata: { oldStatus: 'previous_status', newStatus: status }
+    });
+    
+    return updatedQualityCheck;
+  }
+
+  async deleteQualityCheck(id: number): Promise<boolean> {
+    const result = await db.delete(qualityChecks).where(eq(qualityChecks.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getQualityChecksByWorkOrder(workOrderId: number): Promise<QualityCheck[]> {
+    const result = await db.select().from(qualityChecks)
+      .where(eq(qualityChecks.workOrderId, workOrderId))
+      .orderBy(desc(qualityChecks.inspectionDate));
+    return result;
+  }
+
+  async getLastQualityCheckNumber(): Promise<string | undefined> {
+    const result = await db.select({ checkNumber: qualityChecks.checkNumber })
+      .from(qualityChecks)
+      .orderBy(desc(qualityChecks.inspectionDate))
+      .limit(1);
+    return result[0]?.checkNumber;
+  }
+
+  // Production Task operations
+  async getAllProductionTasks(filters?: { workOrderId?: number; status?: string; assignedTo?: number }): Promise<ProductionTaskWithDetails[]> {
+    let whereConditions: any = eq(productionTasks.id, productionTasks.id);
+    
+    if (filters?.workOrderId) {
+      whereConditions = and(whereConditions, eq(productionTasks.workOrderId, filters.workOrderId));
+    }
+    if (filters?.status) {
+      whereConditions = and(whereConditions, eq(productionTasks.status, filters.status));
+    }
+    if (filters?.assignedTo) {
+      whereConditions = and(whereConditions, eq(productionTasks.assignedTo, filters.assignedTo));
+    }
+
+    const result = await db.select({
+      task: productionTasks,
+      workOrder: { orderNumber: workOrders.orderNumber, title: workOrders.title },
+      createdByUser: { name: users.name }
+    })
+    .from(productionTasks)
+    .innerJoin(workOrders, eq(productionTasks.workOrderId, workOrders.id))
+    .innerJoin(users, eq(productionTasks.createdBy, users.id))
+    .where(whereConditions)
+    .orderBy(asc(productionTasks.sequence), desc(productionTasks.createdAt));
+
+    return result.map(r => ({
+      ...r.task,
+      workOrder: r.workOrder,
+      createdByUser: r.createdByUser
+    }));
+  }
+
+  async getProductionTask(id: number): Promise<ProductionTaskWithDetails | undefined> {
+    const result = await db.select({
+      task: productionTasks,
+      workOrder: { orderNumber: workOrders.orderNumber, title: workOrders.title },
+      createdByUser: { name: users.name }
+    })
+    .from(productionTasks)
+    .innerJoin(workOrders, eq(productionTasks.workOrderId, workOrders.id))
+    .innerJoin(users, eq(productionTasks.createdBy, users.id))
+    .where(eq(productionTasks.id, id))
+    .limit(1);
+
+    if (!result[0]) return undefined;
+
+    const r = result[0];
+    return {
+      ...r.task,
+      workOrder: r.workOrder,
+      createdByUser: r.createdByUser
+    };
+  }
+
+  async createProductionTask(task: InsertProductionTask): Promise<ProductionTask> {
+    const [newTask] = await db.insert(productionTasks).values([task]).returning();
+    return newTask;
+  }
+
+  async updateProductionTask(id: number, updates: Partial<InsertProductionTask>): Promise<ProductionTask | undefined> {
+    const [updatedTask] = await db.update(productionTasks)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(productionTasks.id, id))
+      .returning();
+    return updatedTask;
+  }
+
+  async updateProductionTaskStatus(id: number, status: string, userId: number): Promise<ProductionTask | undefined> {
+    const updateData: any = { status, updatedAt: new Date() };
+    
+    if (status === 'in_progress') {
+      updateData.startTime = new Date();
+    } else if (status === 'completed') {
+      updateData.endTime = new Date();
+      updateData.completedBy = userId;
+    }
+
+    const [updatedTask] = await db.update(productionTasks)
+      .set(updateData)
+      .where(eq(productionTasks.id, id))
+      .returning();
+    
+    // Create audit log
+    await this.createAuditLog({
+      tableName: 'production_tasks',
+      recordId: id,
+      action: 'status_change',
+      userId,
+      metadata: { oldStatus: 'previous_status', newStatus: status }
+    });
+    
+    return updatedTask;
+  }
+
+  async deleteProductionTask(id: number): Promise<boolean> {
+    const result = await db.delete(productionTasks).where(eq(productionTasks.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getProductionTasksByWorkOrder(workOrderId: number): Promise<ProductionTask[]> {
+    const result = await db.select().from(productionTasks)
+      .where(eq(productionTasks.workOrderId, workOrderId))
+      .orderBy(asc(productionTasks.sequence), desc(productionTasks.createdAt));
+    return result;
+  }
+
+  async getLastProductionTaskNumber(): Promise<string | undefined> {
+    const result = await db.select({ taskNumber: productionTasks.taskNumber })
+      .from(productionTasks)
+      .orderBy(desc(productionTasks.createdAt))
+      .limit(1);
+    return result[0]?.taskNumber;
   }
 }
 

@@ -1358,7 +1358,7 @@ function QuoteItemForm({ form, onSubmit, salesProducts, editingItem }: any) {
   );
 }
 
-// Quick Upload Form Component with all required fields
+// Quick Upload Form Component with required fields as per image
 function QuickUploadForm({
   form,
   onSubmit,
@@ -1516,59 +1516,6 @@ function QuickUploadForm({
           )}
         </div>
 
-        {/* Client Selection */}
-        <FormField
-          control={form.control}
-          name="clientId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Client *</FormLabel>
-              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                <FormControl>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select client" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {clients.map((client: any) => (
-                    <SelectItem key={client.id} value={client.id.toString()}>
-                      {client.name} - {client.city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Project Selection */}
-        <FormField
-          control={form.control}
-          name="projectId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Project</FormLabel>
-              <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} value={field.value?.toString()}>
-                <FormControl>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select project (optional)" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">No Project</SelectItem>
-                  {projects.map((project: any) => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
-                      {project.name} ({project.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         {/* Quote Title */}
         <FormField
           control={form.control}
@@ -1606,13 +1553,13 @@ function QuickUploadForm({
           )}
         />
 
-        {/* Status */}
+        {/* Status Dropdown */}
         <FormField
           control={form.control}
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">Status</FormLabel>
+              <FormLabel className="text-xs">Status *</FormLabel>
               <Select onValueChange={field.onChange} defaultValue="draft">
                 <FormControl>
                   <SelectTrigger className="h-8 text-xs">
@@ -1631,7 +1578,7 @@ function QuickUploadForm({
           )}
         />
 
-        {/* Payment Terms */}
+        {/* Payment Terms Dropdown */}
         <FormField
           control={form.control}
           name="paymentTerms"
@@ -1658,7 +1605,7 @@ function QuickUploadForm({
           )}
         />
 
-        {/* Notes */}
+        {/* Notes Textarea */}
         <FormField
           control={form.control}
           name="notes"
@@ -1669,8 +1616,8 @@ function QuickUploadForm({
                 <Textarea 
                   {...field} 
                   placeholder="Any additional notes or special instructions..."
-                  className="min-h-[60px] text-xs resize-none"
-                  rows={3}
+                  className="min-h-[80px] text-xs resize-none"
+                  rows={4}
                 />
               </FormControl>
               <FormMessage />

@@ -1547,31 +1547,7 @@ export default function ProjectQuotes({ projectId }: ProjectQuotesProps) {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          {/* Quote Upload Button */}
-          <div className="relative">
-            <input
-              id="quote-upload"
-              type="file"
-              multiple
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={handleFileSelect}
-              className="hidden"
-              data-testid="input-quote-upload"
-            />
-            <Button 
-              variant="outline"
-              className="w-full sm:w-auto h-8 text-xs"
-              onClick={() => document.getElementById('quote-upload')?.click()}
-              disabled={uploadingQuotes}
-            >
-              {uploadingQuotes ? (
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
-              ) : (
-                <Upload className="h-3 w-3 mr-1" />
-              )}
-              Upload Quote
-            </Button>
-          </div>
+          
 
           <Button
             onClick={() => setShowSimpleUploadDialog(true)}

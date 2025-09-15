@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,12 @@ import TaskCalendar from "@/components/Calendar/TaskCalendar";
 export default function TaskManagement() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const params = useParams();
+  const taskId = params.taskId;
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [isEditingTask, setIsEditingTask] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [isTaskDetailModalOpen, setIsTaskDetailModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assignedToFilter, setAssignedToFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,6 +38,16 @@ export default function TaskManagement() {
     priority: "medium",
     dueDate: "",
     projectId: "",
+  });
+  const [editTaskForm, setEditTaskForm] = useState({
+    id: "",
+    title: "",
+    description: "",
+    assignedTo: "",
+    priority: "medium",
+    dueDate: "",
+    projectId: "",
+    status: "pending",
   });
 
   const currentUser = authService.getUser();
@@ -49,6 +64,34 @@ export default function TaskManagement() {
   const { data: projects } = useQuery({
     queryKey: ["/api/projects"],
   });
+
+  // Get specific task data if taskId is present
+  const { data: currentTask } = useQuery({
+    queryKey: ["/api/tasks", taskId],
+    queryFn: async () => {
+      if (!taskId) return null;
+      return await authenticatedApiRequest('GET', `/api/tasks/${taskId}`);
+    },
+    enabled: !!taskId,
+  });
+
+  // Load task data into edit form when currentTask is loaded
+  useEffect(() => {
+    if (currentTask && taskId) {
+      setEditTaskForm({
+        id: currentTask.id.toString(),
+        title: currentTask.title || "",
+        description: currentTask.description || "",
+        assignedTo: currentTask.assignedTo?.toString() || "",
+        priority: currentTask.priority || "medium",
+        dueDate: currentTask.dueDate ? currentTask.dueDate.split('T')[0] : "",
+        // Normalize projectId: null/empty -> '0' for form, but keep actual values
+        projectId: currentTask.projectId ? currentTask.projectId.toString() : "0",
+        status: currentTask.status || "pending",
+      });
+      setIsEditingTask(true);
+    }
+  }, [currentTask, taskId]);
 
   // Filter staff users for assignment dropdown
   const staffUsers = Array.isArray(users) ? users.filter((user: any) => user.isActive) : [];
@@ -93,6 +136,29 @@ export default function TaskManagement() {
     onError: (error) => {
       toast({
         title: "Failed to create task",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async (taskData: any) => {
+      const { id, ...updateData } = taskData;
+      return await authenticatedApiRequest('PUT', `/api/tasks/${id}`, updateData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks', taskId] });
+      toast({
+        title: "Task updated",
+        description: "Task has been updated successfully.",
+      });
+      setLocation('/tasks');
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to update task",
         description: error.message,
         variant: "destructive",
       });
@@ -149,7 +215,34 @@ export default function TaskManagement() {
       });
       return;
     }
-    addTaskMutation.mutate(taskForm);
+    
+    // Normalize projectId: convert '0' to empty string for "No Project"
+    const normalizedTaskForm = {
+      ...taskForm,
+      projectId: taskForm.projectId === '0' ? '' : taskForm.projectId,
+    };
+    
+    addTaskMutation.mutate(normalizedTaskForm);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTaskForm.title || !editTaskForm.assignedTo || !editTaskForm.priority) {
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Normalize projectId: convert '0' to empty string for "No Project"
+    const normalizedEditForm = {
+      ...editTaskForm,
+      projectId: editTaskForm.projectId === '0' ? '' : editTaskForm.projectId,
+    };
+    
+    updateTaskMutation.mutate(normalizedEditForm);
   };
 
   const getStatusBadge = (status: string) => {
@@ -197,6 +290,11 @@ export default function TaskManagement() {
     }
   };
 
+  const handleTaskTitleClick = (task: any) => {
+    setSelectedTask(task);
+    setIsTaskDetailModalOpen(true);
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "No due date";
     return new Date(dateString).toLocaleDateString();
@@ -217,33 +315,206 @@ export default function TaskManagement() {
     );
   }
 
+  // If viewing/editing a specific task
+  if (taskId && isEditingTask) {
+    return (
+      <ResponsiveLayout
+        title={`Edit Task #${taskId}`}
+        subtitle="Update task details"
+      >
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Edit Task Details</CardTitle>
+                <Button
+                  variant="outline"
+                  onClick={() => setLocation('/tasks')}
+                  data-testid="button-back-to-tasks"
+                >
+                  Back to Tasks
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-title">Task Title *</Label>
+                  <Input
+                    id="edit-title"
+                    value={editTaskForm.title}
+                    onChange={(e) => setEditTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Enter task title"
+                    required
+                    data-testid="input-edit-task-title"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editTaskForm.description}
+                    onChange={(e) => setEditTaskForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Enter task details..."
+                    rows={4}
+                    data-testid="input-edit-task-description"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-status">Status *</Label>
+                  <Select 
+                    value={editTaskForm.status}
+                    onValueChange={(value) => setEditTaskForm(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger data-testid="select-edit-task-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="done">Done</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {isAdmin && (
+                  <div>
+                    <Label htmlFor="edit-assignedTo">Assign To *</Label>
+                    <Select 
+                      value={editTaskForm.assignedTo}
+                      onValueChange={(value) => setEditTaskForm(prev => ({ ...prev, assignedTo: value }))}
+                    >
+                      <SelectTrigger data-testid="select-edit-task-assignee">
+                        <SelectValue placeholder="Select staff..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {staffUsers.map((user: any) => (
+                          <SelectItem key={user.id} value={user.id.toString()}>
+                            {user.name} ({user.username})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-priority">Priority *</Label>
+                    <Select 
+                      value={editTaskForm.priority}
+                      onValueChange={(value) => setEditTaskForm(prev => ({ ...prev, priority: value }))}
+                    >
+                      <SelectTrigger data-testid="select-edit-task-priority">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="edit-dueDate">Due Date</Label>
+                    <Input
+                      id="edit-dueDate"
+                      type="date"
+                      value={editTaskForm.dueDate}
+                      onChange={(e) => setEditTaskForm(prev => ({ ...prev, dueDate: e.target.value }))}
+                      data-testid="input-edit-task-due-date"
+                    />
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <div>
+                    <Label htmlFor="edit-projectId">Related Project (Optional)</Label>
+                    <Select 
+                      value={editTaskForm.projectId}
+                      onValueChange={(value) => setEditTaskForm(prev => ({ ...prev, projectId: value }))}
+                    >
+                      <SelectTrigger data-testid="select-edit-task-project">
+                        <SelectValue placeholder="Select project..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">No Project</SelectItem>
+                        {Array.isArray(projects) && projects.map((project: any) => (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {project.code} - {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setLocation('/tasks')}
+                    data-testid="button-cancel-edit-task"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="bg-amber-600 hover:bg-amber-700"
+                    disabled={updateTaskMutation.isPending}
+                    data-testid="button-update-task"
+                  >
+                    {updateTaskMutation.isPending ? "Updating..." : "Update Task"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </ResponsiveLayout>
+    );
+  }
+
   return (
     <ResponsiveLayout
       title="Task Management"
       subtitle={isAdmin ? "Manage all tasks" : "Your assigned tasks"}
     >
       {/* Task Status Tabs */}
-      <div className="mb-6">
-        <Tabs value={activeTaskTab} onValueChange={setActiveTaskTab}>
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
-            <TabsTrigger value="active">Active ({Array.isArray(tasks) ? tasks.filter((t: any) => t.status !== "done").length : 0})</TabsTrigger>
-            <TabsTrigger value="completed">Completed ({taskStats.completed})</TabsTrigger>
-            <TabsTrigger value="all">All ({taskStats.total})</TabsTrigger>
+      <Tabs value={activeTaskTab} onValueChange={setActiveTaskTab} className="w-full">
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 mb-6">
+          <TabsList className="bg-transparent h-auto p-0 space-x-8">
+            <TabsTrigger 
+              value="active" 
+              className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-3 text-sm font-medium"
+            >
+              Active Tasks ({Array.isArray(tasks) ? tasks.filter((t: any) => t.status !== "done").length : 0})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="completed"
+              className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-3 text-sm font-medium"
+            >
+              Completed ({taskStats.completed})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="all"
+              className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-3 text-sm font-medium"
+            >
+              All ({taskStats.total})
+            </TabsTrigger>
           </TabsList>
-        </Tabs>
-      </div>
-
-      <div className="flex justify-between items-center mb-6">
-        <div>
-        </div>
-        {isAdmin && (
-          <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
-            <DialogTrigger asChild>
-              <Button className="bg-amber-600 hover:bg-amber-700" data-testid="button-create-task">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Task
-              </Button>
-            </DialogTrigger>
+          
+          {isAdmin && (
+            <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
+              <DialogTrigger asChild>
+                <Button className="bg-amber-600 hover:bg-amber-700" data-testid="button-create-task">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Task
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Create New Task</DialogTitle>
@@ -332,7 +603,7 @@ export default function TaskManagement() {
                       <SelectValue placeholder="Select project..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Project</SelectItem>
+                      <SelectItem value="0">No Project</SelectItem>
                       {Array.isArray(projects) && projects.map((project: any) => (
                         <SelectItem key={project.id} value={project.id.toString()}>
                           {project.code} - {project.name}
@@ -366,151 +637,63 @@ export default function TaskManagement() {
         )}
       </div>
 
-      {/* Task Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <Card className="border-l-4 border-l-amber-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{taskStats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              All tasks in system
-            </p>
-          </CardContent>
-        </Card>
+        {/* Compact Filters Row */}
+        <TabsContent value="active" className="space-y-4">
+          <div className="flex flex-wrap items-center gap-4 py-4">
+            <div className="relative min-w-[300px]">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search tasks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-search-tasks"
+              />
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40" data-testid="select-status-filter">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="done">Done</SelectItem>
+              </SelectContent>
+            </Select>
 
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{taskStats.pending}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting start
-            </p>
-          </CardContent>
-        </Card>
+            {isAdmin && (
+              <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                <SelectTrigger className="w-40" data-testid="select-assigned-filter">
+                  <SelectValue placeholder="All Staff" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Staff</SelectItem>
+                  {staffUsers.map((user: any) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{taskStats.inProgress}</div>
-            <p className="text-xs text-muted-foreground">
-              Currently active
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{taskStats.completed}</div>
-            <p className="text-xs text-muted-foreground">
-              Successfully finished
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Task Views */}
-      <Tabs defaultValue="table" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="table" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Table View
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            Calendar View
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="table" className="space-y-6">
-          {/* Filters and Search */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filters & Search
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <Label htmlFor="search">Search Tasks</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="search"
-                      placeholder="Search by title, description..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                      data-testid="input-search-tasks"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="status-filter">Status</Label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger data-testid="select-status-filter">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="done">Done</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {isAdmin && (
-                  <div>
-                    <Label htmlFor="assigned-filter">Assigned To</Label>
-                    <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
-                      <SelectTrigger data-testid="select-assigned-filter">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Staff</SelectItem>
-                        {staffUsers.map((user: any) => (
-                          <SelectItem key={user.id} value={user.id.toString()}>
-                            {user.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="flex items-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setStatusFilter("all");
-                      setAssignedToFilter("all");
-                    }}
-                    className="w-full"
-                    data-testid="button-clear-filters"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            {(searchQuery || statusFilter !== "all" || assignedToFilter !== "all") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                  setAssignedToFilter("all");
+                }}
+                data-testid="button-clear-filters"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
 
           {/* Tasks Table */}
           <Card>
@@ -539,7 +722,14 @@ export default function TaskManagement() {
                     >
                       <TableCell className="font-medium">
                         <div>
-                          <div data-testid={`text-task-title-${task.id}`}>{task.title}</div>
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto font-medium text-left justify-start"
+                            onClick={() => handleTaskTitleClick(task)}
+                            data-testid={`text-task-title-${task.id}`}
+                          >
+                            {task.title}
+                          </Button>
                           <div className="text-xs text-gray-500 truncate max-w-xs" title={task.description}>
                             {task.description || "No description"}
                           </div>
@@ -626,6 +816,117 @@ export default function TaskManagement() {
           <TaskCalendar tasks={filteredTasks} />
         </TabsContent>
       </Tabs>
+
+      {/* Task Detail Modal */}
+      <Dialog open={isTaskDetailModalOpen} onOpenChange={setIsTaskDetailModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Task Details</span>
+              <div className="flex items-center gap-2">
+                {selectedTask && getStatusBadge(selectedTask.status)}
+                {selectedTask && getPriorityBadge(selectedTask.priority)}
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedTask && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Title</Label>
+                <p className="text-lg font-semibold">{selectedTask.title}</p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</Label>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {selectedTask.description || "No description provided"}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Assigned To</Label>
+                  <p className="text-sm mt-1">{selectedTask.assignedUser?.name || "Unknown"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</Label>
+                  <p className="text-sm mt-1">{formatDate(selectedTask.dueDate)}</p>
+                </div>
+              </div>
+
+              {selectedTask.project && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Project</Label>
+                  <p className="text-sm mt-1">{selectedTask.project.code} - {selectedTask.project.name}</p>
+                </div>
+              )}
+
+              {/* Status Change Section */}
+              <div className="border-t pt-4">
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Change Status</Label>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={selectedTask.status === 'pending' ? 'default' : 'outline'}
+                    onClick={() => handleStatusChange(selectedTask.id, 'pending')}
+                    disabled={updateTaskStatusMutation.isPending}
+                  >
+                    Pending
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={selectedTask.status === 'in_progress' ? 'default' : 'outline'}
+                    onClick={() => handleStatusChange(selectedTask.id, 'in_progress')}
+                    disabled={updateTaskStatusMutation.isPending}
+                  >
+                    In Progress
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={selectedTask.status === 'done' ? 'default' : 'outline'}
+                    onClick={() => handleStatusChange(selectedTask.id, 'done')}
+                    disabled={updateTaskStatusMutation.isPending}
+                  >
+                    Done
+                  </Button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsTaskDetailModalOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={() => {
+                    setIsTaskDetailModalOpen(false);
+                    setLocation(`/tasks/${selectedTask.id}`);
+                  }}
+                  className="bg-amber-600 hover:bg-amber-700"
+                >
+                  Edit Task
+                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setIsTaskDetailModalOpen(false);
+                      handleDeleteTask(selectedTask.id);
+                    }}
+                    disabled={deleteTaskMutation.isPending}
+                  >
+                    Delete
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </ResponsiveLayout>
   );
 }

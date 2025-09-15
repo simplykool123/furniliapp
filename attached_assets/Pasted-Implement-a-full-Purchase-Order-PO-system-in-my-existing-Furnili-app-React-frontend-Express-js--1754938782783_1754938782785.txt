@@ -1,0 +1,58 @@
+Implement a full Purchase Order (PO) system in my existing Furnili app (React frontend + Express.js + MySQL backend) with real-time updates and auto-generation for low stock products. Here’s exactly what to build:
+
+1) DATABASE:
+- Add `suppliers` table: id, name, contact_person, phone, email, address, payment_terms, gstin, preferred BOOLEAN, created_by, created_at, updated_at.
+- Add `purchase_orders` table: id, po_number, supplier_id, status ENUM('draft','sent','received','cancelled'), total_amount, created_by, created_at, updated_at.
+- Add `purchase_order_items` table: id, po_id, product_id, sku, description, qty, unit_price, expected_delivery_date, received_qty.
+- Add `audit_logs` table: id, user_id, action, table_name, record_id, metadata JSON, created_at.
+
+2) BACKEND API:
+- Suppliers CRUD:
+  - GET /api/suppliers?search=
+  - GET /api/suppliers/:id
+  - POST /api/suppliers
+  - PUT /api/suppliers/:id
+  - DELETE /api/suppliers/:id
+- Product search endpoint: GET /api/products/search?query=
+- PO endpoints:
+  - GET /api/pos (filters)
+  - GET /api/pos/:id
+  - POST /api/pos (transactional create with items)
+  - PUT /api/pos/:id (update draft)
+  - POST /api/pos/:id/send (generate PDF, send email via nodemailer, update status)
+  - POST /api/pos/:id/receive (transactional stock update, update status, log)
+  - POST /api/pos/:id/cancel (update status)
+- Auto-PO job:
+  - Runs every 10 minutes
+  - Finds products where current_stock < minimum_stock_level
+  - Groups by preferred supplier
+  - Creates DRAFT POs with qty = minimum_stock_level - current_stock
+  - Manual trigger endpoint: POST /api/auto-po/run
+  - Feature flag: AUTO_PO_AUTO_SEND=false
+
+3) REAL-TIME:
+- Integrate Socket.IO server & client
+- Emit events: `po.created`, `po.autocreated`, `product.stock.updated`, `po.received`
+- Client listens and updates UI in real time
+
+4) FRONTEND (React + Tailwind):
+- Supplier autocomplete (debounced search)
+- Product autocomplete (fills product details when selected)
+- Create PO modal: add multiple lines, calculate totals, Save Draft, Save & Send buttons
+- PO list page: filters, table, quick actions (send, receive, edit), expandable rows for items
+- Receive PO modal: enter received qty, update stock
+- Match existing Furnili modal and Tailwind styling
+
+5) EMAIL & WHATSAPP:
+- Email sending: PDF generation (puppeteer), nodemailer integration, status update
+- WhatsApp stub: prepare a message with PO link (actual API integration optional, use config)
+
+6) SECURITY:
+- Role-based access (admin/procurement can create/send/receive/cancel, viewer can only view)
+- Audit log each PO action
+
+7) TESTS:
+- Add integration tests for PO create → send → receive with stock updates
+- Add supplier CRUD tests
+
+Use my existing DB connection, auth middleware, and Tailwind setup. Do not hardcode credentials. Provide SQL migrations, backend routes, controllers, React components, Socket.IO hook, and README instructions.

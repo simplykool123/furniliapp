@@ -1,0 +1,70 @@
+chunk-NFC5BX5N.js?v=171bacff:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+PettyCash.tsx:1024 Pasted image details: {originalName: 'WhatsApp Image 2025-08-19 at 18.49.44.jpeg', newName: 'pasted-receipt-1755637603773.jpg', type: 'image/jpeg', size: 39839}
+PettyCash.tsx:970 Processing file: {name: 'pasted-receipt-1755637603773.jpg', type: 'image/jpeg', size: 39839, lastModified: 1755637603773}
+PettyCash.tsx:327 OCR Debug - Platform: googlepay
+PettyCash.tsx:328 OCR Debug - All lines: (15) ['To KIRTIPAL SINGH', 'furnili table courier', '© Completed', '4 Aug 2025, 11:23 am', '£1 Hore Bank 0720 v', 'UPI transaction ID', '109214778705', 'To: KIRTIPAL SINGH', 'PhonePe + kprathore498@ibl', 'From: SUNRISE MEDIA (HDFC Bank)', 'Google Pay « kunallunkad-3@okhdfcbank', 'Google transaction ID', 'CICAgKiNsgftQQ', 'Liz', 'G Pay']
+PettyCash.tsx:345 OCR Debug - Sorted lines: (15) ['109214778705', 'PhonePe + kprathore498@ibl', '4 Aug 2025, 11:23 am', 'Google Pay « kunallunkad-3@okhdfcbank', '£1 Hore Bank 0720 v', 'To KIRTIPAL SINGH', 'furnili table courier', '© Completed', 'UPI transaction ID', 'To: KIRTIPAL SINGH', 'From: SUNRISE MEDIA (HDFC Bank)', 'Google transaction ID', 'CICAgKiNsgftQQ', 'Liz', 'G Pay']
+PettyCash.tsx:352 OCR Debug - Processing GPay line: 109214778705
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: (2) ['109214778705', '109214778705', index: 0, input: '109214778705', groups: undefined]
+PettyCash.tsx:423 OCR Debug - Found amount match: (2) ['109214778705', '109214778705', index: 0, input: '109214778705', groups: undefined]
+PettyCash.tsx:425 OCR Debug - Parsed amount: 109214778705
+PettyCash.tsx:352 OCR Debug - Processing GPay line: PhonePe + kprathore498@ibl
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: null
+PettyCash.tsx:390 OCR Debug - Priority 5 (currency indicators) match: null
+PettyCash.tsx:352 OCR Debug - Processing GPay line: 4 Aug 2025, 11:23 am
+PettyCash.tsx:352 OCR Debug - Processing GPay line: Google Pay « kunallunkad-3@okhdfcbank
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: null
+PettyCash.tsx:390 OCR Debug - Priority 5 (currency indicators) match: null
+PettyCash.tsx:352 OCR Debug - Processing GPay line: £1 Hore Bank 0720 v
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: null
+PettyCash.tsx:390 OCR Debug - Priority 5 (currency indicators) match: null
+PettyCash.tsx:352 OCR Debug - Processing GPay line: To KIRTIPAL SINGH
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: null
+PettyCash.tsx:390 OCR Debug - Priority 5 (currency indicators) match: null
+PettyCash.tsx:352 OCR Debug - Processing GPay line: furnili table courier
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: null
+PettyCash.tsx:390 OCR Debug - Priority 5 (currency indicators) match: null
+PettyCash.tsx:352 OCR Debug - Processing GPay line: © Completed
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: null
+PettyCash.tsx:390 OCR Debug - Priority 5 (currency indicators) match: null
+PettyCash.tsx:352 OCR Debug - Processing GPay line: UPI transaction ID
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: null
+PettyCash.tsx:390 OCR Debug - Priority 5 (currency indicators) match: null
+PettyCash.tsx:352 OCR Debug - Processing GPay line: To: KIRTIPAL SINGH
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: null
+PettyCash.tsx:390 OCR Debug - Priority 5 (currency indicators) match: null
+PettyCash.tsx:352 OCR Debug - Processing GPay line: From: SUNRISE MEDIA (HDFC Bank)
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null
+PettyCash.tsx:366 OCR Debug - Priority 2 (context) match: null
+PettyCash.tsx:372 OCR Debug - Priority 3 (Rs) match: null
+PettyCash.tsx:384 OCR Debug - Priority 4 (standalone) match: null
+PettyCash.tsx:390 OCR Debug - Priority 5 (currency indicators) match: null
+PettyCash.tsx:352 OCR Debug - Processing GPay line: Google transaction ID
+PettyCash.tsx:361 OCR Debug - Priority 1 (₹) match: null

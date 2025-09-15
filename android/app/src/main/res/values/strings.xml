@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Furnili Management</string>
+    <string name="title_activity_main">Furnili Management</string>
+    <string name="package_name">com.furnili.management</string>
+    <string name="custom_url_scheme">com.furnili.management</string>
+</resources>

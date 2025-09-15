@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, User, FileText, Factory, CheckCircle, AlertTriangle, Play, Upload, FileImage, Download, Plus } from "lucide-react";
@@ -172,23 +172,6 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
     );
   }
 
-  if (workOrders.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <Factory className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Work Orders Yet</h3>
-          <p className="text-gray-600 mb-4">
-            Work orders will appear here once quotes are approved for production.
-          </p>
-          <p className="text-sm text-gray-500">
-            Approve a quote to automatically create a work order and start the production process.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Delivery Notes Section */}
@@ -213,6 +196,9 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Upload Delivery Challan</DialogTitle>
+                  <DialogDescription>
+                    Upload delivery challan files with subject and attach photos or documents.
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
@@ -326,7 +312,21 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
       {/* Work Orders Section */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Work Orders</h3>
-        {workOrders.map((workOrder) => (
+        {workOrders.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Factory className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Work Orders Yet</h3>
+              <p className="text-gray-600 mb-4">
+                Work orders will appear here once quotes are approved for production.
+              </p>
+              <p className="text-sm text-gray-500">
+                Approve a quote to automatically create a work order and start the production process.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          workOrders.map((workOrder) => (
         <Card key={workOrder.id} className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-3">
             <div className="flex justify-between items-start">
@@ -433,8 +433,9 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
             </div>
           </CardContent>
         </Card>
-      ))}
+          ))
+        )}
+      </div>
     </div>
-  </div>
   );
 }

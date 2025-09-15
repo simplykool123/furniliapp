@@ -21,7 +21,6 @@ import FurniliStatsCard from "@/components/UI/FurniliStatsCard";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 // @ts-ignore
 import html2pdf from "html2pdf.js";
-import QuoteUpload from "@/components/QuoteUpload";
 
 // Types
 interface QuoteItem {
@@ -110,7 +109,6 @@ export default function Quotes() {
   const [clientFilter, setClientFilter] = useState("all");
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
@@ -456,31 +454,6 @@ export default function Quotes() {
               </div>
 
               <div className="flex gap-2 sm:w-auto w-full">
-                <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="h-8 text-xs px-3 flex-1 sm:flex-none">
-                      <Upload className="h-3 w-3 mr-1" />
-                      Upload
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Upload Quote Document</DialogTitle>
-                    </DialogHeader>
-                    <QuoteUpload 
-                      onQuoteDataExtracted={(data) => {
-                        console.log("Quote data extracted:", data);
-                        toast({
-                          title: "Quote Data Extracted",
-                          description: "Quote information has been processed successfully",
-                        });
-                        // Could auto-populate a new quote form here if needed
-                      }}
-                      onClose={() => setShowUploadDialog(false)}
-                    />
-                  </DialogContent>
-                </Dialog>
-                
                 <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                   <DialogTrigger asChild>
                     <Button className="h-8 text-xs px-3 flex-1 sm:flex-none">

@@ -358,7 +358,7 @@ export default function ProjectQuotes({ projectId }: ProjectQuotesProps) {
   // Handle viewing uploaded file
   const handleViewFile = async (fileId: number) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       if (!token) {
         toast({ 
           title: "Authentication required", 
@@ -407,7 +407,7 @@ export default function ProjectQuotes({ projectId }: ProjectQuotesProps) {
   // Handle downloading uploaded file  
   const handleDownloadFile = async (fileId: number, fileName: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       if (!token) {
         toast({ 
           title: "Authentication required", 
@@ -621,7 +621,9 @@ export default function ProjectQuotes({ projectId }: ProjectQuotesProps) {
       });
       setUploadingQuotes(false);
       setShowUploadDialog(false);
+      setShowSimpleUploadDialog(false); // Close simplified dialog too
       setUploadFiles([]);
+      setUploadFile(null); // Clear simplified upload file
       uploadForm.reset();
     },
     onError: (error: any) => {

@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { authenticatedApiRequest, authService } from "@/lib/auth";
-import { Plus, CheckCircle2, Clock, AlertCircle, User, Calendar, Search, Filter, CalendarIcon } from "lucide-react";
+import { Plus, CheckCircle2, Clock, AlertCircle, User, Calendar, Search, Filter, CalendarIcon, Trash2, Edit } from "lucide-react";
 import ResponsiveLayout from "@/components/Layout/ResponsiveLayout";
 import TaskCalendar from "@/components/Calendar/TaskCalendar";
 
@@ -25,6 +25,7 @@ export default function TaskManagement() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assignedToFilter, setAssignedToFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTaskTab, setActiveTaskTab] = useState<string>("active");
   const [taskForm, setTaskForm] = useState({
     title: "",
     description: "",
@@ -61,7 +62,12 @@ export default function TaskManagement() {
       task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.assignedUser?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return matchesStatus && matchesAssignedTo && matchesSearch;
+    // Filter based on active tab
+    const matchesTab = (activeTaskTab === "active" && task.status !== "done") || 
+                      (activeTaskTab === "completed" && task.status === "done") ||
+                      (activeTaskTab === "all");
+    
+    return matchesStatus && matchesAssignedTo && matchesSearch && matchesTab;
   }) : [];
 
   const addTaskMutation = useMutation({
@@ -113,6 +119,26 @@ export default function TaskManagement() {
     },
   });
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      return await authenticatedApiRequest('DELETE', `/api/tasks/${taskId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      toast({
+        title: "Task deleted",
+        description: "Task has been deleted successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete task",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskForm.title || !taskForm.assignedTo || !taskForm.priority) {
@@ -156,6 +182,21 @@ export default function TaskManagement() {
     updateTaskStatusMutation.mutate({ taskId, status: newStatus });
   };
 
+  const handleDeleteTask = (taskId: number) => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can delete tasks.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+      deleteTaskMutation.mutate(taskId);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "No due date";
     return new Date(dateString).toLocaleDateString();
@@ -181,13 +222,24 @@ export default function TaskManagement() {
       title="Task Management"
       subtitle={isAdmin ? "Manage all tasks" : "Your assigned tasks"}
     >
+      {/* Task Status Tabs */}
+      <div className="mb-6">
+        <Tabs value={activeTaskTab} onValueChange={setActiveTaskTab}>
+          <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <TabsTrigger value="active">Active ({Array.isArray(tasks) ? tasks.filter((t: any) => t.status !== "done").length : 0})</TabsTrigger>
+            <TabsTrigger value="completed">Completed ({taskStats.completed})</TabsTrigger>
+            <TabsTrigger value="all">All ({taskStats.total})</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <div>
         </div>
         {isAdmin && (
           <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
             <DialogTrigger asChild>
-              <Button className="bg-amber-600 hover:bg-amber-700">
+              <Button className="bg-amber-600 hover:bg-amber-700" data-testid="button-create-task">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Task
               </Button>
@@ -205,6 +257,7 @@ export default function TaskManagement() {
                     onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter task title"
                     required
+                    data-testid="input-task-title"
                   />
                 </div>
 
@@ -216,6 +269,7 @@ export default function TaskManagement() {
                     onChange={(e) => setTaskForm(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Enter task details..."
                     rows={3}
+                    data-testid="input-task-description"
                   />
                 </div>
 
@@ -225,7 +279,7 @@ export default function TaskManagement() {
                     value={taskForm.assignedTo}
                     onValueChange={(value) => setTaskForm(prev => ({ ...prev, assignedTo: value }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-testid="select-task-assignee">
                       <SelectValue placeholder="Select staff..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -238,34 +292,47 @@ export default function TaskManagement() {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="priority">Priority *</Label>
-                  <Select 
-                    value={taskForm.priority}
-                    onValueChange={(value) => setTaskForm(prev => ({ ...prev, priority: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="priority">Priority *</Label>
+                    <Select 
+                      value={taskForm.priority}
+                      onValueChange={(value) => setTaskForm(prev => ({ ...prev, priority: value }))}
+                    >
+                      <SelectTrigger data-testid="select-task-priority">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dueDate">Due Date</Label>
+                    <Input
+                      id="dueDate"
+                      type="date"
+                      value={taskForm.dueDate}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, dueDate: e.target.value }))}
+                      data-testid="input-task-due-date"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="projectId">Link to Project (Optional)</Label>
+                  <Label htmlFor="projectId">Related Project (Optional)</Label>
                   <Select 
                     value={taskForm.projectId}
                     onValueChange={(value) => setTaskForm(prev => ({ ...prev, projectId: value }))}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select project (optional)" />
+                    <SelectTrigger data-testid="select-task-project">
+                      <SelectValue placeholder="Select project..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">General Task (No Project)</SelectItem>
+                      <SelectItem value="">No Project</SelectItem>
                       {Array.isArray(projects) && projects.map((project: any) => (
                         <SelectItem key={project.id} value={project.id.toString()}>
                           {project.code} - {project.name}
@@ -275,28 +342,20 @@ export default function TaskManagement() {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={taskForm.dueDate}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, dueDate: e.target.value }))}
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
                     onClick={() => setIsAddingTask(false)}
+                    data-testid="button-cancel-task"
                   >
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={addTaskMutation.isPending}
+                  <Button 
+                    type="submit" 
                     className="bg-amber-600 hover:bg-amber-700"
+                    disabled={addTaskMutation.isPending}
+                    data-testid="button-submit-task"
                   >
                     {addTaskMutation.isPending ? "Creating..." : "Create Task"}
                   </Button>
@@ -307,17 +366,17 @@ export default function TaskManagement() {
         )}
       </div>
 
-      {/* Task Statistics */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-blue-500">
+      {/* Task Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <Card className="border-l-4 border-l-amber-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{taskStats.total}</div>
             <p className="text-xs text-muted-foreground">
-              All assigned tasks
+              All tasks in system
             </p>
           </CardContent>
         </Card>
@@ -363,97 +422,8 @@ export default function TaskManagement() {
       </div>
 
       {/* Task Views */}
-      <Tabs defaultValue="list" className="w-full">
+      <Tabs defaultValue="table" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="list" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            List View
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Calendar View
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="list" className="space-y-6">
-          {/* Filters and Search */}
-          <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters & Search
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="search">Search Tasks</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder="Search by title, description..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="status-filter">Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {isAdmin && (
-              <div>
-                <Label htmlFor="assigned-filter">Assigned To</Label>
-                <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Staff</SelectItem>
-                    {staffUsers.map((user: any) => (
-                      <SelectItem key={user.id} value={user.id.toString()}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchQuery("");
-                  setStatusFilter("all");
-                  setAssignedToFilter("all");
-                }}
-                className="w-full"
-              >
-                Clear Filters
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tasks View - Table and Calendar */}
-      <Tabs defaultValue="table" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="table" className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
             Table View
@@ -464,115 +434,196 @@ export default function TaskManagement() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="table">
+        <TabsContent value="table" className="space-y-6">
+          {/* Filters and Search */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filters & Search
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="search">Search Tasks</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="search"
+                      placeholder="Search by title, description..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                      data-testid="input-search-tasks"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="status-filter">Status</Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger data-testid="select-status-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="done">Done</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {isAdmin && (
+                  <div>
+                    <Label htmlFor="assigned-filter">Assigned To</Label>
+                    <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                      <SelectTrigger data-testid="select-assigned-filter">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Staff</SelectItem>
+                        {staffUsers.map((user: any) => (
+                          <SelectItem key={user.id} value={user.id.toString()}>
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex items-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setStatusFilter("all");
+                      setAssignedToFilter("all");
+                    }}
+                    className="w-full"
+                    data-testid="button-clear-filters"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tasks Table */}
           <Card>
             <CardHeader>
               <CardTitle>Tasks ({filteredTasks.length})</CardTitle>
             </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Task Title</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTasks.map((task: any) => (
-                <TableRow 
-                  key={task.id} 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => setLocation(`/tasks/${task.id}`)}
-                >
-                  <TableCell className="font-medium">
-                    <div>
-                      <div>{task.title}</div>
-                      <div className="text-xs text-gray-500 truncate max-w-xs" title={task.description}>
-                        {task.description || "No description"}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {task.project ? (
-                      <Badge variant="outline" className="text-xs">
-                        {task.project.code}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-gray-400">General Task</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {task.assignedUser?.name || "Unknown"}
-                    </div>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(task.status)}</TableCell>
-                  <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      {formatDate(task.dueDate)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      {task.status !== "done" && (
-                        <Select
-                          value={task.status}
-                          onValueChange={(value) => handleStatusChange(task.id, value)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="done">Done</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                      {task.status === "done" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(task.id, "in_progress");
-                          }}
-                        >
-                          Reopen
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          {filteredTasks.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No tasks found matching your criteria.
-            </div>
-          )}
-        </CardContent>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task Title</TableHead>
+                    <TableHead>Project</TableHead>
+                    <TableHead>Assigned To</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTasks.map((task: any) => (
+                    <TableRow 
+                      key={task.id} 
+                      className="hover:bg-muted/50 transition-colors"
+                      data-testid={`row-task-${task.id}`}
+                    >
+                      <TableCell className="font-medium">
+                        <div>
+                          <div data-testid={`text-task-title-${task.id}`}>{task.title}</div>
+                          <div className="text-xs text-gray-500 truncate max-w-xs" title={task.description}>
+                            {task.description || "No description"}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {task.project ? (
+                          <Badge variant="outline" className="text-xs">
+                            {task.project.code}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-gray-400">General Task</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          {task.assignedUser?.name || "Unknown"}
+                        </div>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(task.status)}</TableCell>
+                      <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {formatDate(task.dueDate)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {task.status !== "done" && (
+                            <Select
+                              value={task.status}
+                              onValueChange={(value) => handleStatusChange(task.id, value)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                <SelectItem value="done">Done</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {task.status === "done" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleStatusChange(task.id, "in_progress")}
+                              data-testid={`button-reopen-task-${task.id}`}
+                            >
+                              Reopen
+                            </Button>
+                          )}
+                          {isAdmin && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteTask(task.id)}
+                              disabled={deleteTaskMutation.isPending}
+                              data-testid={`button-delete-task-${task.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {filteredTasks.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No tasks found matching your criteria.
+                </div>
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="calendar">
           <TaskCalendar tasks={filteredTasks} />
-        </TabsContent>
-      </Tabs>
-        </TabsContent>
-
-        <TabsContent value="calendar">
-          <TaskCalendar tasks={Array.isArray(tasks) ? tasks : []} />
         </TabsContent>
       </Tabs>
     </ResponsiveLayout>

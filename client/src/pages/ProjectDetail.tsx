@@ -3448,7 +3448,7 @@ export default function ProjectDetail() {
                   </div>
                   <Button 
                     onClick={() => setLocation('/production/work-orders')}
-                    className="bg-furnili-primary hover:bg-furnili-primary/90"
+                    className="hover:bg-furnili-primary/90 text-[#372315] bg-[#ffbd7a]"
                   >
                     <BarChart3 className="h-4 w-4 mr-2" />
                     View Production Dashboard

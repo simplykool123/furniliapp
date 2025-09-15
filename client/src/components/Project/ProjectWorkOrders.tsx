@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText, Factory, CheckCircle, AlertTriangle, Play } from "lucide-react";
+import { Calendar, Clock, User, FileText, Factory, CheckCircle, AlertTriangle, Play, Upload, FileImage, Download, Trash2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProjectWorkOrdersProps {
   projectId: number;
@@ -71,9 +72,62 @@ const getStatusIcon = (status: string) => {
 };
 
 export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps) {
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: workOrders = [], isLoading } = useQuery<WorkOrder[]>({
     queryKey: ['/api/work-orders', { projectId }],
     queryFn: () => apiRequest(`/api/work-orders?projectId=${projectId}`),
+  });
+
+  // Fetch delivery notes for this project
+  const { data: deliveryNotesData } = useQuery<{ files: any[] }>({
+    queryKey: ['/api/projects', projectId, 'files', 'delivery_chalan'],
+    queryFn: () => apiRequest(`/api/projects/${projectId}/files?type=delivery_chalan`),
+  });
+
+  const deliveryNotes = deliveryNotesData?.files || [];
+
+  // Delivery notes upload mutation
+  const deliveryNotesUploadMutation = useMutation({
+    mutationFn: async ({ files }: { files: File[] }) => {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+      
+      const response = await fetch(`/api/projects/${projectId}/files/delivery-chalans/multiple`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to upload delivery notes');
+      }
+
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files', 'delivery_chalan'] });
+      setUploadingFiles(false);
+      toast({
+        title: "Delivery notes uploaded successfully",
+        description: `${data.files?.length || 0} files uploaded`
+      });
+    },
+    onError: (error: any) => {
+      setUploadingFiles(false);
+      toast({
+        title: "Error uploading delivery notes",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading) {
@@ -113,8 +167,144 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
   }
 
   return (
-    <div className="space-y-4">
-      {workOrders.map((workOrder) => (
+    <div className="space-y-6">
+      {/* Delivery Notes Upload Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <FileImage className="h-5 w-5" />
+            <span>Delivery Notes</span>
+            {deliveryNotes.length > 0 && (
+              <Badge variant="secondary">{deliveryNotes.length}</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div 
+            className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 transition-colors hover:border-blue-400 mb-4"
+            onPaste={(e) => {
+              e.preventDefault();
+              const items = Array.from(e.clipboardData?.items || []);
+              const imageFiles = items
+                .filter(item => item.type.startsWith('image/'))
+                .map(item => item.getAsFile())
+                .filter(file => file !== null) as File[];
+              
+              if (imageFiles.length > 0) {
+                setUploadingFiles(true);
+                deliveryNotesUploadMutation.mutate({ files: imageFiles });
+                toast({
+                  title: "Images pasted",
+                  description: `${imageFiles.length} image(s) pasted from clipboard`
+                });
+              }
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.add('border-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
+              const files = Array.from(e.dataTransfer?.files || []);
+              if (files.length > 0) {
+                setUploadingFiles(true);
+                deliveryNotesUploadMutation.mutate({ files });
+              }
+            }}
+            tabIndex={0}
+            data-testid="delivery-notes-production-drop-zone"
+          >
+            <div className="text-center">
+              <Upload className="mx-auto h-8 w-8 text-gray-400" />
+              <div className="mt-4">
+                <label htmlFor="delivery-notes-production-upload" className="cursor-pointer">
+                  <span className="mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Drop delivery notes here, click to browse, or paste images (Ctrl+V)
+                  </span>
+                  <span className="mt-1 block text-xs text-gray-500">
+                    Images, PDFs, Excel files up to 10MB each • Supports clipboard paste for images
+                  </span>
+                </label>
+                <input
+                  id="delivery-notes-production-upload"
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.xlsx,.xls"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) {
+                      setUploadingFiles(true);
+                      deliveryNotesUploadMutation.mutate({ files });
+                      e.target.value = ''; // Reset input
+                    }
+                  }}
+                  className="hidden"
+                  data-testid="input-delivery-notes-production"
+                />
+              </div>
+              {uploadingFiles && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-sm text-gray-600">Uploading delivery notes...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Display uploaded delivery notes */}
+          {deliveryNotes.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {deliveryNotes.map((file: any) => (
+                <div 
+                  key={file.id} 
+                  className="flex items-center justify-between p-3 border rounded-lg bg-white dark:bg-gray-800"
+                  data-testid={`delivery-note-production-${file.id}`}
+                >
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <FileImage className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {file.originalName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(file.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-1 flex-shrink-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => window.open(`/api/files/${file.id}/download`, '_blank')}
+                      data-testid={`button-download-production-${file.id}`}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {deliveryNotes.length === 0 && !uploadingFiles && (
+            <p className="text-center text-gray-500 text-sm">
+              No delivery notes uploaded yet. Upload your first delivery note above.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Work Orders Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Work Orders</h3>
+        {workOrders.map((workOrder) => (
         <Card key={workOrder.id} className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-3">
             <div className="flex justify-between items-start">

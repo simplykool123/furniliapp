@@ -60,6 +60,11 @@ import {
   insertSupplierProductSchema,
   insertPurchaseOrderSchema,
   insertPurchaseOrderItemSchema,
+  
+  // Manufacturing workflow schemas
+  insertWorkOrderSchema,
+  insertQualityCheckSchema,
+  insertProductionScheduleSchema,
 } from "@shared/schema";
 
 // Helper function to get rate from products table or fallback to default
@@ -454,124 +459,278 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Work Orders API - Safe with table check
+  // Work Orders API - With enriched data and search functionality
   app.get("/api/work-orders", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const { search, status, priority, projectId } = req.query;
+      const { status, projectId, priority, search, limit = 100, offset = 0 } = req.query;
       
-      // Check if work_orders table exists first
-      let workOrdersData: any[] = [];
-      try {
-        // Build where conditions for filtering
-        let whereConditions = [];
-        
-        if (status && status !== 'all') {
-          whereConditions.push(eq(workOrders.status, status as string));
-        }
-        
-        if (priority && priority !== 'all') {
-          whereConditions.push(eq(workOrders.priority, priority as string));
-        }
+      // Build base query with joins for enriched data
+      let query = db
+        .select({
+          workOrder: workOrders,
+          project: {
+            id: projects.id,
+            name: projects.name,
+            code: projects.code,
+          },
+          client: {
+            id: clients.id,
+            name: clients.name,
+          },
+          quote: {
+            id: quotes.id,
+            quoteNumber: quotes.quoteNumber,
+            title: quotes.title,
+          },
+          createdByUser: {
+            id: users.id,
+            name: users.name,
+            email: users.email,
+          },
+        })
+        .from(workOrders)
+        .leftJoin(projects, eq(workOrders.projectId, projects.id))
+        .leftJoin(clients, eq(workOrders.clientId, clients.id))
+        .leftJoin(quotes, eq(workOrders.quoteId, quotes.id))
+        .leftJoin(users, eq(workOrders.createdBy, users.id))
+        .orderBy(desc(workOrders.createdAt));
 
-        if (projectId) {
-          whereConditions.push(eq(workOrders.projectId, parseInt(projectId as string)));
-        }
-
-        // Get work orders with related data
-        workOrdersData = await db
-          .select({
-            workOrder: workOrders,
-            project: {
-              id: projects.id,
-              name: projects.name,
-              code: projects.code,
-            },
-            client: {
-              id: clients.id,
-              name: clients.name,
-            },
-            quote: {
-              id: quotes.id,
-              quoteNumber: quotes.quoteNumber,
-              title: quotes.title,
-            },
-            createdBy: {
-              id: users.id,
-              name: users.name,
-            }
-          })
-          .from(workOrders)
-          .leftJoin(projects, eq(workOrders.projectId, projects.id))
-          .leftJoin(clients, eq(workOrders.clientId, clients.id))
-          .leftJoin(quotes, eq(workOrders.quoteId, quotes.id))
-          .leftJoin(users, eq(workOrders.createdBy, users.id))
-          .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-          .orderBy(desc(workOrders.createdAt));
-      } catch (tableError: any) {
-        if (tableError.code === '42P01') {
-          console.warn('work_orders table not found, using empty data');
-          workOrdersData = [];
-        } else {
-          throw tableError;
-        }
+      // Apply filters
+      const conditions: any[] = [];
+      
+      if (status && status !== 'all') {
+        conditions.push(eq(workOrders.status, status as string));
       }
-
-      // Apply search filter if provided
-      let filteredWorkOrders = workOrdersData;
-      if (search) {
-        const searchTerm = (search as string).toLowerCase();
-        filteredWorkOrders = workOrdersData.filter(item => 
-          item.workOrder?.orderNumber?.toLowerCase().includes(searchTerm) ||
-          item.workOrder?.title?.toLowerCase().includes(searchTerm) ||
-          item.project?.name?.toLowerCase().includes(searchTerm) ||
-          item.client?.name?.toLowerCase().includes(searchTerm)
+      
+      if (priority && priority !== 'all') {
+        conditions.push(eq(workOrders.priority, priority as string));
+      }
+      
+      if (projectId) {
+        conditions.push(eq(workOrders.projectId, parseInt(projectId as string)));
+      }
+      
+      // Add search functionality across multiple fields
+      if (search && typeof search === 'string') {
+        const searchTerm = `%${search.toLowerCase()}%`;
+        conditions.push(
+          or(
+            sql`LOWER(${workOrders.title}) LIKE ${searchTerm}`,
+            sql`LOWER(${workOrders.description}) LIKE ${searchTerm}`,
+            sql`LOWER(${workOrders.orderNumber}) LIKE ${searchTerm}`,
+            sql`LOWER(${projects.name}) LIKE ${searchTerm}`,
+            sql`LOWER(${projects.code}) LIKE ${searchTerm}`,
+            sql`LOWER(${clients.name}) LIKE ${searchTerm}`
+          )
         );
       }
-
-      // Transform to include related data
-      const result = filteredWorkOrders.map(wo => ({
-        ...wo.workOrder,
-        project: wo.project || { name: 'No Project', code: 'N/A' },
-        client: wo.client || { name: 'No Client' },
-        quote: wo.quote,
-        createdByUser: wo.createdBy || { name: 'Unknown' },
-        approvedByUser: null, // Will be populated when approval workflow is added
-        schedules: [], // Will be populated when schedules are integrated
-        tasks: [], // Will be populated when tasks are integrated
-        qualityChecks: [] // Will be populated when quality checks are integrated
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as typeof query;
+      }
+      
+      // Apply pagination
+      const workOrdersData = await query
+        .limit(parseInt(limit as string))
+        .offset(parseInt(offset as string));
+      
+      // Format the response to match expected UI structure
+      const formattedWorkOrders = workOrdersData.map(row => ({
+        ...row.workOrder,
+        project: row.project,
+        client: row.client,
+        quote: row.quote,
+        createdByUser: row.createdByUser,
       }));
       
-      res.json(result);
+      res.json(formattedWorkOrders);
     } catch (error) {
       console.error("Work orders error:", error);
+      res.status(500).json({ message: "Failed to fetch work orders", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.get("/api/work-orders/:id", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const workOrder = await storage.getWorkOrder(id);
+      
+      if (!workOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+      
+      res.json(workOrder);
+    } catch (error) {
+      console.error("Get work order error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.post("/api/work-orders", authenticateToken, async (req: AuthRequest, res) => {
+  app.post("/api/work-orders", authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      // Validate input with work order schema
-      // const workOrderData = insertWorkOrderSchema.parse(req.body);
+      // Validate request body using Zod schema
+      const validationResult = insertWorkOrderSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid work order data",
+          errors: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        });
+      }
       
-      // Mock response - replace with actual storage calls when available
-      res.status(201).json({ 
-        message: "Work order created successfully",
-        id: Date.now() 
-      });
+      const { getNextWorkOrderNumber } = await import("./utils/ids");
+      
+      // Generate work order number
+      const orderNumber = getNextWorkOrderNumber();
+      
+      // Create work order data
+      const workOrderData = {
+        ...validationResult.data,
+        orderNumber,
+        createdBy: req.user!.id,
+        status: validationResult.data.status || 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const newWorkOrder = await storage.createWorkOrder(workOrderData);
+      
+      if (!newWorkOrder) {
+        return res.status(500).json({ message: "Failed to create work order" });
+      }
+      
+      res.status(201).json(newWorkOrder);
     } catch (error) {
       console.error("Create work order error:", error);
+      if (error instanceof Error && error.message.includes('foreign key')) {
+        return res.status(400).json({ message: "Invalid project, client, or quote reference" });
+      }
+      res.status(500).json({ message: "Failed to create work order", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.patch("/api/work-orders/:id", authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid work order ID" });
+      }
+      
+      // Validate request body using partial schema
+      const partialSchema = insertWorkOrderSchema.partial();
+      const validationResult = partialSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid update data",
+          errors: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        });
+      }
+      
+      const updates = {
+        ...validationResult.data,
+        updatedAt: new Date()
+      };
+      
+      const updatedWorkOrder = await storage.updateWorkOrder(id, updates);
+      
+      if (!updatedWorkOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+      
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Update work order error:", error);
+      if (error instanceof Error && error.message.includes('foreign key')) {
+        return res.status(400).json({ message: "Invalid project, client, or quote reference" });
+      }
+      res.status(500).json({ message: "Failed to update work order", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.patch("/api/work-orders/:id/status", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid work order ID" });
+      }
+      
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      // Validate status value
+      const validStatuses = ['pending', 'planned', 'in_progress', 'paused', 'completed', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ 
+          message: "Invalid status", 
+          validStatuses 
+        });
+      }
+      
+      // Check if work order exists first
+      const existingWorkOrder = await storage.getWorkOrder(id);
+      if (!existingWorkOrder) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+      
+      // Validate state transitions
+      if (existingWorkOrder.status === 'completed' && status !== 'completed') {
+        return res.status(409).json({ message: "Cannot change status of completed work order" });
+      }
+      
+      if (existingWorkOrder.status === 'cancelled' && status !== 'pending') {
+        return res.status(409).json({ message: "Cancelled work orders can only be reset to pending" });
+      }
+      
+      const updatedWorkOrder = await storage.updateWorkOrderStatus(id, status, req.user!.id);
+      
+      if (!updatedWorkOrder) {
+        return res.status(500).json({ message: "Failed to update work order status" });
+      }
+      
+      res.json(updatedWorkOrder);
+    } catch (error) {
+      console.error("Update work order status error:", error);
+      res.status(500).json({ message: "Failed to update work order status", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.delete("/api/work-orders/:id", authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteWorkOrder(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Work order not found" });
+      }
+      
+      res.json({ message: "Work order deleted successfully" });
+    } catch (error) {
+      console.error("Delete work order error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Quality Checks API
+  // Quality Checks API - Using Storage Layer
   app.get("/api/quality-checks", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const { search, status, type } = req.query;
+      const { workOrderId, checkType, overallStatus } = req.query;
       
-      // Mock quality checks data - replace with actual storage calls when available
-      const qualityChecks: any[] = [];
+      // Build filters
+      const filters: { workOrderId?: number; checkType?: string; overallStatus?: string } = {};
+      if (workOrderId) filters.workOrderId = parseInt(workOrderId as string);
+      if (checkType && checkType !== 'all') filters.checkType = checkType as string;
+      if (overallStatus && overallStatus !== 'all') filters.overallStatus = overallStatus as string;
       
+      const qualityChecks = await storage.getAllQualityChecks(filters);
       res.json(qualityChecks);
     } catch (error) {
       console.error("Quality checks error:", error);
@@ -581,13 +740,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/quality-checks/stats", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      // Mock quality stats - replace with actual storage calls when available
+      const allChecks = await storage.getAllQualityChecks();
+      
       const stats = {
-        totalChecks: 0,
-        passedChecks: 0,
-        failedChecks: 0,
-        pendingChecks: 0,
-        passRate: 0
+        totalChecks: allChecks.length,
+        passedChecks: allChecks.filter(qc => qc.overallStatus === 'passed').length,
+        failedChecks: allChecks.filter(qc => qc.overallStatus === 'failed').length,
+        pendingChecks: allChecks.filter(qc => qc.overallStatus === 'pending').length,
+        passRate: allChecks.length > 0 ? (allChecks.filter(qc => qc.overallStatus === 'passed').length / allChecks.length) * 100 : 0
       };
       
       res.json(stats);
@@ -597,30 +757,190 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/quality-checks", authenticateToken, async (req: AuthRequest, res) => {
+  app.get("/api/quality-checks/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      // Validate input with quality check schema
-      // const qualityCheckData = insertQualityCheckSchema.parse(req.body);
+      const id = parseInt(req.params.id);
+      const qualityCheck = await storage.getQualityCheck(id);
       
-      // Mock response - replace with actual storage calls when available
-      res.status(201).json({ 
-        message: "Quality check created successfully",
-        id: Date.now() 
-      });
+      if (!qualityCheck) {
+        return res.status(404).json({ message: "Quality check not found" });
+      }
+      
+      res.json(qualityCheck);
     } catch (error) {
-      console.error("Create quality check error:", error);
+      console.error("Get quality check error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Production Schedule API
+  app.post("/api/quality-checks", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      // Validate request body using Zod schema
+      const validationResult = insertQualityCheckSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid quality check data",
+          errors: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        });
+      }
+      
+      const { getNextQualityCheckNumber } = await import("./utils/ids");
+      
+      // Generate quality check number
+      const checkNumber = getNextQualityCheckNumber();
+      
+      // Verify work order exists
+      const workOrder = await storage.getWorkOrder(validationResult.data.workOrderId);
+      if (!workOrder) {
+        return res.status(400).json({ message: "Invalid work order reference" });
+      }
+      
+      // Create quality check data
+      const qualityCheckData = {
+        ...validationResult.data,
+        checkNumber,
+        inspectedBy: req.user!.id,
+        overallStatus: validationResult.data.overallStatus || 'pending',
+        inspectionDate: validationResult.data.inspectionDate || new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const newQualityCheck = await storage.createQualityCheck(qualityCheckData);
+      
+      if (!newQualityCheck) {
+        return res.status(500).json({ message: "Failed to create quality check" });
+      }
+      
+      res.status(201).json(newQualityCheck);
+    } catch (error) {
+      console.error("Create quality check error:", error);
+      if (error instanceof Error && error.message.includes('foreign key')) {
+        return res.status(400).json({ message: "Invalid work order reference" });
+      }
+      res.status(500).json({ message: "Failed to create quality check", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.patch("/api/quality-checks/:id", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid quality check ID" });
+      }
+      
+      // Validate request body using partial schema
+      const partialSchema = insertQualityCheckSchema.partial();
+      const validationResult = partialSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid update data",
+          errors: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        });
+      }
+      
+      const updates = {
+        ...validationResult.data,
+        updatedAt: new Date()
+      };
+      
+      const updatedQualityCheck = await storage.updateQualityCheck(id, updates);
+      
+      if (!updatedQualityCheck) {
+        return res.status(404).json({ message: "Quality check not found" });
+      }
+      
+      res.json(updatedQualityCheck);
+    } catch (error) {
+      console.error("Update quality check error:", error);
+      if (error instanceof Error && error.message.includes('foreign key')) {
+        return res.status(400).json({ message: "Invalid work order reference" });
+      }
+      res.status(500).json({ message: "Failed to update quality check", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.patch("/api/quality-checks/:id/status", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid quality check ID" });
+      }
+      
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      // Validate status value
+      const validStatuses = ['pending', 'passed', 'failed', 'conditional_pass'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ 
+          message: "Invalid status", 
+          validStatuses 
+        });
+      }
+      
+      // Check if quality check exists first
+      const existingCheck = await storage.getQualityCheck(id);
+      if (!existingCheck) {
+        return res.status(404).json({ message: "Quality check not found" });
+      }
+      
+      // Validate state transition
+      if (existingCheck.overallStatus === 'passed' && status === 'pending') {
+        return res.status(409).json({ message: "Cannot change status from passed back to pending" });
+      }
+      
+      const updatedQualityCheck = await storage.updateQualityCheckStatus(id, status, req.user!.id);
+      
+      if (!updatedQualityCheck) {
+        return res.status(500).json({ message: "Failed to update quality check status" });
+      }
+      
+      res.json(updatedQualityCheck);
+    } catch (error) {
+      console.error("Update quality check status error:", error);
+      res.status(500).json({ message: "Failed to update quality check status", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.delete("/api/quality-checks/:id", authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteQualityCheck(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Quality check not found" });
+      }
+      
+      res.json({ message: "Quality check deleted successfully" });
+    } catch (error) {
+      console.error("Delete quality check error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Production Schedule API - Using Storage Layer
   app.get("/api/production-schedule", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const { date, workstation } = req.query;
+      const { date, workstationId, status } = req.query;
       
-      // Mock production schedule data - replace with actual storage calls when available
-      const schedules: any[] = [];
+      // Build filters
+      const filters: { date?: string; workstationId?: string; status?: string } = {};
+      if (date) filters.date = date as string;
+      if (workstationId && workstationId !== 'all') filters.workstationId = workstationId as string;
+      if (status && status !== 'all') filters.status = status as string;
       
+      const schedules = await storage.getAllProductionSchedules(filters);
       res.json(schedules);
     } catch (error) {
       console.error("Production schedule error:", error);
@@ -628,18 +948,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/production-schedule", authenticateToken, async (req: AuthRequest, res) => {
+  app.get("/api/production-schedule/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      // Validate input with production schedule schema
-      // const scheduleData = insertProductionScheduleSchema.parse(req.body);
+      const id = parseInt(req.params.id);
+      const schedule = await storage.getProductionSchedule(id);
       
-      // Mock response - replace with actual storage calls when available
-      res.status(201).json({ 
-        message: "Production schedule created successfully",
-        id: Date.now() 
-      });
+      if (!schedule) {
+        return res.status(404).json({ message: "Production schedule not found" });
+      }
+      
+      res.json(schedule);
+    } catch (error) {
+      console.error("Get production schedule error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/production-schedule", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      // Validate request body using Zod schema
+      const validationResult = insertProductionScheduleSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid production schedule data",
+          errors: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        });
+      }
+      
+      // Verify work order exists
+      const workOrder = await storage.getWorkOrder(validationResult.data.workOrderId);
+      if (!workOrder) {
+        return res.status(400).json({ message: "Invalid work order reference" });
+      }
+      
+      // Validate schedule times
+      const scheduledDate = new Date(validationResult.data.scheduledDate);
+      const now = new Date();
+      if (scheduledDate < now) {
+        return res.status(400).json({ message: "Cannot schedule production in the past" });
+      }
+      
+      // Create production schedule data
+      const scheduleData = {
+        ...validationResult.data,
+        scheduledBy: req.user!.id,
+        status: validationResult.data.status || 'scheduled',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const newSchedule = await storage.createProductionSchedule(scheduleData);
+      
+      if (!newSchedule) {
+        return res.status(500).json({ message: "Failed to create production schedule" });
+      }
+      
+      res.status(201).json(newSchedule);
     } catch (error) {
       console.error("Create production schedule error:", error);
+      if (error instanceof Error && error.message.includes('foreign key')) {
+        return res.status(400).json({ message: "Invalid work order reference" });
+      }
+      res.status(500).json({ message: "Failed to create production schedule", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.patch("/api/production-schedule/:id", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid production schedule ID" });
+      }
+      
+      // Validate request body using partial schema
+      const partialSchema = insertProductionScheduleSchema.partial();
+      const validationResult = partialSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid update data",
+          errors: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        });
+      }
+      
+      // Validate schedule times if being updated
+      if (validationResult.data.scheduledDate) {
+        const scheduledDate = new Date(validationResult.data.scheduledDate);
+        const now = new Date();
+        if (scheduledDate < now) {
+          return res.status(400).json({ message: "Cannot schedule production in the past" });
+        }
+      }
+      
+      const updates = {
+        ...validationResult.data,
+        updatedAt: new Date()
+      };
+      
+      const updatedSchedule = await storage.updateProductionSchedule(id, updates);
+      
+      if (!updatedSchedule) {
+        return res.status(404).json({ message: "Production schedule not found" });
+      }
+      
+      res.json(updatedSchedule);
+    } catch (error) {
+      console.error("Update production schedule error:", error);
+      if (error instanceof Error && error.message.includes('foreign key')) {
+        return res.status(400).json({ message: "Invalid work order reference" });
+      }
+      res.status(500).json({ message: "Failed to update production schedule", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.patch("/api/production-schedule/:id/status", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid production schedule ID" });
+      }
+      
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      // Validate status value
+      const validStatuses = ['scheduled', 'in_progress', 'completed', 'cancelled', 'delayed'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ 
+          message: "Invalid status", 
+          validStatuses 
+        });
+      }
+      
+      // Check if production schedule exists first
+      const existingSchedule = await storage.getProductionSchedule(id);
+      if (!existingSchedule) {
+        return res.status(404).json({ message: "Production schedule not found" });
+      }
+      
+      // Validate state transitions
+      if (existingSchedule.status === 'completed' && status !== 'completed') {
+        return res.status(409).json({ message: "Cannot change status of completed production schedule" });
+      }
+      
+      if (existingSchedule.status === 'cancelled' && status !== 'scheduled') {
+        return res.status(409).json({ message: "Cancelled schedules can only be rescheduled" });
+      }
+      
+      const updatedSchedule = await storage.updateProductionScheduleStatus(id, status);
+      
+      if (!updatedSchedule) {
+        return res.status(500).json({ message: "Failed to update production schedule status" });
+      }
+      
+      res.json(updatedSchedule);
+    } catch (error) {
+      console.error("Update production schedule status error:", error);
+      res.status(500).json({ message: "Failed to update production schedule status", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.delete("/api/production-schedule/:id", authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteProductionSchedule(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Production schedule not found" });
+      }
+      
+      res.json({ message: "Production schedule deleted successfully" });
+    } catch (error) {
+      console.error("Delete production schedule error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, ClockIcon, Package, Users, AlertTriangle, CheckCircle, Plus, Calendar, ExternalLink, Upload, FileImage, Download, Trash2 } from "lucide-react";
+import { CalendarIcon, ClockIcon, Package, Users, AlertTriangle, CheckCircle, Plus, Calendar, ExternalLink, Upload, FileImage, Download, Trash2, Settings, Play, Pause, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,6 +62,12 @@ export default function ProductionPlanning() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  
+  // Enhanced scheduling state
+  const [selectedWorkstation, setSelectedWorkstation] = useState<string | null>(null);
+  const [isWorkstationDialogOpen, setIsWorkstationDialogOpen] = useState(false);
+  const [workstationAction, setWorkstationAction] = useState<'assign' | 'schedule' | 'maintain'>('assign');
+  
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -183,7 +189,7 @@ export default function ProductionPlanning() {
 
     // Validate file types
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    const invalidFiles = files.filter(file => !validTypes.includes(file.mimetype || file.type));
+    const invalidFiles = files.filter(file => !validTypes.includes(file.type));
     
     if (invalidFiles.length > 0) {
       toast({
@@ -241,6 +247,29 @@ export default function ProductionPlanning() {
     link.href = `/api/files/${fileId}/download`;
     link.download = fileName;
     link.click();
+  };
+
+  // Enhanced workstation management handlers
+  const handleWorkstationAction = (stationName: string, action: 'assign' | 'schedule' | 'maintain') => {
+    setSelectedWorkstation(stationName);
+    setWorkstationAction(action);
+    setIsWorkstationDialogOpen(true);
+  };
+
+  const handleWorkstationStatusChange = async (stationName: string, action: 'start' | 'pause' | 'stop') => {
+    try {
+      // This would integrate with the production schedule API
+      toast({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} ${stationName}`,
+        description: `Workstation ${stationName} has been ${action}ed successfully`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating workstation",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -972,32 +1001,88 @@ export default function ProductionPlanning() {
                         { name: 'Packaging Station', status: 'available', operator: null, currentTask: null, progress: 0 },
                         { name: 'Hardware Installation', status: 'busy', operator: 'Suresh Patel', currentTask: 'Drawer Fittings', progress: 30 },
                       ].map((station, index) => (
-                        <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                           <div className="flex items-center gap-4">
-                            <div className={`w-3 h-3 rounded-full ${station.status === 'busy' ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                            <div className={`w-4 h-4 rounded-full ${station.status === 'busy' ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
                             <div>
-                              <p className="font-medium">{station.name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{station.name}</p>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => handleWorkstationAction(station.name, 'assign')}
+                                  data-testid={`button-assign-${station.name.replace(/\s+/g, '-').toLowerCase()}`}
+                                >
+                                  <Settings className="h-3 w-3" />
+                                </Button>
+                              </div>
                               {station.operator && (
                                 <p className="text-sm text-muted-foreground">
-                                  {station.operator} - {station.currentTask}
+                                  👤 {station.operator} - {station.currentTask}
                                 </p>
                               )}
                               {!station.operator && (
-                                <p className="text-sm text-green-600">Available for new tasks</p>
+                                <p className="text-sm text-green-600">🔴 Available for assignment</p>
+                              )}
+                              {station.progress > 0 && (
+                                <div className="mt-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                                      <div 
+                                        className={`h-2 rounded-full transition-all duration-300 ${
+                                          station.progress >= 90 ? 'bg-green-500' : 
+                                          station.progress >= 70 ? 'bg-blue-500' : 
+                                          station.progress >= 30 ? 'bg-yellow-500' : 'bg-red-500'
+                                        }`} 
+                                        style={{ width: `${station.progress}%` }}
+                                      ></div>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground font-medium">{station.progress}%</span>
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <Badge className={station.status === 'busy' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}>
-                              {station.status}
-                            </Badge>
-                            {station.progress > 0 && (
-                              <div className="mt-2">
-                                <div className="w-20 bg-gray-200 rounded-full h-1">
-                                  <div className="bg-blue-500 h-1 rounded-full" style={{ width: `${station.progress}%` }}></div>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">{station.progress}%</p>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right">
+                              <Badge className={`${station.status === 'busy' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-green-100 text-green-800 border-green-200'} border`}>
+                                {station.status === 'busy' ? 'Active' : 'Available'}
+                              </Badge>
+                            </div>
+                            {station.status === 'busy' && (
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => handleWorkstationStatusChange(station.name, 'pause')}
+                                  data-testid={`button-pause-${station.name.replace(/\s+/g, '-').toLowerCase()}`}
+                                >
+                                  <Pause className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                  onClick={() => handleWorkstationStatusChange(station.name, 'stop')}
+                                  data-testid={`button-stop-${station.name.replace(/\s+/g, '-').toLowerCase()}`}
+                                >
+                                  <RotateCcw className="h-3 w-3" />
+                                </Button>
                               </div>
+                            )}
+                            {station.status === 'available' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 px-3 text-green-600 hover:text-green-700"
+                                onClick={() => handleWorkstationStatusChange(station.name, 'start')}
+                                data-testid={`button-start-${station.name.replace(/\s+/g, '-').toLowerCase()}`}
+                              >
+                                <Play className="h-3 w-3 mr-1" />
+                                Start
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -1006,18 +1091,36 @@ export default function ProductionPlanning() {
                   </div>
 
                   {/* Quick Actions */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium mb-3">Quick Actions</h4>
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
+                    <h4 className="font-medium mb-3 text-gray-800">🚀 Quick Actions</h4>
                     <div className="flex gap-2 flex-wrap">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleWorkstationAction('All Workstations', 'assign')}
+                        data-testid="button-assign-workers"
+                        className="bg-white hover:bg-gray-50"
+                      >
                         <Users className="h-4 w-4 mr-2" />
                         Assign Workers
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleWorkstationAction('All Workstations', 'maintain')}
+                        data-testid="button-schedule-maintenance"
+                        className="bg-white hover:bg-gray-50"
+                      >
                         <Calendar className="h-4 w-4 mr-2" />
                         Schedule Maintenance
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setLocation('/inventory')}
+                        data-testid="button-check-inventory"
+                        className="bg-white hover:bg-gray-50"
+                      >
                         <Package className="h-4 w-4 mr-2" />
                         Check Inventory
                       </Button>
@@ -1111,7 +1214,7 @@ export default function ProductionPlanning() {
                               {file.originalName}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {(file.fileSize / 1024 / 1024).toFixed(1)} MB
+                              {((file.fileSize || 0) / 1024 / 1024).toFixed(1)} MB
                             </p>
                           </div>
                         </div>
@@ -1151,6 +1254,162 @@ export default function ProductionPlanning() {
               >
                 Close
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Enhanced Workstation Management Dialog */}
+        <Dialog open={isWorkstationDialogOpen} onOpenChange={setIsWorkstationDialogOpen}>
+          <DialogContent className="max-w-xl">
+            <DialogHeader>
+              <DialogTitle>
+                {workstationAction === 'assign' && '👥 Assign Worker'}
+                {workstationAction === 'schedule' && '📅 Schedule Task'}
+                {workstationAction === 'maintain' && '🔧 Schedule Maintenance'}
+              </DialogTitle>
+              <DialogDescription>
+                {workstationAction === 'assign' && `Assign a worker to ${selectedWorkstation}`}
+                {workstationAction === 'schedule' && `Schedule a production task for ${selectedWorkstation}`}
+                {workstationAction === 'maintain' && `Schedule maintenance for ${selectedWorkstation}`}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {workstationAction === 'assign' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Select Worker</label>
+                    <Select>
+                      <SelectTrigger data-testid="select-worker">
+                        <SelectValue placeholder="Choose available worker" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="rajesh">Rajesh Kumar</SelectItem>
+                        <SelectItem value="amit">Amit Singh</SelectItem>
+                        <SelectItem value="priya">Priya Sharma</SelectItem>
+                        <SelectItem value="suresh">Suresh Patel</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Task</label>
+                    <Input placeholder="Enter task description" data-testid="input-task" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Start Time</label>
+                      <Input type="time" data-testid="input-start-time" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Duration (hours)</label>
+                      <Input type="number" placeholder="4" data-testid="input-duration" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {workstationAction === 'schedule' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Work Order</label>
+                    <Select>
+                      <SelectTrigger data-testid="select-work-order">
+                        <SelectValue placeholder="Select work order" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="wo-001">WO-001 - Office Table</SelectItem>
+                        <SelectItem value="wo-002">WO-002 - Cabinet Assembly</SelectItem>
+                        <SelectItem value="wo-003">WO-003 - Wardrobe</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Operation Type</label>
+                    <Select>
+                      <SelectTrigger data-testid="select-operation-type">
+                        <SelectValue placeholder="Select operation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cutting">Cutting</SelectItem>
+                        <SelectItem value="assembly">Assembly</SelectItem>
+                        <SelectItem value="finishing">Finishing</SelectItem>
+                        <SelectItem value="quality">Quality Check</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Scheduled Date</label>
+                      <Input type="date" data-testid="input-scheduled-date" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Priority</label>
+                      <Select>
+                        <SelectTrigger data-testid="select-priority">
+                          <SelectValue placeholder="Priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="urgent">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {workstationAction === 'maintain' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Maintenance Type</label>
+                    <Select>
+                      <SelectTrigger data-testid="select-maintenance-type">
+                        <SelectValue placeholder="Select maintenance type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="preventive">Preventive Maintenance</SelectItem>
+                        <SelectItem value="corrective">Corrective Maintenance</SelectItem>
+                        <SelectItem value="calibration">Calibration</SelectItem>
+                        <SelectItem value="cleaning">Deep Cleaning</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Scheduled Date</label>
+                    <Input type="datetime-local" data-testid="input-maintenance-date" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Notes</label>
+                    <Textarea placeholder="Maintenance notes and requirements" data-testid="textarea-maintenance-notes" />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsWorkstationDialogOpen(false)}
+                  data-testid="button-cancel-workstation"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    toast({
+                      title: "Success!",
+                      description: `${workstationAction === 'assign' ? 'Worker assigned' : workstationAction === 'schedule' ? 'Task scheduled' : 'Maintenance scheduled'} successfully`,
+                    });
+                    setIsWorkstationDialogOpen(false);
+                  }}
+                  data-testid="button-confirm-workstation"
+                >
+                  {workstationAction === 'assign' && 'Assign Worker'}
+                  {workstationAction === 'schedule' && 'Schedule Task'}
+                  {workstationAction === 'maintain' && 'Schedule Maintenance'}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

@@ -355,6 +355,16 @@ export default function ProjectQuotes({ projectId }: ProjectQuotesProps) {
     }
   };
 
+  // Determine if quote is uploaded vs created
+  const isUploadedQuote = (quote: Quote) => {
+    return (
+      (quoteFiles[quote.id]?.length > 0 && 
+       (quote.description?.includes('Quote uploaded with') || 
+        quote.pricelist === 'Uploaded Quote')) ||
+      quote.pricelist === 'Uploaded Quote'
+    );
+  };
+
   // Handle viewing uploaded file
   const handleViewFile = async (fileId: number) => {
     try {
@@ -1655,8 +1665,14 @@ export default function ProjectQuotes({ projectId }: ProjectQuotesProps) {
                     <h3 
                       className="font-medium truncate cursor-pointer hover:text-brown-600 hover:underline"
                       onClick={() => {
-                        setSelectedQuote(quote);
-                        setShowViewDialog(true);
+                        if (isUploadedQuote(quote) && quoteFiles[quote.id]?.length > 0) {
+                          // For uploaded quotes, directly open the file
+                          handleViewFile(quoteFiles[quote.id][0].id);
+                        } else {
+                          // For created quotes, show the structured view dialog
+                          setSelectedQuote(quote);
+                          setShowViewDialog(true);
+                        }
                       }}
                     >
                       {quote.title}
@@ -1674,33 +1690,39 @@ export default function ProjectQuotes({ projectId }: ProjectQuotesProps) {
                   </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => {
-                      setSelectedQuote(quote);
-                      setShowViewDialog(true);
-                    }}
-                  >
-                    <Eye className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => setLocation(`/projects/${projectId}/quotes/${quote.id}/edit`)}
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => handleExportPDF(quote)}
-                  >
-                    <Download className="h-3 w-3" />
-                  </Button>
+                  {/* Buttons for created quotes (with structured data) */}
+                  {!isUploadedQuote(quote) && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          setSelectedQuote(quote);
+                          setShowViewDialog(true);
+                        }}
+                      >
+                        <Eye className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => setLocation(`/projects/${projectId}/quotes/${quote.id}/edit`)}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleExportPDF(quote)}
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
+                  
                   {/* File buttons for uploaded quotes */}
                   {quoteFiles[quote.id] && quoteFiles[quote.id].length > 0 && (
                     <>
@@ -1724,6 +1746,8 @@ export default function ProjectQuotes({ projectId }: ProjectQuotesProps) {
                       </Button>
                     </>
                   )}
+                  
+                  {/* Common buttons for all quotes */}
                   <Button
                     variant="outline"
                     size="sm"

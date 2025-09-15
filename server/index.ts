@@ -151,7 +151,9 @@ app.use((req, res, next) => {
       console.error("❌ Failed to initialize Telegram bot:", error);
     }
 
-    // Initialize WhatsApp Bot
+    // Initialize WhatsApp Bot - DISABLED to prevent continuous connection attempts
+    // Uncomment the code below when you need WhatsApp functionality
+    /*
     try {
       const whatsappBot = new FurniliWhatsAppBot();
       
@@ -174,5 +176,12 @@ app.use((req, res, next) => {
     } catch (error) {
       console.error("❌ Failed to initialize WhatsApp bot:", error);
     }
+    */
+    
+    // Initialize global WhatsApp references as disabled
+    global.whatsappClient = undefined;
+    global.qrCodeData = null;
+    global.initializeWhatsAppBot = undefined;
+    log("📱 WhatsApp bot initialization DISABLED - enable in code when needed");
   });
 })();

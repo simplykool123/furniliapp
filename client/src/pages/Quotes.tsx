@@ -1357,3 +1357,345 @@ function QuoteItemForm({ form, onSubmit, salesProducts, editingItem }: any) {
     </Form>
   );
 }
+
+// Quick Upload Form Component with all required fields
+function QuickUploadForm({
+  form,
+  onSubmit,
+  clients,
+  projects,
+  isSubmitting,
+}: {
+  form: any;
+  onSubmit: (data: any) => void;
+  clients: any[];
+  projects: any[];
+  isSubmitting: boolean;
+}) {
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const { toast } = useToast();
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const validFile = files.find(file => 
+      file.type === 'application/pdf' || 
+      file.type === 'image/jpeg' ||
+      file.type === 'image/jpg' ||
+      file.type === 'image/png'
+    );
+    
+    if (validFile) {
+      if (validFile.size > 50 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Files must be under 50MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setUploadFile(validFile);
+    } else {
+      toast({ 
+        title: "Invalid file", 
+        description: "Please upload PDF, JPG, or PNG files only", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleSubmit = (data: any) => {
+    if (!uploadFile) {
+      toast({
+        title: "Please select a file to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Create quote data with file attachment
+    const quoteData = {
+      ...data,
+      items: [], // No items for quick upload
+      file: uploadFile,
+    };
+    
+    onSubmit(quoteData);
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
+        {/* File Upload Area */}
+        <div
+          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+            dragActive
+              ? 'border-blue-300 bg-blue-50'
+              : uploadFile
+              ? 'border-green-300 bg-green-50'
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {uploadFile ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2">
+                <Upload className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-green-600 truncate">
+                  {uploadFile.name}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                {(uploadFile.size / 1024 / 1024).toFixed(1)}MB • {uploadFile.type.includes('pdf') ? 'PDF' : 'Image'}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setUploadFile(null)}
+                className="text-xs h-6"
+              >
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Upload className="h-6 w-6 text-gray-400 mx-auto" />
+              <div className="text-sm">
+                <p className="font-medium">Drop quote file here</p>
+                <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG files only • Max 50MB</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.pdf,.jpg,.jpeg,.png';
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      if (file.size > 50 * 1024 * 1024) {
+                        toast({
+                          title: "File too large",
+                          description: "Files must be under 50MB",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      setUploadFile(file);
+                    }
+                  };
+                  input.click();
+                }}
+                className="text-xs h-6"
+              >
+                Choose File
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Client Selection */}
+        <FormField
+          control={form.control}
+          name="clientId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Client *</FormLabel>
+              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                <FormControl>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select client" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {clients.map((client: any) => (
+                    <SelectItem key={client.id} value={client.id.toString()}>
+                      {client.name} - {client.city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Project Selection */}
+        <FormField
+          control={form.control}
+          name="projectId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Project</FormLabel>
+              <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} value={field.value?.toString()}>
+                <FormControl>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select project (optional)" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">No Project</SelectItem>
+                  {projects.map((project: any) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.name} ({project.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Quote Title */}
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Quote Title *</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Enter quote title" className="h-8 text-xs" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Total Amount */}
+        <FormField
+          control={form.control}
+          name="totalAmount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Total Amount (₹) *</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="number"
+                  step="0.01"
+                  className="h-8 text-xs"
+                  placeholder="0.00"
+                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Status */}
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue="draft">
+                <FormControl>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Payment Terms */}
+        <FormField
+          control={form.control}
+          name="paymentTerms"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Payment Terms *</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue="100% advance">
+                <FormControl>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select payment terms" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="100% advance">100% advance</SelectItem>
+                  <SelectItem value="50% advance, 50% on delivery">50% advance, 50% on delivery</SelectItem>
+                  <SelectItem value="30% advance, 70% on delivery">30% advance, 70% on delivery</SelectItem>
+                  <SelectItem value="25% advance, 75% on completion">25% advance, 75% on completion</SelectItem>
+                  <SelectItem value="Net 30">Net 30 days</SelectItem>
+                  <SelectItem value="Custom terms">Custom terms</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Notes */}
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Notes</FormLabel>
+              <FormControl>
+                <Textarea 
+                  {...field} 
+                  placeholder="Any additional notes or special instructions..."
+                  className="min-h-[60px] text-xs resize-none"
+                  rows={3}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Submit Button */}
+        <div className="flex justify-end gap-2 pt-3">
+          <Button
+            type="submit"
+            disabled={isSubmitting || !uploadFile}
+            className="h-8 text-xs px-4"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+                Creating...
+              </>
+            ) : (
+              "Create Quote"
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}

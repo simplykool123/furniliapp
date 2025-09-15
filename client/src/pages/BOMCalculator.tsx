@@ -414,12 +414,20 @@ export default function BOMCalculator() {
       unitOfMeasure: "mm",
       boardThickness: "18mm",
       partsConfig: selectedFurniture?.defaultConfig || {
+        // Legacy fields for compatibility
         shelves: 0,
         drawers: 0,
         shutters: 0,
         doors: 0,
         backPanels: 0,
         exposedSides: false,
+        
+        // New wardrobe-specific fields with proper defaults
+        wardrobeType: "openable",
+        shutterCount: selectedFurnitureType === 'wardrobe' ? 2 : 0,
+        shelfCount: selectedFurnitureType === 'wardrobe' ? 3 : 0,
+        drawerCount: 0,
+        hasLoft: false,
         backThickness: 6,
         slideColorance: 12.5,
         boxThickness: 12,
@@ -463,6 +471,14 @@ export default function BOMCalculator() {
         tvUnitType: 'floor_standing',
         storageType: 'floor_standing',
         bookshelfType: 'open_shelving',
+        
+        // Wardrobe-specific defaults
+        wardrobeType: "openable",
+        shutterCount: selectedFurnitureType === 'wardrobe' ? 2 : 0,
+        shelfCount: selectedFurnitureType === 'wardrobe' ? 3 : 0,
+        drawerCount: 0,
+        hasLoft: false,
+        
         ...selectedFurniture.defaultConfig,
         customParts: []
       });

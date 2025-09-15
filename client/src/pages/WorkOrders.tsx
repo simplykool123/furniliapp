@@ -808,6 +808,114 @@ export default function WorkOrders() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* View Work Order Dialog */}
+        <Dialog open={isOrderDetailOpen} onOpenChange={setIsOrderDetailOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Work Order Details</DialogTitle>
+            </DialogHeader>
+            {selectedOrder && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Work Order Number</Label>
+                    <p className="text-sm font-semibold">{selectedOrder.workOrderNumber}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Status</Label>
+                    <Badge className={`${getStatusColor(selectedOrder.status)} text-white`}>
+                      {selectedOrder.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Title</Label>
+                    <p className="text-sm">{selectedOrder.title}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Priority</Label>
+                    <Badge variant={selectedOrder.priority === 'high' ? 'destructive' : selectedOrder.priority === 'medium' ? 'default' : 'secondary'}>
+                      {selectedOrder.priority}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Project</Label>
+                    <p className="text-sm">{selectedOrder.projectName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Client</Label>
+                    <p className="text-sm">{selectedOrder.clientName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Order Type</Label>
+                    <p className="text-sm capitalize">{selectedOrder.orderType}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Total Quantity</Label>
+                    <p className="text-sm">{selectedOrder.totalQuantity}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Progress</Label>
+                    <p className="text-sm">{selectedOrder.completedQuantity || 0} / {selectedOrder.totalQuantity} ({selectedOrder.progressPercentage || 0}%)</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Current Stage</Label>
+                    <p className="text-sm capitalize">{selectedOrder.currentStage || 'Not started'}</p>
+                  </div>
+                </div>
+                
+                {selectedOrder.description && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Description</Label>
+                    <p className="text-sm mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">{selectedOrder.description}</p>
+                  </div>
+                )}
+                
+                {selectedOrder.specifications && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Specifications</Label>
+                    <p className="text-sm mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">{selectedOrder.specifications}</p>
+                  </div>
+                )}
+                
+                {selectedOrder.qualityStandards && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Quality Standards</Label>
+                    <p className="text-sm mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">{selectedOrder.qualityStandards}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Estimated Start Date</Label>
+                    <p className="text-sm">{selectedOrder.estimatedStartDate ? format(new Date(selectedOrder.estimatedStartDate), 'MMM dd, yyyy') : 'Not set'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Estimated End Date</Label>
+                    <p className="text-sm">{selectedOrder.estimatedEndDate ? format(new Date(selectedOrder.estimatedEndDate), 'MMM dd, yyyy') : 'Not set'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Actual Start Date</Label>
+                    <p className="text-sm">{selectedOrder.actualStartDate ? format(new Date(selectedOrder.actualStartDate), 'MMM dd, yyyy') : 'Not started'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Actual End Date</Label>
+                    <p className="text-sm">{selectedOrder.actualEndDate ? format(new Date(selectedOrder.actualEndDate), 'MMM dd, yyyy') : 'Not completed'}</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <Button 
+                    onClick={() => setIsOrderDetailOpen(false)}
+                    data-testid="button-close-detail"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
     </ResponsiveLayout>
   );
 }

@@ -112,6 +112,46 @@ export default function Projects() {
     },
   });
 
+  const deliveryNotesUploadMutation = useMutation({
+    mutationFn: async ({ projectId, files }: { projectId: number; files: File[] }) => {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+      
+      const response = await fetch(`/api/projects/${projectId}/files/delivery-chalans/multiple`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to upload delivery notes');
+      }
+
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', selectedProjectForFiles, 'files'] });
+      setUploadingFiles(false);
+      toast({
+        title: "Delivery notes uploaded successfully",
+        description: `${data.files?.length || 0} files uploaded`
+      });
+    },
+    onError: (error: any) => {
+      setUploadingFiles(false);
+      toast({
+        title: "Error uploading delivery notes",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const generalFileUploadMutation = useMutation({
     mutationFn: async ({ projectId, files }: { projectId: number; files: File[] }) => {
       const formData = new FormData();
@@ -1995,33 +2035,102 @@ export default function Projects() {
               )}
             </TabsContent>
 
-            {/* Delivery Chalans Tab */}
+            {/* Delivery Notes Tab */}
             <TabsContent value="delivery_chalans" className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+              <div 
+                className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 transition-colors hover:border-blue-400"
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const items = Array.from(e.clipboardData?.items || []);
+                  const imageFiles = items
+                    .filter(item => item.type.startsWith('image/'))
+                    .map(item => item.getAsFile())
+                    .filter(file => file !== null) as File[];
+                  
+                  if (imageFiles.length > 0 && selectedProjectForFiles) {
+                    setUploadingFiles(true);
+                    deliveryNotesUploadMutation.mutate({ projectId: selectedProjectForFiles, files: imageFiles });
+                    toast({
+                      title: "Images pasted",
+                      description: `${imageFiles.length} image(s) pasted from clipboard`
+                    });
+                  }
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.add('border-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
+                  const files = Array.from(e.dataTransfer?.files || []);
+                  if (files.length > 0 && selectedProjectForFiles) {
+                    setUploadingFiles(true);
+                    deliveryNotesUploadMutation.mutate({ projectId: selectedProjectForFiles, files });
+                  }
+                }}
+                tabIndex={0}
+                data-testid="delivery-notes-drop-zone"
+              >
                 <div className="text-center">
                   <FileImage className="mx-auto h-12 w-12 text-gray-400" />
                   <div className="mt-4">
-                    <span className="mt-2 block text-sm font-medium text-gray-900">
-                      Delivery chalans are managed from the Production Planning module
-                    </span>
-                    <span className="mt-1 block text-xs text-gray-500">
-                      Visit Production Planning to upload delivery chalan images
-                    </span>
+                    <label htmlFor="delivery-notes-upload" className="cursor-pointer">
+                      <span className="mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Drop delivery notes here, click to browse, or paste images (Ctrl+V)
+                      </span>
+                      <span className="mt-1 block text-xs text-gray-500">
+                        Images, PDFs, Excel files up to 10MB each • Supports clipboard paste for images
+                      </span>
+                    </label>
+                    <input
+                      id="delivery-notes-upload"
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf,.xlsx,.xls"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length > 0 && selectedProjectForFiles) {
+                          setUploadingFiles(true);
+                          deliveryNotesUploadMutation.mutate({ projectId: selectedProjectForFiles, files });
+                          e.target.value = ''; // Reset input
+                        }
+                      }}
+                      className="hidden"
+                      data-testid="input-delivery-notes"
+                    />
                   </div>
+                  {(uploadingFiles && fileTabActive === 'delivery_chalans') && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <span className="ml-2 text-sm text-gray-600">Uploading delivery notes...</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
               {deliveryChalans.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {deliveryChalans.map((file) => (
-                    <FileCard key={file.id} file={file} onDelete={handleDeleteFile} onDownload={handleDownloadFile} />
-                  ))}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Delivery Notes ({deliveryChalans.length})
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {deliveryChalans.map((file) => (
+                      <FileCard key={file.id} file={file} onDelete={handleDeleteFile} onDownload={handleDownloadFile} />
+                    ))}
+                  </div>
                 </div>
               )}
               
-              {deliveryChalans.length === 0 && (
+              {deliveryChalans.length === 0 && !uploadingFiles && (
                 <div className="text-center py-8 text-gray-500">
-                  No delivery chalans uploaded yet.
+                  No delivery notes uploaded yet. Upload your first delivery note above.
                 </div>
               )}
             </TabsContent>

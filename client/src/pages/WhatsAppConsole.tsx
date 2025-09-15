@@ -23,6 +23,7 @@ import {
 import { format } from "date-fns";
 import Layout from "@/components/Layout/Layout";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface WhatsAppMessage {
   id: string;
@@ -53,6 +54,7 @@ interface BotStatus {
 }
 
 export default function WhatsAppConsole() {
+  const { toast } = useToast();
   const [selectedSession, setSelectedSession] = useState<string>("");
   const [messageInput, setMessageInput] = useState("");
 

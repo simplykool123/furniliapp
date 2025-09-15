@@ -508,13 +508,18 @@ export default function BOMCalculator() {
       });
 
       // Auto-update form values with smart suggestions
-      form.setValue('partsConfig.shutterCount', smartSuggestions.shutters, { shouldDirty: false });
-      form.setValue('partsConfig.shelfCount', smartSuggestions.shelves, { shouldDirty: false });
-      form.setValue('partsConfig.drawerCount', smartSuggestions.drawers, { shouldDirty: false });
+      form.setValue('partsConfig.shutterCount', smartSuggestions.shutters, { shouldDirty: false, shouldValidate: true });
+      form.setValue('partsConfig.shelfCount', smartSuggestions.shelves, { shouldDirty: false, shouldValidate: true });
+      form.setValue('partsConfig.drawerCount', smartSuggestions.drawers, { shouldDirty: false, shouldValidate: true });
 
       // Show helpful notes to user if available  
       if (smartSuggestions.notes.length > 0) {
         console.log('Smart defaults applied:', smartSuggestions.notes.join(' '));
+        toast({
+          title: "Smart Defaults Applied",
+          description: smartSuggestions.notes.join(' '),
+          duration: 3000,
+        });
       }
       
     } catch (error) {

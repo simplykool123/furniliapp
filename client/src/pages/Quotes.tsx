@@ -109,6 +109,7 @@ export default function Quotes() {
   const [clientFilter, setClientFilter] = useState("all");
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createMode, setCreateMode] = useState<'full' | 'quick'>('full');
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
@@ -454,7 +455,7 @@ export default function Quotes() {
               </div>
 
               <div className="flex gap-2 sm:w-auto w-full">
-                <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <Dialog open={showCreateDialog} onOpenChange={(open) => { setShowCreateDialog(open); if (!open) setCreateMode('full'); }}>
                   <DialogTrigger asChild>
                     <Button className="h-8 text-xs px-3 flex-1 sm:flex-none">
                       <Plus className="h-3 w-3 mr-1" />
@@ -464,25 +465,58 @@ export default function Quotes() {
                   <DialogContent className="max-w-[98vw] max-h-[95vh] overflow-y-auto p-2 sm:p-6">
                     <DialogHeader className="pb-2">
                       <DialogTitle className="text-sm sm:text-base">Create New Quote</DialogTitle>
+                      
+                      {/* Mode Toggle */}
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          type="button"
+                          variant={createMode === 'quick' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setCreateMode('quick')}
+                          className="flex-1 h-8 text-xs"
+                        >
+                          Quick Upload
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={createMode === 'full' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setCreateMode('full')}
+                          className="flex-1 h-8 text-xs"
+                        >
+                          Full Quote
+                        </Button>
+                      </div>
                     </DialogHeader>
-                    <QuoteForm
-                      form={form}
-                      onSubmit={onSubmit}
-                      clients={clients}
-                      projects={projects}
-                      salesProducts={salesProducts}
-                      quoteItems={quoteItems}
-                      setQuoteItems={setQuoteItems}
-                      editingItem={editingItem}
-                      setEditingItem={setEditingItem}
-                      showItemDialog={showItemDialog}
-                      setShowItemDialog={setShowItemDialog}
-                      itemForm={itemForm}
-                      handleSaveItem={handleSaveItem}
-                      addFromSalesProduct={addFromSalesProduct}
-                      calculateTotals={calculateTotals}
-                      isSubmitting={createMutation.isPending}
-                    />
+                    
+                    {createMode === 'quick' ? (
+                      <QuickUploadForm
+                        form={form}
+                        onSubmit={onSubmit}
+                        clients={clients}
+                        projects={projects}
+                        isSubmitting={createMutation.isPending}
+                      />
+                    ) : (
+                      <QuoteForm
+                        form={form}
+                        onSubmit={onSubmit}
+                        clients={clients}
+                        projects={projects}
+                        salesProducts={salesProducts}
+                        quoteItems={quoteItems}
+                        setQuoteItems={setQuoteItems}
+                        editingItem={editingItem}
+                        setEditingItem={setEditingItem}
+                        showItemDialog={showItemDialog}
+                        setShowItemDialog={setShowItemDialog}
+                        itemForm={itemForm}
+                        handleSaveItem={handleSaveItem}
+                        addFromSalesProduct={addFromSalesProduct}
+                        calculateTotals={calculateTotals}
+                        isSubmitting={createMutation.isPending}
+                      />
+                    )}
                   </DialogContent>
                 </Dialog>
               </div>

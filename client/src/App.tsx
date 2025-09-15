@@ -283,6 +283,12 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
+      <Route path="/tasks/:taskId">
+        <ProtectedRoute>
+          <TaskManagement />
+        </ProtectedRoute>
+      </Route>
+      
       <Route path="/bom-calculator">
         <ProtectedRoute>
           <BOMCalculator />

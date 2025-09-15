@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "workOrderNumber": "WO-2025-0001",
+    "title": "Oak Dining Table Assembly",
+    "projectId": 5,
+    "priority": "high",
+    "status": "in_progress",
+    "type": "assembly",
+    "description": "Assemble oak dining table with 6 chairs for Mahajan project",
+    "requiredSkills": [
+      "woodworking",
+      "assembly"
+    ],
+    "estimatedHours": 12,
+    "deadline": "2025-09-22T22:30:24.849Z",
+    "createdBy": 7,
+    "assignedTo": [
+      7
+    ],
+    "progress": 65,
+    "createdAt": "2025-09-15T22:30:24.849Z",
+    "updatedAt": "2025-09-15T22:30:24.849Z"
+  },
+  {
+    "id": 2,
+    "workOrderNumber": "WO-2025-0002",
+    "title": "Cabinet Door Finishing",
+    "projectId": 5,
+    "priority": "medium",
+    "status": "pending",
+    "type": "finishing",
+    "description": "Apply stain and lacquer finish to cabinet doors",
+    "requiredSkills": [
+      "finishing",
+      "painting"
+    ],
+    "estimatedHours": 8,
+    "deadline": "2025-09-20T22:30:24.849Z",
+    "createdBy": 7,
+    "assignedTo": [],
+    "progress": 0,
+    "createdAt": "2025-09-15T22:30:24.849Z",
+    "updatedAt": "2025-09-15T22:30:24.849Z"
+  }
+]

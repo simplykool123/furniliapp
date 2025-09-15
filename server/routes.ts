@@ -23,6 +23,7 @@ import { registerCRMRoutes } from "./crmRoutes";
 import setupQuoteUploadRoutes from "./quoteUploadRoutes";
 // ObjectStorageService removed - using local storage only
 import { db } from "./db";
+import { manufacturingStorage } from "./memStorage";
 import { calculateBOM, generateBOMNumber, convertDimensions, DEFAULT_RATES, calculateWardrobeBOM, calculateSheetOptimization } from "./utils/bomCalculations";
 import { optimizeSheetCutting, OptimizedPanel, SheetDimensions } from "./utils/advanced-nesting";
 import { getBotStatus } from "./services/whatsappBot.js";
@@ -32,8 +33,8 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 
-import { eq, and, or, gt, desc, sql } from "drizzle-orm";
-import { projectFiles, users, suppliers, products, purchaseOrders, purchaseOrderItems, stockMovements, bomCalculations, bomItems, workOrders, quotes, projects, clients, telegramUserSessions, tasks, whatsappMessages } from "@shared/schema";
+import { eq, and, or, gt, desc, sql, gte, lt } from "drizzle-orm";
+import { projectFiles, users, suppliers, products, purchaseOrders, purchaseOrderItems, stockMovements, bomCalculations, bomItems, workOrders, productionSchedules, qualityChecks, productionTasks, quotes, projects, clients, telegramUserSessions, tasks, whatsappMessages } from "@shared/schema";
 
 // OpenAI client removed - AI functionality simplified
 import {
@@ -364,87 +365,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Production Dashboard API - Safe with table check
+  // Production Dashboard API - Using LOCAL STORAGE ONLY (MemStorage)
   app.get("/api/production/dashboard", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      // Check if work_orders table exists first
-      let allWorkOrders: any[] = [];
-      try {
-        allWorkOrders = await db
-          .select({
-            workOrder: workOrders,
-            project: {
-              id: projects.id,
-              name: projects.name,
-              code: projects.code,
-            },
-            client: {
-              id: clients.id,
-              name: clients.name,
-            },
-            quote: {
-              id: quotes.id,
-              quoteNumber: quotes.quoteNumber,
-              title: quotes.title,
-            },
-            createdBy: {
-              id: users.id,
-              name: users.name,
-            }
-          })
-          .from(workOrders)
-          .leftJoin(projects, eq(workOrders.projectId, projects.id))
-          .leftJoin(clients, eq(workOrders.clientId, clients.id))
-          .leftJoin(quotes, eq(workOrders.quoteId, quotes.id))
-          .leftJoin(users, eq(workOrders.createdBy, users.id))
-          .orderBy(desc(workOrders.createdAt));
-      } catch (tableError: any) {
-        if (tableError.code === '42P01') {
-          console.warn('work_orders table not found, using empty data');
-          allWorkOrders = [];
-        } else {
-          throw tableError;
-        }
-      }
-
-      const today = new Date();
-      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-
-      // Calculate statistics
-      const totalWorkOrders = allWorkOrders.length;
-      const activeWorkOrders = allWorkOrders.filter(wo => 
-        ['pending', 'planned', 'in_progress'].includes(wo.workOrder.status)
-      ).length;
-      
-      const completedToday = allWorkOrders.filter(wo => 
-        wo.workOrder.status === 'completed' && 
-        wo.workOrder.actualEndDate &&
-        new Date(wo.workOrder.actualEndDate) >= todayStart &&
-        new Date(wo.workOrder.actualEndDate) < todayEnd
-      ).length;
-
-      // Get recent work orders (last 10)
-      const recentWorkOrders = allWorkOrders.slice(0, 10);
-
-      const dashboardData = {
-        stats: {
-          totalWorkOrders,
-          activeWorkOrders,
-          completedToday,
-          pendingQuality: 0, // Will be implemented when quality checks are integrated
-          capacityUtilization: totalWorkOrders > 0 ? Math.round((activeWorkOrders / totalWorkOrders) * 100) : 0
-        },
-        recentWorkOrders: recentWorkOrders.map(wo => ({
-          ...wo.workOrder,
-          project: wo.project,
-          client: wo.client,
-          quote: wo.quote,
-          createdByUser: wo.createdBy
-        })),
-        todaySchedule: [], // Will be implemented when production schedules are added
-        pendingQualityChecks: [] // Will be implemented when quality checks are integrated
-      };
+      // Use MemStorage for LOCAL STORAGE ONLY (VPS deployment)
+      const dashboardData = await manufacturingStorage.getProductionDashboardData();
       
       // Cache headers for better performance
       res.set({
@@ -459,88 +384,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Work Orders API - With enriched data and search functionality
+  // Work Orders API - Using LOCAL STORAGE ONLY (MemStorage)
   app.get("/api/work-orders", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const { status, projectId, priority, search, limit = 100, offset = 0 } = req.query;
+      const { status, projectId, priority, search } = req.query;
       
-      // Build base query with joins for enriched data
-      let query = db
-        .select({
-          workOrder: workOrders,
-          project: {
-            id: projects.id,
-            name: projects.name,
-            code: projects.code,
-          },
-          client: {
-            id: clients.id,
-            name: clients.name,
-          },
-          quote: {
-            id: quotes.id,
-            quoteNumber: quotes.quoteNumber,
-            title: quotes.title,
-          },
-          createdByUser: {
-            id: users.id,
-            name: users.name,
-            email: users.email,
-          },
-        })
-        .from(workOrders)
-        .leftJoin(projects, eq(workOrders.projectId, projects.id))
-        .leftJoin(clients, eq(workOrders.clientId, clients.id))
-        .leftJoin(quotes, eq(workOrders.quoteId, quotes.id))
-        .leftJoin(users, eq(workOrders.createdBy, users.id))
-        .orderBy(desc(workOrders.createdAt));
-
-      // Apply filters
-      const conditions: any[] = [];
+      // Get work orders from MemStorage (LOCAL STORAGE ONLY)
+      const allWorkOrders = await manufacturingStorage.getAllWorkOrders();
+      
+      // Apply filters using JavaScript (LOCAL STORAGE ONLY)
+      let filteredOrders = allWorkOrders;
       
       if (status && status !== 'all') {
-        conditions.push(eq(workOrders.status, status as string));
+        filteredOrders = filteredOrders.filter(order => order.status === status);
       }
       
       if (priority && priority !== 'all') {
-        conditions.push(eq(workOrders.priority, priority as string));
+        filteredOrders = filteredOrders.filter(order => order.priority === priority);
       }
       
       if (projectId) {
-        conditions.push(eq(workOrders.projectId, parseInt(projectId as string)));
+        filteredOrders = filteredOrders.filter(order => order.projectId === parseInt(projectId as string));
       }
       
-      // Add search functionality across multiple fields
+      // Add search functionality across title, description, and work order number
       if (search && typeof search === 'string') {
-        const searchTerm = `%${search.toLowerCase()}%`;
-        conditions.push(
-          or(
-            sql`LOWER(${workOrders.title}) LIKE ${searchTerm}`,
-            sql`LOWER(${workOrders.description}) LIKE ${searchTerm}`,
-            sql`LOWER(${workOrders.orderNumber}) LIKE ${searchTerm}`,
-            sql`LOWER(${projects.name}) LIKE ${searchTerm}`,
-            sql`LOWER(${projects.code}) LIKE ${searchTerm}`,
-            sql`LOWER(${clients.name}) LIKE ${searchTerm}`
-          )
+        const searchTerm = search.toLowerCase();
+        filteredOrders = filteredOrders.filter(order => 
+          order.title.toLowerCase().includes(searchTerm) ||
+          order.description?.toLowerCase().includes(searchTerm) ||
+          order.workOrderNumber.toLowerCase().includes(searchTerm)
         );
       }
       
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions)) as typeof query;
-      }
-      
-      // Apply pagination
-      const workOrdersData = await query
-        .limit(parseInt(limit as string))
-        .offset(parseInt(offset as string));
-      
-      // Format the response to match expected UI structure
-      const formattedWorkOrders = workOrdersData.map(row => ({
-        ...row.workOrder,
-        project: row.project,
-        client: row.client,
-        quote: row.quote,
-        createdByUser: row.createdByUser,
+      // Format response for UI compatibility
+      const formattedWorkOrders = filteredOrders.map(order => ({
+        ...order,
+        id: order.id,
+        orderNumber: order.workOrderNumber,
+        completionPercentage: order.progress || 0,
+        project: {
+          id: order.projectId,
+          name: `Project ${order.projectId}`,
+          code: `PROJ-${order.projectId}`
+        }
       }));
       
       res.json(formattedWorkOrders);
@@ -553,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/work-orders/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const workOrder = await storage.getWorkOrder(id);
+      const workOrder = await manufacturingStorage.getWorkOrder(id);
       
       if (!workOrder) {
         return res.status(404).json({ message: "Work order not found" });
@@ -676,7 +563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if work order exists first
-      const existingWorkOrder = await storage.getWorkOrder(id);
+      const existingWorkOrder = await manufacturingStorage.getWorkOrder(id);
       if (!existingWorkOrder) {
         return res.status(404).json({ message: "Work order not found" });
       }
@@ -809,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date()
       };
       
-      const newQualityCheck = await storage.createQualityCheck(qualityCheckData);
+      const newQualityCheck = await manufacturingStorage.createQualityCheck(qualityCheckData);
       
       if (!newQualityCheck) {
         return res.status(500).json({ message: "Failed to create quality check" });
@@ -1130,6 +1017,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Delete production schedule error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ============================================================================
+  // PRODUCTION WORKSTATION CONTROL ENDPOINTS 
+  // ============================================================================
+  
+  // Workstation status control (start, pause, stop)
+  app.post("/api/production/workstations/control", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      const { stationName, action, timestamp } = req.body;
+      
+      if (!stationName || !action) {
+        return res.status(400).json({ message: "Station name and action are required" });
+      }
+      
+      const validActions = ['start', 'pause', 'stop', 'reset'];
+      if (!validActions.includes(action)) {
+        return res.status(400).json({ 
+          message: "Invalid action", 
+          validActions 
+        });
+      }
+      
+      // Create a workstation status log entry using MemStorage (LOCAL STORAGE ONLY)
+      const statusLog = await manufacturingStorage.createProductionSchedule({
+        workOrderId: 1, // Required field - using dummy ID for status logs
+        workstationId: stationName.toLowerCase().replace(/\s+/g, '_'),
+        workstationName: stationName,
+        operationType: `status_${action}`,
+        scheduledDate: new Date(timestamp || new Date().toISOString()),
+        startTime: new Date().toTimeString().substring(0, 5),
+        endTime: new Date(Date.now() + 60000).toTimeString().substring(0, 5), // 1 minute default
+        duration: 1, // 1 minute for status changes
+        status: action === 'start' ? 'in_progress' : action === 'pause' ? 'paused' : 'cancelled',
+        notes: `Workstation ${action} by ${req.user!.username}`,
+        scheduledBy: req.user!.id
+      });
+      
+      res.json({ 
+        success: true, 
+        message: `Workstation ${stationName} ${action} successfully`,
+        statusLog 
+      });
+    } catch (error) {
+      console.error("Workstation control error:", error);
+      res.status(500).json({ message: "Failed to control workstation", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Worker assignment to workstation
+  app.post("/api/production/workstations/assign", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      const { workstation, workerId, task, startTime, duration } = req.body;
+      
+      if (!workstation || !workerId || !task) {
+        return res.status(400).json({ message: "Workstation, worker ID, and task are required" });
+      }
+      
+      // Create a production schedule entry for the worker assignment using MemStorage (LOCAL STORAGE ONLY)
+      const assignment = await manufacturingStorage.createProductionSchedule({
+        workOrderId: 1, // Required field - using dummy ID for worker assignments
+        workstationId: workstation.toLowerCase().replace(/\s+/g, '_'),
+        workstationName: workstation,
+        operationType: 'worker_assignment',
+        scheduledDate: startTime ? new Date(startTime) : new Date(),
+        startTime: new Date().toTimeString().substring(0, 5),
+        endTime: new Date(Date.now() + (duration || 8) * 60 * 60 * 1000).toTimeString().substring(0, 5),
+        duration: (duration || 8) * 60, // Convert hours to minutes
+        status: 'scheduled',
+        assignedWorkers: [workerId.toString()], // Array field
+        notes: `Worker assignment: ${task}`,
+        scheduledBy: req.user!.id
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Worker assigned successfully",
+        assignment 
+      });
+    } catch (error) {
+      console.error("Worker assignment error:", error);
+      res.status(500).json({ message: "Failed to assign worker", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Production task scheduling
+  app.post("/api/production/schedules", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      const { workstation, workOrderId, operationType, scheduledDate, priority } = req.body;
+      
+      if (!workstation || !workOrderId || !operationType || !scheduledDate) {
+        return res.status(400).json({ message: "Workstation, work order, operation type, and scheduled date are required" });
+      }
+      
+      // Create a production schedule entry using MemStorage (LOCAL STORAGE ONLY)
+      const schedule = await manufacturingStorage.createProductionSchedule({
+        workOrderId: parseInt(workOrderId.replace('wo-', '')), // Convert WO-001 to 1
+        workstationId: workstation.toLowerCase().replace(/\s+/g, '_'),
+        workstationName: workstation,
+        operationType,
+        scheduledDate: new Date(scheduledDate),
+        startTime: '09:00', // Default start time
+        endTime: '13:00', // Default end time (4 hours)
+        duration: 240, // 4 hours in minutes
+        status: 'scheduled',
+        scheduledBy: req.user!.id
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Task scheduled successfully",
+        schedule 
+      });
+    } catch (error) {
+      console.error("Task scheduling error:", error);
+      res.status(500).json({ message: "Failed to schedule task", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Maintenance scheduling
+  app.post("/api/production/maintenance", authenticateToken, requireRole(['admin', 'manager', 'supervisor']), async (req: AuthRequest, res) => {
+    try {
+      const { workstation, maintenanceType, scheduledDate, notes } = req.body;
+      
+      if (!workstation || !maintenanceType || !scheduledDate) {
+        return res.status(400).json({ message: "Workstation, maintenance type, and scheduled date are required" });
+      }
+      
+      // Create a production schedule entry for maintenance
+      const maintenance = await storage.createProductionSchedule({
+        workOrderId: 1, // Required field - using dummy ID for maintenance
+        workstationId: workstation.toLowerCase().replace(/\s+/g, '_'),
+        workstationName: workstation,
+        operationType: 'maintenance',
+        scheduledDate: new Date(scheduledDate),
+        startTime: new Date().toTimeString().substring(0, 5),
+        endTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toTimeString().substring(0, 5), // 2 hours later
+        duration: 120, // 2 hours in minutes
+        status: 'scheduled',
+        notes: `${maintenanceType}: ${notes || 'Scheduled maintenance'}`,
+        scheduledBy: req.user!.id
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Maintenance scheduled successfully",
+        maintenance 
+      });
+    } catch (error) {
+      console.error("Maintenance scheduling error:", error);
+      res.status(500).json({ message: "Failed to schedule maintenance", error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 

@@ -50,7 +50,31 @@ const workOrderSchema = z.object({
   estimatedEndDate: z.string(),
 });
 
+// Workstation management schemas
+const workerAssignmentSchema = z.object({
+  workerId: z.string().min(1, "Worker is required"),
+  task: z.string().min(1, "Task description is required"),
+  startTime: z.string().min(1, "Start time is required"),
+  duration: z.number().min(0.5, "Duration must be at least 0.5 hours"),
+});
+
+const taskScheduleSchema = z.object({
+  workOrderId: z.string().min(1, "Work order is required"),
+  operationType: z.string().min(1, "Operation type is required"),
+  scheduledDate: z.string().min(1, "Scheduled date is required"),
+  priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
+});
+
+const maintenanceSchema = z.object({
+  maintenanceType: z.string().min(1, "Maintenance type is required"),
+  scheduledDate: z.string().min(1, "Scheduled date is required"),
+  notes: z.string().optional(),
+});
+
 type WorkOrderFormData = z.infer<typeof workOrderSchema>;
+type WorkerAssignmentFormData = z.infer<typeof workerAssignmentSchema>;
+type TaskScheduleFormData = z.infer<typeof taskScheduleSchema>;
+type MaintenanceFormData = z.infer<typeof maintenanceSchema>;
 
 export default function ProductionPlanning() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -109,6 +133,95 @@ export default function ProductionPlanning() {
     },
   });
 
+  // Workstation status control mutations
+  const workstationControlMutation = useMutation({
+    mutationFn: ({ stationName, action, data }: { stationName: string; action: string; data?: any }) =>
+      apiRequest('/api/production/workstations/control', {
+        method: 'POST',
+        body: JSON.stringify({ stationName, action, ...data }),
+      }),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/production/dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/production/schedules'] });
+      toast({
+        title: "Workstation updated",
+        description: `${variables.stationName} ${variables.action} successfully`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating workstation",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Workstation assignment mutation
+  const workstationAssignmentMutation = useMutation({
+    mutationFn: (data: any) =>
+      apiRequest('/api/production/workstations/assign', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/production/dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/production/schedules'] });
+      setIsWorkstationDialogOpen(false);
+      toast({ title: "Assignment successful" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error assigning workstation",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Production scheduling mutation
+  const productionScheduleMutation = useMutation({
+    mutationFn: (data: any) =>
+      apiRequest('/api/production/schedules', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/production/dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/production/schedules'] });
+      setIsWorkstationDialogOpen(false);
+      toast({ title: "Task scheduled successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error scheduling task",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Maintenance scheduling mutation
+  const maintenanceScheduleMutation = useMutation({
+    mutationFn: (data: any) =>
+      apiRequest('/api/production/maintenance', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/production/dashboard'] });
+      setIsWorkstationDialogOpen(false);
+      toast({ title: "Maintenance scheduled successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error scheduling maintenance",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Form setup
   const form = useForm<WorkOrderFormData>({
     resolver: zodResolver(workOrderSchema),
@@ -121,6 +234,36 @@ export default function ProductionPlanning() {
       specifications: "",
       estimatedStartDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       estimatedEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    },
+  });
+
+  // Workstation management forms
+  const workerAssignmentForm = useForm<WorkerAssignmentFormData>({
+    resolver: zodResolver(workerAssignmentSchema),
+    defaultValues: {
+      workerId: "",
+      task: "",
+      startTime: "",
+      duration: 4,
+    },
+  });
+
+  const taskScheduleForm = useForm<TaskScheduleFormData>({
+    resolver: zodResolver(taskScheduleSchema),
+    defaultValues: {
+      workOrderId: "",
+      operationType: "",
+      scheduledDate: new Date().toISOString().split('T')[0],
+      priority: "medium",
+    },
+  });
+
+  const maintenanceForm = useForm<MaintenanceFormData>({
+    resolver: zodResolver(maintenanceSchema),
+    defaultValues: {
+      maintenanceType: "",
+      scheduledDate: new Date().toISOString().slice(0, 16),
+      notes: "",
     },
   });
 
@@ -257,19 +400,11 @@ export default function ProductionPlanning() {
   };
 
   const handleWorkstationStatusChange = async (stationName: string, action: 'start' | 'pause' | 'stop') => {
-    try {
-      // This would integrate with the production schedule API
-      toast({
-        title: `${action.charAt(0).toUpperCase() + action.slice(1)} ${stationName}`,
-        description: `Workstation ${stationName} has been ${action}ed successfully`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error updating workstation",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    workstationControlMutation.mutate({ 
+      stationName, 
+      action,
+      data: { timestamp: new Date().toISOString() } 
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -1276,138 +1411,283 @@ export default function ProductionPlanning() {
             
             <div className="space-y-4">
               {workstationAction === 'assign' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Select Worker</label>
-                    <Select>
-                      <SelectTrigger data-testid="select-worker">
-                        <SelectValue placeholder="Choose available worker" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="rajesh">Rajesh Kumar</SelectItem>
-                        <SelectItem value="amit">Amit Singh</SelectItem>
-                        <SelectItem value="priya">Priya Sharma</SelectItem>
-                        <SelectItem value="suresh">Suresh Patel</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Task</label>
-                    <Input placeholder="Enter task description" data-testid="input-task" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Start Time</label>
-                      <Input type="time" data-testid="input-start-time" />
+                <Form {...workerAssignmentForm}>
+                  <form onSubmit={workerAssignmentForm.handleSubmit((data) => {
+                    workstationAssignmentMutation.mutate({
+                      workstation: selectedWorkstation,
+                      ...data
+                    });
+                  })} className="space-y-4">
+                    <FormField
+                      control={workerAssignmentForm.control}
+                      name="workerId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Select Worker</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-worker">
+                                <SelectValue placeholder="Choose available worker" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="rajesh">Rajesh Kumar</SelectItem>
+                              <SelectItem value="amit">Amit Singh</SelectItem>
+                              <SelectItem value="priya">Priya Sharma</SelectItem>
+                              <SelectItem value="suresh">Suresh Patel</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={workerAssignmentForm.control}
+                      name="task"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Task Description</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter task description" {...field} data-testid="input-task" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={workerAssignmentForm.control}
+                        name="startTime"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Start Time</FormLabel>
+                            <FormControl>
+                              <Input type="time" {...field} data-testid="input-start-time" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={workerAssignmentForm.control}
+                        name="duration"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Duration (hours)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.5" 
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                data-testid="input-duration" 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                    <div>
-                      <label className="text-sm font-medium">Duration (hours)</label>
-                      <Input type="number" placeholder="4" data-testid="input-duration" />
-                    </div>
-                  </div>
-                </div>
+                  </form>
+                </Form>
               )}
 
               {workstationAction === 'schedule' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Work Order</label>
-                    <Select>
-                      <SelectTrigger data-testid="select-work-order">
-                        <SelectValue placeholder="Select work order" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="wo-001">WO-001 - Office Table</SelectItem>
-                        <SelectItem value="wo-002">WO-002 - Cabinet Assembly</SelectItem>
-                        <SelectItem value="wo-003">WO-003 - Wardrobe</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Operation Type</label>
-                    <Select>
-                      <SelectTrigger data-testid="select-operation-type">
-                        <SelectValue placeholder="Select operation" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cutting">Cutting</SelectItem>
-                        <SelectItem value="assembly">Assembly</SelectItem>
-                        <SelectItem value="finishing">Finishing</SelectItem>
-                        <SelectItem value="quality">Quality Check</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Scheduled Date</label>
-                      <Input type="date" data-testid="input-scheduled-date" />
+                <Form {...taskScheduleForm}>
+                  <form onSubmit={taskScheduleForm.handleSubmit((data) => {
+                    productionScheduleMutation.mutate({
+                      workstation: selectedWorkstation,
+                      ...data
+                    });
+                  })} className="space-y-4">
+                    <FormField
+                      control={taskScheduleForm.control}
+                      name="workOrderId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Work Order</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-work-order">
+                                <SelectValue placeholder="Select work order" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="wo-001">WO-001 - Office Table</SelectItem>
+                              <SelectItem value="wo-002">WO-002 - Cabinet Assembly</SelectItem>
+                              <SelectItem value="wo-003">WO-003 - Wardrobe</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={taskScheduleForm.control}
+                      name="operationType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Operation Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-operation-type">
+                                <SelectValue placeholder="Select operation" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="cutting">Cutting</SelectItem>
+                              <SelectItem value="assembly">Assembly</SelectItem>
+                              <SelectItem value="finishing">Finishing</SelectItem>
+                              <SelectItem value="quality">Quality Check</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={taskScheduleForm.control}
+                        name="scheduledDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Scheduled Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} data-testid="input-scheduled-date" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={taskScheduleForm.control}
+                        name="priority"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Priority</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-priority">
+                                  <SelectValue placeholder="Priority" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="urgent">Urgent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                    <div>
-                      <label className="text-sm font-medium">Priority</label>
-                      <Select>
-                        <SelectTrigger data-testid="select-priority">
-                          <SelectValue placeholder="Priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                          <SelectItem value="urgent">Urgent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
+                  </form>
+                </Form>
               )}
 
               {workstationAction === 'maintain' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Maintenance Type</label>
-                    <Select>
-                      <SelectTrigger data-testid="select-maintenance-type">
-                        <SelectValue placeholder="Select maintenance type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="preventive">Preventive Maintenance</SelectItem>
-                        <SelectItem value="corrective">Corrective Maintenance</SelectItem>
-                        <SelectItem value="calibration">Calibration</SelectItem>
-                        <SelectItem value="cleaning">Deep Cleaning</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Scheduled Date</label>
-                    <Input type="datetime-local" data-testid="input-maintenance-date" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Notes</label>
-                    <Textarea placeholder="Maintenance notes and requirements" data-testid="textarea-maintenance-notes" />
-                  </div>
-                </div>
+                <Form {...maintenanceForm}>
+                  <form onSubmit={maintenanceForm.handleSubmit((data) => {
+                    maintenanceScheduleMutation.mutate({
+                      workstation: selectedWorkstation,
+                      ...data
+                    });
+                  })} className="space-y-4">
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="maintenanceType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Maintenance Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-maintenance-type">
+                                <SelectValue placeholder="Select maintenance type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="preventive">Preventive Maintenance</SelectItem>
+                              <SelectItem value="corrective">Corrective Maintenance</SelectItem>
+                              <SelectItem value="calibration">Calibration</SelectItem>
+                              <SelectItem value="cleaning">Deep Cleaning</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="scheduledDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Scheduled Date & Time</FormLabel>
+                          <FormControl>
+                            <Input type="datetime-local" {...field} data-testid="input-maintenance-date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={maintenanceForm.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Maintenance notes and requirements" 
+                              {...field} 
+                              data-testid="textarea-maintenance-notes" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
               )}
 
               <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button
                   variant="outline"
-                  onClick={() => setIsWorkstationDialogOpen(false)}
+                  onClick={() => {
+                    setIsWorkstationDialogOpen(false);
+                    // Reset forms when closing
+                    if (workstationAction === 'assign') workerAssignmentForm.reset();
+                    if (workstationAction === 'schedule') taskScheduleForm.reset();
+                    if (workstationAction === 'maintain') maintenanceForm.reset();
+                  }}
                   data-testid="button-cancel-workstation"
                 >
                   Cancel
                 </Button>
                 <Button
-                  onClick={() => {
-                    toast({
-                      title: "Success!",
-                      description: `${workstationAction === 'assign' ? 'Worker assigned' : workstationAction === 'schedule' ? 'Task scheduled' : 'Maintenance scheduled'} successfully`,
-                    });
-                    setIsWorkstationDialogOpen(false);
-                  }}
+                  type="submit"
+                  form={workstationAction === 'assign' ? 'worker-assignment-form' : 
+                        workstationAction === 'schedule' ? 'task-schedule-form' : 'maintenance-form'}
+                  disabled={workstationAssignmentMutation.isPending || 
+                           productionScheduleMutation.isPending || 
+                           maintenanceScheduleMutation.isPending}
                   data-testid="button-confirm-workstation"
                 >
-                  {workstationAction === 'assign' && 'Assign Worker'}
-                  {workstationAction === 'schedule' && 'Schedule Task'}
-                  {workstationAction === 'maintain' && 'Schedule Maintenance'}
+                  {(workstationAssignmentMutation.isPending || 
+                    productionScheduleMutation.isPending || 
+                    maintenanceScheduleMutation.isPending) ? "Processing..." : 
+                   workstationAction === 'assign' ? 'Assign Worker' :
+                   workstationAction === 'schedule' ? 'Schedule Task' : 'Schedule Maintenance'}
                 </Button>
               </div>
             </div>

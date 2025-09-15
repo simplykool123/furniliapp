@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "checkNumber": "QC-2025-0001",
+    "workOrderId": 1,
+    "checkType": "visual_inspection",
+    "stage": "pre_finishing",
+    "overallStatus": "passed",
+    "checkItems": [
+      "Surface smoothness",
+      "Joint alignment",
+      "Dimension accuracy"
+    ],
+    "results": [
+      "passed",
+      "passed",
+      "passed"
+    ],
+    "defects": [],
+    "notes": "All items passed visual inspection. Ready for finishing.",
+    "inspectedBy": 7,
+    "inspectionDate": "2025-09-15T22:30:24.849Z",
+    "createdAt": "2025-09-15T22:30:24.849Z",
+    "updatedAt": "2025-09-15T22:30:24.849Z"
+  },
+  {
+    "id": 2,
+    "checkNumber": "QC-2025-0002",
+    "workOrderId": 1,
+    "checkType": "functional_test",
+    "stage": "final_inspection",
+    "overallStatus": "pending",
+    "checkItems": [
+      "Stability test",
+      "Drawer operation",
+      "Hardware check"
+    ],
+    "results": [
+      "pending",
+      "pending",
+      "pending"
+    ],
+    "defects": [],
+    "notes": "Awaiting final functional testing",
+    "inspectedBy": 7,
+    "inspectionDate": "2025-09-15T22:30:24.849Z",
+    "createdAt": "2025-09-15T22:30:24.849Z",
+    "updatedAt": "2025-09-15T22:30:24.849Z"
+  }
+]

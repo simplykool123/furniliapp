@@ -1,5 +1,6 @@
 // Working storage implementation with proper database operations
 import { db } from './db';
+import { getNextWorkOrderNumber, getNextQualityCheckNumber, getNextProductionTaskNumber } from './utils/ids';
 import { 
   users, 
   categories, 
@@ -606,10 +607,9 @@ class DatabaseStorage implements IStorage {
           status: row.status as 'pending' | 'approved' | 'issued' | 'cancelled',
           approvedAt: row.approved_at as Date | null,
           issuedAt: row.issued_at as Date | null,
-          notes: row.remarks as string | null,
-          totalCost: Number(row.total_value) || 0,
+          remarks: row.remarks as string | null,
+          totalValue: Number(row.total_value) || 0,
           createdAt: row.created_at as Date,
-          updatedAt: row.created_at as Date,
           requestedByUser: { 
             name: (row.requested_by_name as string) || 'Unknown', 
             email: (row.requested_by_email as string) || '' 
@@ -2731,7 +2731,18 @@ class DatabaseStorage implements IStorage {
   }
 
   async createWorkOrder(workOrder: InsertWorkOrder): Promise<WorkOrder> {
-    const [newWorkOrder] = await db.insert(workOrders).values([workOrder]).returning();
+    // Get the last work order number for auto-generation
+    const lastWorkOrder = await db.select({ orderNumber: workOrders.orderNumber })
+      .from(workOrders)
+      .orderBy(desc(workOrders.id))
+      .limit(1);
+    
+    const orderNumber = getNextWorkOrderNumber(lastWorkOrder[0]?.orderNumber);
+    
+    const [newWorkOrder] = await db.insert(workOrders).values([{
+      ...workOrder,
+      orderNumber
+    }]).returning();
     return newWorkOrder;
   }
 
@@ -2943,7 +2954,18 @@ class DatabaseStorage implements IStorage {
   }
 
   async createQualityCheck(qualityCheck: InsertQualityCheck): Promise<QualityCheck> {
-    const [newQualityCheck] = await db.insert(qualityChecks).values([qualityCheck]).returning();
+    // Get the last quality check number for auto-generation
+    const lastQualityCheck = await db.select({ checkNumber: qualityChecks.checkNumber })
+      .from(qualityChecks)
+      .orderBy(desc(qualityChecks.id))
+      .limit(1);
+    
+    const checkNumber = getNextQualityCheckNumber(lastQualityCheck[0]?.checkNumber);
+    
+    const [newQualityCheck] = await db.insert(qualityChecks).values([{
+      ...qualityCheck,
+      checkNumber
+    }]).returning();
     return newQualityCheck;
   }
 
@@ -3055,7 +3077,18 @@ class DatabaseStorage implements IStorage {
   }
 
   async createProductionTask(task: InsertProductionTask): Promise<ProductionTask> {
-    const [newTask] = await db.insert(productionTasks).values([task]).returning();
+    // Get the last production task number for auto-generation
+    const lastTask = await db.select({ taskNumber: productionTasks.taskNumber })
+      .from(productionTasks)
+      .orderBy(desc(productionTasks.id))
+      .limit(1);
+    
+    const taskNumber = getNextProductionTaskNumber(lastTask[0]?.taskNumber);
+    
+    const [newTask] = await db.insert(productionTasks).values([{
+      ...task,
+      taskNumber
+    }]).returning();
     return newTask;
   }
 

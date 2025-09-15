@@ -64,7 +64,16 @@ export default function WorkOrders() {
   });
 
   const { data: workOrders, isLoading } = useQuery<WorkOrderWithDetails[]>({
-    queryKey: ['/api/work-orders', { search: searchTerm, status: statusFilter, priority: priorityFilter }],
+    queryKey: ['/api/work-orders', searchTerm, statusFilter, priorityFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('search', searchTerm);
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
+      if (priorityFilter && priorityFilter !== 'all') params.append('priority', priorityFilter);
+      
+      const url = `/api/work-orders${params.toString() ? `?${params.toString()}` : ''}`;
+      return await authenticatedApiRequest('GET', url);
+    },
   });
 
   const { data: projects } = useQuery({

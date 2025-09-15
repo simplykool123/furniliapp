@@ -983,6 +983,10 @@ class DatabaseStorage implements IStorage {
   }
 
   async deleteProject(id: number): Promise<boolean> {
+    // Delete project logs first to avoid foreign key constraint violation
+    await db.delete(projectLogs).where(eq(projectLogs.projectId, id));
+    
+    // Then delete the project
     await db.delete(projects).where(eq(projects.id, id));
     return true;
   }

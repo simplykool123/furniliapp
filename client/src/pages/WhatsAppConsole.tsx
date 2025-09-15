@@ -133,7 +133,10 @@ export default function WhatsAppConsole() {
           <div className="flex gap-2">
             <Button 
               variant="outline"
-              onClick={() => queryClient.invalidateQueries()}
+              onClick={() => {
+                queryClient.invalidateQueries();
+                toast({ title: "Refreshing data...", duration: 2000 });
+              }}
               data-testid="button-refresh"
             >
               <RefreshCw className="mr-2 h-4 w-4" />

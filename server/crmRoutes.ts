@@ -134,7 +134,7 @@ export function registerCRMRoutes(app: Express) {
 
       sqlQuery += ` ORDER BY c.created_at DESC`;
 
-      const result = await db.execute(sql.raw(sqlQuery, queryParams));
+      const result = await db.execute(sql`${sql.raw(sqlQuery)}`);
       const leads = result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
@@ -218,7 +218,7 @@ export function registerCRMRoutes(app: Express) {
 
       sqlQuery += ` ORDER BY c.created_at DESC`;
 
-      const result = await db.execute(sql.raw(sqlQuery, queryParams));
+      const result = await db.execute(sql`${sql.raw(sqlQuery)}`);
       const leads = result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,

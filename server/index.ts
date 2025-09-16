@@ -138,7 +138,9 @@ app.use((req, res, next) => {
   }, async () => {
     log(`serving on port ${port}`);
     
-    // Initialize Telegram Bot
+    // Initialize Telegram Bot - TEMPORARILY DISABLED
+    // Uncomment when you want to enable the bot again
+    /*
     try {
       const { TELEGRAM_BOT_TOKEN } = await import('./config.js');
       if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN.trim() !== "") {
@@ -150,6 +152,8 @@ app.use((req, res, next) => {
     } catch (error) {
       console.error("❌ Failed to initialize Telegram bot:", error);
     }
+    */
+    console.log("⏸️ Telegram bot is temporarily disabled - using elsewhere")
 
     // Initialize WhatsApp Bot - DISABLED to prevent continuous connection attempts
     // Uncomment the code below when you need WhatsApp functionality

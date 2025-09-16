@@ -5,7 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Furnili Management',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    allowNavigation: ['*']
   },
   plugins: {
     Camera: {

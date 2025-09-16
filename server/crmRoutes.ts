@@ -134,7 +134,9 @@ export function registerCRMRoutes(app: Express) {
 
       sqlQuery += ` ORDER BY c.created_at DESC`;
 
-      const result = await db.execute(sql`${sql.raw(sqlQuery)}`);
+      // Use pg client directly for raw SQL with parameters
+      const client = await (db as any).getClient();
+      const result = await client.query(sqlQuery, queryParams);
       const leads = result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
@@ -218,7 +220,9 @@ export function registerCRMRoutes(app: Express) {
 
       sqlQuery += ` ORDER BY c.created_at DESC`;
 
-      const result = await db.execute(sql`${sql.raw(sqlQuery)}`);
+      // Use pg client directly for raw SQL with parameters
+      const client = await (db as any).getClient();
+      const result = await client.query(sqlQuery, queryParams);
       const leads = result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,

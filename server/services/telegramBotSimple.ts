@@ -759,8 +759,8 @@ Once added, please try /start again.`);
         } else {
           console.log(`➕ Creating new session for user ${userId}`);
           await client.query(
-            'INSERT INTO telegram_user_sessions (telegram_user_id, telegram_username, telegram_first_name, session_state, last_interaction) VALUES ($1, $2, $3, $4, NOW())',
-            [userId, username, firstName, 'authenticated']
+            'INSERT INTO telegram_user_sessions (telegram_user_id, telegram_username, telegram_first_name, last_interaction, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW(), NOW())',
+            [userId, username, firstName]
           );
         }
       } finally {

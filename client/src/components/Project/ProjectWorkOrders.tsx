@@ -391,25 +391,6 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
           {/* Simplified Delivery Notes Interface */}
           {deliveryNotes.length > 0 ? (
             <div className="space-y-4">
-              {/* Simple Header with Add Button */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-medium text-gray-900">Delivery Notes</h3>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setUploadContext({
-                      category: 'delivery_chalan',
-                      title: 'Delivery Note'
-                    });
-                    setIsUploadDialogOpen(true);
-                  }}
-                  className="text-blue-600 border-blue-200 hover:bg-blue-50 h-6 px-2 text-xs"
-                >
-                  Add
-                </Button>
-              </div>
-
               {/* Simple File Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
                 {deliveryNotes.map((file: any) => (

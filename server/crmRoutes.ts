@@ -605,4 +605,19 @@ export function registerCRMRoutes(app: Express) {
       res.status(400).json({ error: "Failed to create project note" });
     }
   });
+
+  // DEBUG: Check actual schema on live connection
+  app.get("/api/debug/schema", async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT table_schema, column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_schema='public' AND table_name='clients' 
+        ORDER BY column_name
+      `);
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 }

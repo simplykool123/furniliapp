@@ -4,12 +4,12 @@
 
 export const config = {
   // Database Configuration
-  // Production: Set DATABASE_URL environment variable
-  DATABASE_URL: process.env.DATABASE_URL || "postgresql://postgres.qopynbelowyghyciuofo:Furnili@123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres",
+  // REQUIRED: Set DATABASE_URL environment variable
+  DATABASE_URL: requireEnvVar('DATABASE_URL', 'Database connection string is required'),
   
   // Bot Configuration
-  // Production: Set TELEGRAM_BOT_TOKEN environment variable (leave empty if not using)
-  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || "8388446773:AAGert9QZiJpi90LumzRGKN9XBqGFHveLZg",
+  // OPTIONAL: Set TELEGRAM_BOT_TOKEN environment variable (empty = disabled)
+  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
   
   // JWT Secret for authentication
   // Production: REQUIRED - Set JWT_SECRET environment variable with a secure random key
@@ -33,6 +33,18 @@ export const config = {
     whatsapp: process.env.UPLOAD_PATH_WHATSAPP || "uploads/whatsapp/"
   }
 };
+
+// Environment variable validation helper
+function requireEnvVar(name: string, description: string): string {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`🚨 CONFIGURATION ERROR: ${name} environment variable is required`);
+    console.error(`📝 Description: ${description}`);
+    console.error(`🔧 Fix: Set ${name} in your environment variables`);
+    process.exit(1);
+  }
+  return value;
+}
 
 // JWT Secret validation function
 function validateJWTSecret(jwtSecret?: string): string {

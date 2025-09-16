@@ -26,8 +26,10 @@ const userStates = new Map<string, string>(); // Track user authentication state
 
 export class FurniliTelegramBot {
   private bot: TelegramBot;
+  private token: string;
   
   constructor(token: string) {
+    this.token = token;
     this.bot = new TelegramBot(token, { polling: true });
     this.setupHandlers();
     console.log('🤖 Furnili Telegram Bot initialized - permanent authentication');
@@ -700,7 +702,7 @@ Once added, please try /start again.`);
 
   private async downloadFile(fileId: string, type: string, extension: string) {
     const fileInfo = await this.bot.getFile(fileId);
-    const downloadUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfo.file_path}`;
+    const downloadUrl = `https://api.telegram.org/file/bot${this.token}/${fileInfo.file_path}`;
     
     const uniqueName = crypto.randomBytes(8).toString('hex');
     const fileName = `telegram_${type}_${uniqueName}${extension}`;

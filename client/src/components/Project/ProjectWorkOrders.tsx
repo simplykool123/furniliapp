@@ -86,11 +86,14 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
     queryFn: () => apiRequest(`/api/work-orders?projectId=${projectId}`),
   });
 
+  // Delivery notes query key - consistent for cache invalidation
+  const deliveryNotesKey = ['/api/projects', projectId, 'files', 'delivery_chalan'];
+  
   // Fetch delivery notes for this project  
   const { data: deliveryNotesData } = useQuery<{ files: any[] }>({
-    queryKey: ['/api/projects', projectId, 'files', 'delivery_chalan', 'v3'],
+    queryKey: deliveryNotesKey,
     queryFn: () => apiRequest(`/api/projects/${projectId}/files?category=delivery_chalan`),
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
   });
 
   const deliveryNotes = deliveryNotesData?.files || [];
@@ -119,7 +122,7 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
       return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files', 'delivery_chalan'] });
+      queryClient.invalidateQueries({ queryKey: deliveryNotesKey });
       setUploadingFiles(false);
       setIsUploadModalOpen(false);
       setUploadForm({ title: '', file: null });

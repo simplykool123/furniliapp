@@ -671,6 +671,10 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
       {showImagePreview && previewImage && (
         <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
           <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Image Preview</DialogTitle>
+              <DialogDescription>Preview of {previewImage.name}</DialogDescription>
+            </DialogHeader>
             <div className="relative">
               <Button
                 variant="ghost"

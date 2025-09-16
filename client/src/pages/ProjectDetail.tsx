@@ -893,7 +893,7 @@ export default function ProjectDetail() {
   });
 
   // Real project files from database
-  const { data: projectFiles = [], isLoading: filesLoading } = useQuery({
+  const { data: projectFilesData, isLoading: filesLoading } = useQuery({
     queryKey: ["/api/projects", projectId, "files"],
     queryFn: async () => {
       const token =
@@ -910,6 +910,9 @@ export default function ProjectDetail() {
     enabled: !!projectId,
     staleTime: 30 * 1000, // 30 seconds
   });
+
+  // Extract files array from API response
+  const projectFiles = projectFilesData?.files || [];
 
   // Query for project logs/notes
   const projectLogsQuery = useQuery({

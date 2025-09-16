@@ -84,7 +84,7 @@ export default function Pipeline() {
   // Create pipeline stage mutation
   const createStageMutation = useMutation({
     mutationFn: (data: PipelineStageFormData) => 
-      apiRequest("/api/crm/pipeline-stages", { method: "POST", body: JSON.stringify(data) }),
+      apiRequest("/api/crm/pipeline-stages", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/crm/pipeline-stages"] });
       setIsNewStageOpen(false);

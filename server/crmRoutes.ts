@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { authenticateToken, requireRole, type AuthRequest } from "./middleware/auth";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { 
   leadSources, 
   pipelineStages, 
@@ -134,9 +134,8 @@ export function registerCRMRoutes(app: Express) {
 
       sqlQuery += ` ORDER BY c.created_at DESC`;
 
-      // Use pg client directly for raw SQL with parameters
-      const client = await (db as any).getClient();
-      const result = await client.query(sqlQuery, queryParams);
+      // Use pool directly for raw SQL with parameters
+      const result = await pool.query(sqlQuery, queryParams);
       const leads = result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
@@ -220,9 +219,8 @@ export function registerCRMRoutes(app: Express) {
 
       sqlQuery += ` ORDER BY c.created_at DESC`;
 
-      // Use pg client directly for raw SQL with parameters
-      const client = await (db as any).getClient();
-      const result = await client.query(sqlQuery, queryParams);
+      // Use pool directly for raw SQL with parameters
+      const result = await pool.query(sqlQuery, queryParams);
       const leads = result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,

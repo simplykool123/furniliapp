@@ -753,13 +753,13 @@ Once added, please try /start again.`);
         if (existing.rows.length > 0) {
           console.log(`✅ Updating existing session for user ${userId}`);
           await client.query(
-            'UPDATE telegram_user_sessions SET telegram_username = $2, telegram_first_name = $3, last_interaction = NOW(), updated_at = NOW() WHERE telegram_user_id = $1',
+            'UPDATE telegram_user_sessions SET telegram_username = $2, telegram_first_name = $3, updated_at = NOW() WHERE telegram_user_id = $1',
             [userId, username, firstName]
           );
         } else {
           console.log(`➕ Creating new session for user ${userId}`);
           await client.query(
-            'INSERT INTO telegram_user_sessions (telegram_user_id, telegram_username, telegram_first_name, last_interaction, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW(), NOW())',
+            'INSERT INTO telegram_user_sessions (telegram_user_id, telegram_username, telegram_first_name, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())',
             [userId, username, firstName]
           );
         }

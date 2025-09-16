@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, User, FileText, Factory, CheckCircle, AlertTriangle, Play, Upload, FileImage, Download, Plus } from "lucide-react";
+import { Calendar, Clock, User, FileText, Factory, CheckCircle, AlertTriangle, Play, Upload, FileImage, Download, Plus, Eye, Trash2, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -77,7 +77,9 @@ const getStatusIcon = (status: string) => {
 export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps) {
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isCreateWorkOrderOpen, setIsCreateWorkOrderOpen] = useState(false);
   const [uploadForm, setUploadForm] = useState({ title: '', file: null as File | null });
+  const [createWorkOrderForm, setCreateWorkOrderForm] = useState({ title: '', quantity: 1 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -88,6 +90,57 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
     }
   };
   const queryClient = useQueryClient();
+
+  // Delete work order mutation
+  const deleteWorkOrderMutation = useMutation({
+    mutationFn: async (workOrderId: number) => {
+      const response = await apiRequest(`/api/work-orders/${workOrderId}`, { method: 'DELETE' });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-orders', { projectId }] });
+      toast({ title: "Work order deleted successfully!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete work order", variant: "destructive" });
+    }
+  });
+
+  // Create work order mutation
+  const createWorkOrderMutation = useMutation({
+    mutationFn: async (data: { title: string; quantity: number }) => {
+      const response = await apiRequest('/api/work-orders', { 
+        method: 'POST', 
+        body: JSON.stringify({ ...data, projectId })
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-orders', { projectId }] });
+      setIsCreateWorkOrderOpen(false);
+      setCreateWorkOrderForm({ title: '', quantity: 1 });
+      toast({ title: "Work order created successfully!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to create work order", variant: "destructive" });
+    }
+  });
+
+  // Handle delete work order
+  const handleDeleteWorkOrder = (workOrderId: number) => {
+    if (window.confirm('Are you sure you want to delete this work order?')) {
+      deleteWorkOrderMutation.mutate(workOrderId);
+    }
+  };
+
+  // Handle create work order
+  const handleCreateWorkOrder = () => {
+    if (!createWorkOrderForm.title.trim()) {
+      toast({ title: "Please enter a title for the work order", variant: "destructive" });
+      return;
+    }
+    createWorkOrderMutation.mutate(createWorkOrderForm);
+  };
 
   const { data: workOrders = [], isLoading } = useQuery<WorkOrder[]>({
     queryKey: ['/api/work-orders', { projectId }],
@@ -289,133 +342,131 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
         </CardContent>
       </Card>
 
-      {/* Work Orders Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Work Orders</h3>
-        {workOrders.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Factory className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Work Orders Yet</h3>
-              <p className="text-gray-600 mb-4">
-                Work orders will appear here once quotes are approved for production.
-              </p>
-              <p className="text-sm text-gray-500">
-                Approve a quote to automatically create a work order and start the production process.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          workOrders.map((workOrder) => (
-        <Card key={workOrder.id} className="hover:shadow-md transition-shadow">
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  {getStatusIcon(workOrder.status)}
-                  <CardTitle className="text-lg">{workOrder.orderNumber}</CardTitle>
-                </div>
-                <h4 className="text-sm font-medium text-gray-800">{workOrder.title}</h4>
-              </div>
-              <div className="flex space-x-2">
-                <Badge className={`${statusColors[workOrder.status]} text-xs`}>
-                  {workOrder.status.replace('_', ' ')}
-                </Badge>
-                <Badge className={`${priorityColors[workOrder.priority]} text-xs`}>
-                  {workOrder.priority}
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="pt-0">
-            <div className="space-y-3">
-              {workOrder.description && (
-                <p className="text-sm text-gray-600">{workOrder.description}</p>
-              )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center space-x-2">
-                  <Factory className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">Type:</span>
-                  <span className="font-medium capitalize">{workOrder.orderType}</span>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">Quantity:</span>
-                  <span className="font-medium">{workOrder.totalQuantity}</span>
-                </div>
-                
-                {workOrder.quote && (
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">Quote:</span>
-                    <span className="font-medium">{workOrder.quote.quoteNumber}</span>
-                  </div>
+      {/* Work Orders Section - Compact */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center space-x-2">
+                <Factory className="h-5 w-5" />
+                <span>Work Orders</span>
+                {workOrders.length > 0 && (
+                  <Badge variant="secondary">{workOrders.length}</Badge>
                 )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">Estimated Start:</span>
-                  <p className="font-medium">
-                    {new Date(workOrder.estimatedStartDate).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-gray-600">Estimated End:</span>
-                  <p className="font-medium">
-                    {new Date(workOrder.estimatedEndDate).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              {workOrder.actualStartDate && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Actual Start:</span>
-                    <p className="font-medium text-green-600">
-                      {new Date(workOrder.actualStartDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                  {workOrder.actualEndDate && (
-                    <div>
-                      <span className="text-gray-600">Actual End:</span>
-                      <p className="font-medium text-green-600">
-                        {new Date(workOrder.actualEndDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {workOrder.specifications && (
-                <div className="bg-gray-50 p-3 rounded-md">
-                  <span className="text-sm font-medium text-gray-700">Specifications:</span>
-                  <p className="text-sm text-gray-600 mt-1">{workOrder.specifications}</p>
-                </div>
-              )}
-              
-              <div className="flex justify-between items-center pt-2 border-t">
-                <div className="text-xs text-gray-500">
-                  Created {new Date(workOrder.createdAt).toLocaleDateString()} 
-                  {workOrder.createdByUser && ` by ${workOrder.createdByUser.name}`}
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => window.open(`/production/work-orders/${workOrder.id}`, '_blank')}
-                >
-                  View Details
-                </Button>
-              </div>
+              </CardTitle>
+              <p className="text-sm text-gray-500 mt-1">
+                A work order is a simple production task created after a quote is approved.
+              </p>
             </div>
-          </CardContent>
-        </Card>
-          ))
-        )}
-      </div>
+            <Button
+              onClick={() => setIsCreateWorkOrderOpen(true)}
+              className="bg-brown-600 hover:bg-brown-700 text-white"
+              size="sm"
+              data-testid="button-create-work-order"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Create Work Order
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {workOrders.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Factory className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-sm">No work orders yet</p>
+              <p className="text-xs mt-1">Click "Create Work Order" to add your first production task</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {workOrders.map((workOrder) => (
+                <div key={workOrder.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      {getStatusIcon(workOrder.status)}
+                      <span className="font-medium">{workOrder.orderNumber}</span>
+                    </div>
+                    <span className="text-sm text-gray-600">{workOrder.title}</span>
+                    <Badge className={`${statusColors[workOrder.status]} text-xs`}>
+                      {workOrder.status.replace('_', ' ')}
+                    </Badge>
+                    <span className="text-xs text-gray-500">Qty: {workOrder.totalQuantity}</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(workOrder.estimatedStartDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(`/production/work-orders/${workOrder.id}`, '_blank')}
+                      data-testid={`button-view-${workOrder.id}`}
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteWorkOrder(workOrder.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      data-testid={`button-delete-${workOrder.id}`}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create Work Order Dialog */}
+      <Dialog open={isCreateWorkOrderOpen} onOpenChange={setIsCreateWorkOrderOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Work Order</DialogTitle>
+            <DialogDescription>
+              Create a new production task for this project.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="wo-title">Title *</Label>
+              <Input
+                id="wo-title"
+                placeholder="Enter work order title"
+                value={createWorkOrderForm.title}
+                onChange={(e) => setCreateWorkOrderForm(prev => ({ ...prev, title: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="wo-quantity">Quantity *</Label>
+              <Input
+                id="wo-quantity"
+                type="number"
+                min="1"
+                value={createWorkOrderForm.quantity}
+                onChange={(e) => setCreateWorkOrderForm(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsCreateWorkOrderOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateWorkOrder}
+              disabled={!createWorkOrderForm.title.trim() || createWorkOrderMutation.isPending}
+              className="bg-brown-600 hover:bg-brown-700 text-white"
+            >
+              {createWorkOrderMutation.isPending ? "Creating..." : "Create Work Order"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

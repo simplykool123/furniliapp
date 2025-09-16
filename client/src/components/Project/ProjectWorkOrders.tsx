@@ -89,7 +89,7 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
   // Fetch delivery notes for this project
   const { data: deliveryNotesData } = useQuery<{ files: any[] }>({
     queryKey: ['/api/projects', projectId, 'files', 'delivery_chalan'],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/files?type=delivery_chalan`),
+    queryFn: () => apiRequest(`/api/projects/${projectId}/files?category=delivery_chalan`),
   });
 
   const deliveryNotes = deliveryNotesData?.files || [];

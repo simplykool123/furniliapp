@@ -86,10 +86,11 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
     queryFn: () => apiRequest(`/api/work-orders?projectId=${projectId}`),
   });
 
-  // Fetch delivery notes for this project
+  // Fetch delivery notes for this project  
   const { data: deliveryNotesData } = useQuery<{ files: any[] }>({
-    queryKey: ['/api/projects', projectId, 'files', 'delivery_chalan'],
+    queryKey: ['/api/projects', projectId, 'files', 'delivery_chalan', 'v3'],
     queryFn: () => apiRequest(`/api/projects/${projectId}/files?category=delivery_chalan`),
+    staleTime: 30000, // 30 seconds
   });
 
   const deliveryNotes = deliveryNotesData?.files || [];

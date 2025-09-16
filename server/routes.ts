@@ -4547,8 +4547,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/:id/files", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const projectId = parseInt(req.params.id);
-      const files = await storage.getProjectFiles(projectId);
-      res.json(files);
+      const { category } = req.query;
+      
+      let files = await storage.getProjectFiles(projectId);
+      
+      console.log(`Files for project ${projectId}:`, files.map(f => ({ id: f.id, fileName: f.fileName, category: f.category })));
+      
+      // Filter by category if specified
+      if (category && typeof category === 'string') {
+        console.log(`Filtering by category: ${category}`);
+        files = files.filter(file => file.category === category);
+        console.log(`Filtered files:`, files.map(f => ({ id: f.id, fileName: f.fileName, category: f.category })));
+      }
+      
+      res.json({ files });
     } catch (error) {
       console.error("Failed to fetch project files:", error);
       res.status(500).json({ message: "Failed to fetch project files", error: String(error) });

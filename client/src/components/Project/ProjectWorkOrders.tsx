@@ -99,7 +99,7 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
     mutationFn: async ({ title, file }: { title: string; file: File }) => {
       const formData = new FormData();
       formData.append('files', file);
-      formData.append('type', 'delivery_chalan');
+      formData.append('category', 'delivery_chalan');
       formData.append('title', title);
       
       const response = await fetch(`/api/projects/${projectId}/files`, {
@@ -223,14 +223,33 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
                   </div>
                   
                   <div>
-                    <Label htmlFor="delivery-file">Select File *</Label>
+                    <Label htmlFor="delivery-file">Select File * (or Ctrl+V to paste)</Label>
                     <Input
                       id="delivery-file"
                       type="file"
                       accept="image/*,.pdf,.xlsx,.xls"
                       onChange={(e) => setUploadForm(prev => ({ ...prev, file: e.target.files?.[0] || null }))}
+                      onPaste={(e) => {
+                        const items = e.clipboardData?.items;
+                        if (items) {
+                          for (let i = 0; i < items.length; i++) {
+                            if (items[i].type.indexOf('image') !== -1) {
+                              const file = items[i].getAsFile();
+                              if (file) {
+                                setUploadForm(prev => ({ ...prev, file }));
+                                break;
+                              }
+                            }
+                          }
+                        }
+                      }}
                       data-testid="input-delivery-file"
                     />
+                    {uploadForm.file && (
+                      <p className="text-xs text-green-600 mt-1">
+                        File selected: {uploadForm.file.name}
+                      </p>
+                    )}
                   </div>
                   
                   <div className="flex justify-end space-x-2 pt-4">

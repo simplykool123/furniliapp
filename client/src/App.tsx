@@ -42,6 +42,7 @@ import WorkOrders from "@/pages/WorkOrders";
 import QualityControl from "@/pages/QualityControl";
 import WhatsAppConsole from "@/pages/WhatsAppConsole";
 import Leads from "@/pages/Leads";
+import Pipeline from "@/pages/Pipeline";
 import Interactions from "@/pages/Interactions";
 import CreateQuote from "@/pages/CreateQuote";
 import EditQuote from "@/pages/EditQuote";
@@ -328,6 +329,12 @@ function Router() {
       <Route path="/leads">
         <ProtectedRoute>
           <Leads />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/pipeline">
+        <ProtectedRoute>
+          <Pipeline />
         </ProtectedRoute>
       </Route>
       

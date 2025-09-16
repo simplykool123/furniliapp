@@ -19,7 +19,6 @@ import {
 import { createBackupZip } from "./utils/backupExport";
 import { canOrderMaterials, getMaterialRequestEligibleProjects, getStageDisplayName } from "./utils/projectStageValidation";
 import { setupQuotesRoutes } from "./quotesRoutes";
-import { registerCRMRoutes } from "./crmRoutes";
 import setupQuoteUploadRoutes from "./quoteUploadRoutes";
 // ObjectStorageService removed - using local storage only
 import { db } from "./db";
@@ -6065,7 +6064,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupQuoteUploadRoutes(app);
   
   // CRM Routes
-  registerCRMRoutes(app);
 
   // Register file upload routes
   app.use('/api', fileRoutes);

@@ -65,18 +65,6 @@ export const navigation = [
   { name: 'Staff Attendance', href: '/attendance', icon: UserRoundPen, roles: ['admin', 'manager', 'staff', 'store_incharge'] },
   { name: 'Petty Cash', href: '/petty-cash', icon: CircleDollarSign, roles: ['admin', 'manager', 'staff', 'store_incharge'] }, // Store keeper can access user-specific petty cash
   
-  { 
-    name: 'CRM & Sales', 
-    icon: Users2, 
-    roles: ['admin', 'manager'],
-    isCollapsible: true,
-    subItems: [
-      { name: 'Lead Management', href: '/leads', icon: UserPlus, roles: ['admin', 'manager'] },
-      { name: 'Sales Pipeline', href: '/pipeline', icon: TrendingUpDown, roles: ['admin', 'manager'] },
-      { name: 'Customer Interactions', href: '/interactions', icon: MessageSquare, roles: ['admin', 'manager'] },
-      { name: 'Customer Satisfaction', href: '/satisfaction', icon: Star, roles: ['admin', 'manager'] },
-    ]
-  },
   
   { name: 'Project Management', href: '/projects', icon: ProjectManagementIcon, roles: ['admin', 'manager', 'staff', 'store_incharge'] }, // Store keeper can access project management
   { name: 'Task Management', href: '/tasks', icon: CheckSquare, roles: ['admin', 'manager', 'staff', 'store_incharge'] },

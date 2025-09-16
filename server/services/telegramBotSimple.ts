@@ -370,10 +370,12 @@ Send the command and start uploading!`;
       return;
     }
 
-    // Handle text notes if user is in notes mode
+    // Handle text messages based on current mode
     const currentMode = userModes.get(userId);
     if (currentMode === 'notes') {
       await this.handleTextNote(msg, text);
+    } else if (currentMode === 'delivery_chalan') {
+      await this.handleDeliveryChallanComment(msg, text);
     }
   }
 
@@ -421,6 +423,49 @@ Quick Start:
 Please contact the admin (9823633833) to add your phone number to the system.
 
 Once added, please try /start again.`);
+    }
+  }
+
+  private async handleDeliveryChallanComment(msg: TelegramBot.Message, commentText: string) {
+    const chatId = msg.chat.id;
+    const userId = msg.from?.id.toString();
+    if (!userId) return;
+
+    try {
+      const projectId = userProjects.get(userId) || 1;
+      const systemUser = await this.getSystemUserInfo(userId);
+      console.log(`💬 User ${userId} (${systemUser?.name}) adding comment to delivery challan: "${commentText}"`);
+
+      const client = await botPool.connect();
+      try {
+        // Find the most recent delivery challan file uploaded by this user
+        const recentFile = await client.query(`
+          SELECT id, file_name, original_name 
+          FROM project_files 
+          WHERE project_id = $1 AND category = 'delivery_chalan' AND uploaded_by = $2
+          ORDER BY created_at DESC 
+          LIMIT 1
+        `, [projectId, systemUser?.id || 7]);
+
+        if (recentFile.rows.length > 0) {
+          const file = recentFile.rows[0];
+          
+          // Update the file with the comment
+          await client.query(
+            'UPDATE project_files SET comment = $1 WHERE id = $2',
+            [commentText, file.id]
+          );
+
+          await this.bot.sendMessage(chatId, `✅ Comment added to "${file.original_name}":\n"${commentText}"`);
+        } else {
+          await this.bot.sendMessage(chatId, `❌ No recent delivery challan found to add comment to. Please upload a photo first.`);
+        }
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Error handling delivery challan comment:', error);
+      await this.bot.sendMessage(chatId, "Error adding comment. Please try again.");
     }
   }
 

@@ -106,67 +106,59 @@ export function registerCRMRoutes(app: Express) {
     try {
       const { search } = req.query;
       
-      // TEMPORARY FIX: Use raw SQL to bypass Drizzle ORM issue
-      let sqlQuery = `
-        SELECT 
-          c.id, c.name, c.email, c.mobile, c.city, c.contact_person as "contactPerson",
-          c.phone, c.address1, c.address2, c.state, c.pin_code as "pinCode", 
-          c.gst_number as "gstNumber", c.type, c.lead_source_id as "leadSourceId",
-          c.pipeline_stage_id as "pipelineStageId", c.is_active as "isActive",
-          c.created_at as "createdAt", c.updated_at as "updatedAt",
-          ls.id as "leadSourceId_join", ls.name as "leadSourceName", ls.type as "leadSourceType",
-          ps.id as "pipelineStageId_join", ps.name as "pipelineStageName", 
-          ps.color as "pipelineStageColor", ps.probability as "pipelineStageProbability"
-        FROM clients c
-        LEFT JOIN lead_sources ls ON c.lead_source_id = ls.id
-        LEFT JOIN pipeline_stages ps ON c.pipeline_stage_id = ps.id
-        WHERE c.is_active = true AND c.type = 'lead'
-      `;
-
-      const queryParams: any[] = [];
-
+      // Use proper Drizzle ORM query with joins
+      let whereConditions = [eq(clients.isActive, true), eq(clients.type, 'lead')];
+      
       // Add search functionality
       if (search && search !== 'all') {
-        sqlQuery += ` AND (c.name ILIKE $${queryParams.length + 1} OR c.email ILIKE $${queryParams.length + 2} OR c.mobile ILIKE $${queryParams.length + 3} OR c.city ILIKE $${queryParams.length + 4})`;
         const searchTerm = `%${search}%`;
-        queryParams.push(searchTerm, searchTerm, searchTerm, searchTerm);
+        whereConditions.push(
+          or(
+            like(clients.name, searchTerm),
+            like(clients.email, searchTerm),
+            like(clients.mobile, searchTerm),
+            like(clients.city, searchTerm)
+          )
+        );
       }
 
-      sqlQuery += ` ORDER BY c.created_at DESC`;
-
-      // Use pool directly for raw SQL with parameters
-      const result = await pool.query(sqlQuery, queryParams);
-      const leads = result.rows.map((row: any) => ({
-        id: row.id,
-        name: row.name,
-        email: row.email,
-        mobile: row.mobile,
-        city: row.city,
-        contactPerson: row.contactPerson,
-        phone: row.phone,
-        address1: row.address1,
-        address2: row.address2,
-        state: row.state,
-        pinCode: row.pinCode,
-        gstNumber: row.gstNumber,
-        type: row.type,
-        leadSourceId: row.leadSourceId,
-        pipelineStageId: row.pipelineStageId,
-        isActive: row.isActive,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        leadSource: row.leadSourceId_join ? {
-          id: row.leadSourceId_join,
-          name: row.leadSourceName, 
-          type: row.leadSourceType
-        } : null,
-        pipelineStage: row.pipelineStageId_join ? {
-          id: row.pipelineStageId_join,
-          name: row.pipelineStageName,
-          color: row.pipelineStageColor,
-          probability: row.pipelineStageProbability
-        } : null
-      }));
+      const leads = await db
+        .select({
+          id: clients.id,
+          name: clients.name,
+          email: clients.email,
+          mobile: clients.mobile,
+          city: clients.city,
+          contactPerson: clients.contactPerson,
+          phone: clients.phone,
+          address1: clients.address1,
+          address2: clients.address2,
+          state: clients.state,
+          pinCode: clients.pinCode,
+          gstNumber: clients.gstNumber,
+          type: clients.type,
+          leadSourceId: clients.leadSourceId,
+          pipelineStageId: clients.pipelineStageId,
+          isActive: clients.isActive,
+          createdAt: clients.createdAt,
+          updatedAt: clients.updatedAt,
+          leadSource: {
+            id: leadSources.id,
+            name: leadSources.name,
+            type: leadSources.type
+          },
+          pipelineStage: {
+            id: pipelineStages.id,
+            name: pipelineStages.name,
+            color: pipelineStages.color,
+            probability: pipelineStages.probability
+          }
+        })
+        .from(clients)
+        .leftJoin(leadSources, eq(clients.leadSourceId, leadSources.id))
+        .leftJoin(pipelineStages, eq(clients.pipelineStageId, pipelineStages.id))
+        .where(and(...whereConditions))
+        .orderBy(desc(clients.createdAt));
 
       res.json(leads);
     } catch (error) {
@@ -180,31 +172,14 @@ export function registerCRMRoutes(app: Express) {
     try {
       const { stage, source } = req.params;
       
-      // TEMPORARY FIX: Use raw SQL to bypass Drizzle ORM issue
-      let sqlQuery = `
-        SELECT 
-          c.id, c.name, c.email, c.mobile, c.city, c.contact_person as "contactPerson",
-          c.phone, c.address1, c.address2, c.state, c.pin_code as "pinCode", 
-          c.gst_number as "gstNumber", c.type, c.lead_source_id as "leadSourceId",
-          c.pipeline_stage_id as "pipelineStageId", c.is_active as "isActive",
-          c.created_at as "createdAt", c.updated_at as "updatedAt",
-          ls.id as "leadSourceId_join", ls.name as "leadSourceName", ls.type as "leadSourceType",
-          ps.id as "pipelineStageId_join", ps.name as "pipelineStageName", 
-          ps.color as "pipelineStageColor", ps.probability as "pipelineStageProbability"
-        FROM clients c
-        LEFT JOIN lead_sources ls ON c.lead_source_id = ls.id
-        LEFT JOIN pipeline_stages ps ON c.pipeline_stage_id = ps.id
-        WHERE c.is_active = true AND c.type = 'lead'
-      `;
-
-      const queryParams: any[] = [];
+      // Use proper Drizzle ORM query with joins and filters
+      let whereConditions = [eq(clients.isActive, true), eq(clients.type, 'lead')];
       
       // Add stage filter
       if (stage && stage !== 'all') {
         const stageId = parseInt(stage);
         if (!isNaN(stageId)) {
-          sqlQuery += ` AND c.pipeline_stage_id = $${queryParams.length + 1}`;
-          queryParams.push(stageId);
+          whereConditions.push(eq(clients.pipelineStageId, stageId));
         }
       }
 
@@ -212,46 +187,47 @@ export function registerCRMRoutes(app: Express) {
       if (source && source !== 'all') {
         const sourceId = parseInt(source);
         if (!isNaN(sourceId)) {
-          sqlQuery += ` AND c.lead_source_id = $${queryParams.length + 1}`;
-          queryParams.push(sourceId);
+          whereConditions.push(eq(clients.leadSourceId, sourceId));
         }
       }
 
-      sqlQuery += ` ORDER BY c.created_at DESC`;
-
-      // Use pool directly for raw SQL with parameters
-      const result = await pool.query(sqlQuery, queryParams);
-      const leads = result.rows.map((row: any) => ({
-        id: row.id,
-        name: row.name,
-        email: row.email,
-        mobile: row.mobile,
-        city: row.city,
-        contactPerson: row.contactPerson,
-        phone: row.phone,
-        address1: row.address1,
-        address2: row.address2,
-        state: row.state,
-        pinCode: row.pinCode,
-        gstNumber: row.gstNumber,
-        type: row.type,
-        leadSourceId: row.leadSourceId,
-        pipelineStageId: row.pipelineStageId,
-        isActive: row.isActive,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        leadSource: row.leadSourceId_join ? {
-          id: row.leadSourceId_join,
-          name: row.leadSourceName, 
-          type: row.leadSourceType
-        } : null,
-        pipelineStage: row.pipelineStageId_join ? {
-          id: row.pipelineStageId_join,
-          name: row.pipelineStageName,
-          color: row.pipelineStageColor,
-          probability: row.pipelineStageProbability
-        } : null
-      }));
+      const leads = await db
+        .select({
+          id: clients.id,
+          name: clients.name,
+          email: clients.email,
+          mobile: clients.mobile,
+          city: clients.city,
+          contactPerson: clients.contactPerson,
+          phone: clients.phone,
+          address1: clients.address1,
+          address2: clients.address2,
+          state: clients.state,
+          pinCode: clients.pinCode,
+          gstNumber: clients.gstNumber,
+          type: clients.type,
+          leadSourceId: clients.leadSourceId,
+          pipelineStageId: clients.pipelineStageId,
+          isActive: clients.isActive,
+          createdAt: clients.createdAt,
+          updatedAt: clients.updatedAt,
+          leadSource: {
+            id: leadSources.id,
+            name: leadSources.name,
+            type: leadSources.type
+          },
+          pipelineStage: {
+            id: pipelineStages.id,
+            name: pipelineStages.name,
+            color: pipelineStages.color,
+            probability: pipelineStages.probability
+          }
+        })
+        .from(clients)
+        .leftJoin(leadSources, eq(clients.leadSourceId, leadSources.id))
+        .leftJoin(pipelineStages, eq(clients.pipelineStageId, pipelineStages.id))
+        .where(and(...whereConditions))
+        .orderBy(desc(clients.createdAt));
 
       res.json(leads);
     } catch (error) {

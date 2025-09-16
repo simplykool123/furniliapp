@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +78,15 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadForm, setUploadForm] = useState({ title: '', file: null as File | null });
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Handle file selection
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setUploadForm(prev => ({ ...prev, file: event.target.files![0] }));
+    }
+  };
   const queryClient = useQueryClient();
 
   const { data: workOrders = [], isLoading } = useQuery<WorkOrder[]>({
@@ -181,103 +189,52 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
       {/* Delivery Notes Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center space-x-2">
-              <FileImage className="h-5 w-5" />
-              <span>Delivery Notes</span>
-              {deliveryNotes.length > 0 && (
-                <Badge variant="secondary">{deliveryNotes.length}</Badge>
-              )}
-            </CardTitle>
-            
-            <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="flex items-center space-x-2" data-testid="button-quick-upload-delivery">
-                  <Plus className="h-4 w-4" />
-                  <span>Quick Upload Delivery Challan</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Upload Delivery Challan</DialogTitle>
-                  <DialogDescription>
-                    Upload delivery challan files with subject and attach photos or documents.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="delivery-type">Type *</Label>
-                    <Input 
-                      id="delivery-type" 
-                      value="Delivery Challan" 
-                      disabled 
-                      className="bg-gray-50"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="delivery-title">Subject *</Label>
-                    <Input
-                      id="delivery-title"
-                      placeholder="Enter subject/description"
-                      value={uploadForm.title}
-                      onChange={(e) => setUploadForm(prev => ({ ...prev, title: e.target.value }))}
-                      data-testid="input-delivery-title"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="delivery-file">Select File * (or Ctrl+V to paste)</Label>
-                    <Input
-                      id="delivery-file"
-                      type="file"
-                      accept="image/*,.pdf,.xlsx,.xls"
-                      onChange={(e) => setUploadForm(prev => ({ ...prev, file: e.target.files?.[0] || null }))}
-                      onPaste={(e) => {
-                        const items = e.clipboardData?.items;
-                        if (items) {
-                          for (let i = 0; i < items.length; i++) {
-                            if (items[i].type.indexOf('image') !== -1) {
-                              const file = items[i].getAsFile();
-                              if (file) {
-                                setUploadForm(prev => ({ ...prev, file }));
-                                break;
-                              }
-                            }
-                          }
-                        }
-                      }}
-                      data-testid="input-delivery-file"
-                    />
-                    {uploadForm.file && (
-                      <p className="text-xs text-green-600 mt-1">
-                        File selected: {uploadForm.file.name}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setIsUploadModalOpen(false)}
-                      disabled={uploadingFiles}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleSimpleUpload}
-                      disabled={uploadingFiles || !uploadForm.title || !uploadForm.file}
-                      data-testid="button-upload-delivery"
-                    >
-                      {uploadingFiles ? "Uploading..." : "Upload File"}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <CardTitle className="flex items-center space-x-2">
+            <FileImage className="h-5 w-5" />
+            <span>Delivery Notes</span>
+            {deliveryNotes.length > 0 && (
+              <Badge variant="secondary">{deliveryNotes.length}</Badge>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Simple inline uploader - just like Files tab */}
+          <div className="flex items-center gap-3 mb-4 p-3 border rounded-lg bg-gray-50">
+            <input
+              type="text"
+              placeholder="Comment"
+              value={uploadForm.title}
+              onChange={(e) => setUploadForm(prev => ({ ...prev, title: e.target.value }))}
+              className="flex-1 px-3 py-2 border rounded text-sm"
+              data-testid="input-delivery-comment"
+            />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              multiple
+              accept="image/*,.pdf,.doc,.docx"
+              className="hidden"
+            />
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              variant="outline"
+              size="sm"
+              data-testid="button-select-files"
+            >
+              Add
+            </Button>
+            <Button
+              onClick={handleSimpleUpload}
+              disabled={!uploadForm.file || uploadingFiles}
+              className="bg-brown-600 hover:bg-brown-700 text-white"
+              size="sm"
+              data-testid="button-upload"
+            >
+              {uploadingFiles ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            </Button>
+          </div>
+
           {/* Display uploaded delivery notes */}
           {deliveryNotes.length > 0 ? (
             <div className="space-y-3">

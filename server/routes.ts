@@ -4551,13 +4551,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let files = await storage.getProjectFiles(projectId);
       
-      console.log(`Files for project ${projectId}:`, files.map(f => ({ id: f.id, fileName: f.fileName, category: f.category })));
-      
       // Filter by category if specified
       if (category && typeof category === 'string') {
-        console.log(`Filtering by category: ${category}`);
         files = files.filter(file => file.category === category);
-        console.log(`Filtered files:`, files.map(f => ({ id: f.id, fileName: f.fileName, category: f.category })));
       }
       
       res.json({ files });

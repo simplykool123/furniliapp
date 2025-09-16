@@ -41,6 +41,7 @@ export class FurniliTelegramBot {
     this.bot.onText(/\/design/, (msg) => this.handleCategorySelection(msg, 'design'));
     this.bot.onText(/\/drawings/, (msg) => this.handleCategorySelection(msg, 'drawings'));
     this.bot.onText(/\/notes/, (msg) => this.handleCategorySelection(msg, 'notes'));
+    this.bot.onText(/\/dc/, (msg) => this.handleCategorySelection(msg, 'delivery_chalan'));
     this.bot.on('photo', (msg) => this.handlePhoto(msg));
     this.bot.on('document', (msg) => this.handleDocument(msg));
     // Handle simple number inputs for project selection and phone authentication  
@@ -211,6 +212,57 @@ Example: 9876543210`);
   }
 
 
+  private async selectProjectByNumber(msg: TelegramBot.Message, projectNumber: number) {
+    const chatId = msg.chat.id;
+    const userId = msg.from?.id.toString();
+    if (!userId) return;
+
+    try {
+      const client = await botPool.connect();
+      
+      try {
+        const projectListResult = await client.query(`
+          SELECT p.id, p.code, p.name, p.client_id, c.name as client_name
+          FROM projects p
+          LEFT JOIN clients c ON p.client_id = c.id
+          WHERE p.is_active = true 
+            AND p.stage NOT IN ('completed', 'handover', 'lost')
+          ORDER BY p.created_at
+        `);
+        const projectList = projectListResult.rows;
+
+        if (projectNumber < 1 || projectNumber > projectList.length) {
+          await this.bot.sendMessage(chatId, `Invalid project number. Select between 1 and ${projectList.length}.`);
+          return;
+        }
+
+        const selectedProject = projectList[projectNumber - 1];
+        userProjects.set(userId, selectedProject.id);
+        
+        console.log(`✅ User ${userId} selected project: ${selectedProject.code} (ID: ${selectedProject.id})`);
+
+        const message = `✅ Project Selected: ${selectedProject.code} - ${selectedProject.name}
+Client: ${selectedProject.client_name || 'Unknown'}
+
+📁 Choose upload category:
+• /recce - Site photos with measurements
+• /design - Design files
+• /drawings - Technical drawings
+• /notes - Text notes
+• /dc - Delivery challan photos
+
+Send the command and start uploading!`;
+
+        await this.bot.sendMessage(chatId, message);
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Error selecting project by number:', error);
+      await this.bot.sendMessage(chatId, "Error selecting project. Please try again.");
+    }
+  }
+
   private async handleSelectProject(msg: TelegramBot.Message, match: RegExpExecArray | null) {
     const chatId = msg.chat.id;
     const userId = msg.from?.id.toString();
@@ -254,6 +306,7 @@ Client: ${selectedProject.client_name || 'Unknown'}
 • /design - Design files
 • /drawings - Technical drawings
 • /notes - Text notes
+• /dc - Delivery challan photos
 
 Send the command and start uploading!`;
 
@@ -304,8 +357,8 @@ Send the command and start uploading!`;
           // Skip session check - just handle number as project selection
           console.log(`📱 User ${userId} typed number: ${projectNumber}`);
           
-          // Simulate /select command for any number input
-          await this.handleSelectProject(msg, [text, projectNumber.toString()]);
+          // Handle numeric project selection directly
+          await this.selectProjectByNumber(msg, projectNumber);
         } finally {
           client.release();
         }
@@ -436,7 +489,8 @@ Once added, please try /start again.`);
         recce: "📷 Recce Mode Active\n\nSend site photos with measurements.",
         design: "🎨 Design Mode Active\n\nSend design files and concepts.",
         drawings: "📐 Drawings Mode Active\n\nSend technical drawings and plans.",
-        notes: "📝 Notes Mode Active\n\nSend text notes or attachments."
+        notes: "📝 Notes Mode Active\n\nSend text notes or attachments.",
+        delivery_chalan: "📋 Delivery Challan Mode Active\n\nSend delivery challan photos."
       };
 
       await this.bot.sendMessage(chatId, messages[category] || "Upload mode active. Send your files!");
@@ -722,7 +776,8 @@ Once added, please try /start again.`);
       'recce': 'photos',
       'design': 'design', 
       'drawings': 'drawings',
-      'notes': 'notes'
+      'notes': 'notes',
+      'delivery_chalan': 'delivery_chalan'
     };
     return mapping[category] || 'general';
   }

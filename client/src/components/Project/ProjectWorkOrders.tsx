@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, User, FileText, Factory, CheckCircle, AlertTriangle, Play, Upload, FileImage, Download, Plus, Eye, Trash2, Loader2, MoreVertical, Image, FolderOpen } from "lucide-react";
+import { Calendar, Clock, User, FileText, Factory, CheckCircle, AlertTriangle, Play, Upload, FileImage, Download, Plus, Eye, Trash2, Loader2, MoreVertical, Image, FolderOpen, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -388,193 +388,134 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Delivery Notes - Exact Files Tab Interface */}
+          {/* Simplified Delivery Notes Interface */}
           {deliveryNotes.length > 0 ? (
             <div className="space-y-4">
-              {Object.entries(
-                deliveryNotes.reduce((titleGroups: any, file: any) => {
-                  const title = file.description && file.description.trim() 
-                    ? file.description.trim() 
-                    : file.title && file.title.trim()
-                    ? file.title.trim()
-                    : 'Untitled';
-                  if (!titleGroups[title]) titleGroups[title] = [];
-                  titleGroups[title].push(file);
-                  return titleGroups;
-                }, {})
-              ).map(([title, files]: [string, any]) => (
-                <div key={`delivery_chalan-${title}`} className="bg-white rounded border border-gray-200 p-2">
-                  {/* Title Header - Compact with Edit Functionality */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {editingGroupTitle === `delivery_chalan-${title}` ? (
-                        <input
-                          type="text"
-                          value={groupTitles[`delivery_chalan-${title}`] || title}
-                          onChange={(e) =>
-                            setGroupTitles({
-                              ...groupTitles,
-                              [`delivery_chalan-${title}`]: e.target.value,
-                            })
-                          }
-                          onBlur={() => {
-                            const newTitle = groupTitles[`delivery_chalan-${title}`] || title;
-                            if (newTitle !== title) {
-                              updateGroupTitle('delivery_chalan', title, newTitle);
-                            }
-                            setEditingGroupTitle(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              const newTitle = groupTitles[`delivery_chalan-${title}`] || title;
-                              if (newTitle !== title) {
-                                updateGroupTitle('delivery_chalan', title, newTitle);
-                              }
-                              setEditingGroupTitle(null);
-                            }
-                          }}
-                          className="text-base font-medium text-gray-900 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none min-w-[120px]"
-                          autoFocus
+              {/* Simple Header with Add Button */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-medium text-gray-900">Delivery Notes</h3>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setUploadContext({
+                      category: 'delivery_chalan',
+                      title: 'Delivery Note'
+                    });
+                    setIsUploadDialogOpen(true);
+                  }}
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50 h-6 px-2 text-xs"
+                >
+                  Add
+                </Button>
+              </div>
+
+              {/* Simple File Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
+                {deliveryNotes.map((file: any) => (
+                  <div key={file.id} className="group relative">
+                    {/* File Thumbnail - Click to View */}
+                    <div 
+                      className="aspect-square bg-gray-100 rounded-sm overflow-hidden relative border border-orange-400 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => {
+                        if (file.mimeType?.includes("pdf") || file.originalName?.toLowerCase().endsWith('.pdf')) {
+                          // Open PDF directly in new tab
+                          window.open(file.filePath ? `/${file.filePath}` : `/api/files/${file.id}/download`, '_blank');
+                        } else if (file.mimeType?.includes("image") || file.fileType?.includes("image")) {
+                          // Show image preview
+                          setPreviewImage({
+                            src: file.filePath ? `/${file.filePath}` : `/api/files/${file.id}/download`,
+                            name: file.originalName,
+                          });
+                          setShowImagePreview(true);
+                        } else {
+                          // Download other files
+                          const link = document.createElement('a');
+                          link.href = file.filePath ? `/${file.filePath}` : `/api/files/${file.id}/download`;
+                          link.download = file.originalName;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }
+                      }}
+                    >
+                      {file.mimeType?.includes("image") || file.fileType?.includes("image") ? (
+                        <img
+                          src={file.filePath ? `/${file.filePath}` : `/api/files/${file.id}/download`}
+                          alt={file.originalName}
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        <h3 
-                          className="text-base font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                          onClick={() => setEditingGroupTitle(`delivery_chalan-${title}`)}
-                        >
-                          {groupTitles[`delivery_chalan-${title}`] || title}
-                        </h3>
+                        <div className="w-full h-full flex flex-col items-center justify-center p-2">
+                          {getFileIcon(file.mimeType || file.fileType, file.originalName)}
+                          <span className="text-xs text-gray-600 mt-1 text-center truncate w-full">
+                            {file.originalName}
+                          </span>
+                        </div>
                       )}
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setUploadContext({
-                          category: 'delivery_chalan',
-                          title: groupTitles[`delivery_chalan-${title}`] || title
-                        });
-                        setIsUploadDialogOpen(true);
-                      }}
-                      className="text-blue-600 border-blue-200 hover:bg-blue-50 h-6 px-2 text-xs"
-                    >
-                      Add
-                    </Button>
-                  </div>
 
-                  {/* Image Grid - More Compact */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
-                    {files.map((file: any) => (
-                      <div key={file.id} className="group relative">
-                        {/* Image Thumbnail - Compact */}
-                        <div className="aspect-square bg-gray-100 rounded-sm overflow-hidden relative border border-orange-400">
-                          {file.mimeType?.includes("image") || file.fileType?.includes("image") ? (
-                            <img
-                              src={file.filePath ? `/${file.filePath}` : `/api/files/${file.id}/download`}
-                              alt={file.originalName}
-                              className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
-                              onClick={() => {
-                                setPreviewImage({
-                                  src: file.filePath ? `/${file.filePath}` : `/api/files/${file.id}/download`,
-                                  name: file.originalName,
-                                });
-                                setShowImagePreview(true);
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              {getFileIcon(file.mimeType || file.fileType, file.originalName)}
-                            </div>
-                          )}
-
-                          {/* Three-dot menu - Smaller */}
-                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-5 w-5 p-0 bg-black/50 hover:bg-black/70 text-white rounded-full"
-                                >
-                                  <MoreVertical className="h-2.5 w-2.5" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-40">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setPreviewImage({
-                                      src: file.filePath ? `/${file.filePath}` : `/api/files/${file.id}/download`,
-                                      name: file.originalName,
-                                    });
-                                    setShowImagePreview(true);
-                                  }}
-                                >
-                                  <Eye className="h-3 w-3 mr-2" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <a
-                                    href={file.filePath ? `/${file.filePath}` : `/api/files/${file.id}/download`}
-                                    download={file.originalName}
-                                  >
-                                    <Download className="h-3 w-3 mr-2" />
-                                    Download
-                                  </a>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteFile(file.id, file.originalName)}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-3 w-3 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-
-                        {/* Comment Section - More Compact */}
-                        <div className="mt-0.5">
-                          <div className="bg-gray-50 rounded px-1.5 py-0.5 min-h-[20px] flex items-center">
-                            <input
-                              type="text"
-                              value={
-                                editingComment?.fileId === file.id
-                                  ? editingComment?.comment
-                                  : file.comment || ""
-                              }
-                              placeholder="Comment"
-                              onChange={(e) => {
-                                setEditingComment({
-                                  fileId: file.id,
-                                  comment: e.target.value,
-                                });
-                              }}
-                              onFocus={() => {
-                                if (!editingComment || editingComment.fileId !== file.id) {
-                                  setEditingComment({
-                                    fileId: file.id,
-                                    comment: file.comment || "",
-                                  });
-                                }
-                              }}
-                              onBlur={() => {
-                                if (editingComment?.fileId === file.id && editingComment) {
-                                  updateCommentMutation.mutate({
-                                    fileId: file.id,
-                                    comment: editingComment.comment,
-                                  });
-                                }
-                              }}
-                              className="text-xs text-gray-600 flex-1 bg-transparent border-none outline-none placeholder-gray-400"
-                            />
-                          </div>
-                        </div>
+                      {/* Simple Delete Button */}
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 w-5 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteFile(file.id, file.originalName);
+                          }}
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </Button>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Simple Comment Input */}
+                    <div className="mt-0.5">
+                      <input
+                        type="text"
+                        value={
+                          editingComment?.fileId === file.id
+                            ? editingComment?.comment
+                            : file.comment || ""
+                        }
+                        placeholder="Add comment"
+                        onChange={(e) => {
+                          setEditingComment({
+                            fileId: file.id,
+                            comment: e.target.value,
+                          });
+                        }}
+                        onFocus={() => {
+                          if (!editingComment || editingComment.fileId !== file.id) {
+                            setEditingComment({
+                              fileId: file.id,
+                              comment: file.comment || "",
+                            });
+                          }
+                        }}
+                        onBlur={() => {
+                          if (editingComment?.fileId === file.id && editingComment) {
+                            updateCommentMutation.mutate({
+                              fileId: file.id,
+                              comment: editingComment.comment,
+                            });
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && editingComment?.fileId === file.id && editingComment) {
+                            updateCommentMutation.mutate({
+                              fileId: file.id,
+                              comment: editingComment.comment,
+                            });
+                          }
+                        }}
+                        className="w-full text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 focus:bg-white focus:border-blue-300 outline-none"
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ) : (
             <div className="text-center py-8">
@@ -587,7 +528,7 @@ export default function ProjectWorkOrders({ projectId }: ProjectWorkOrdersProps)
               </p>
               <Button
                 onClick={() => {
-                  setUploadContext({ category: 'delivery_chalan', title: 'New Delivery Note' });
+                  setUploadContext({ category: 'delivery_chalan', title: 'Delivery Note' });
                   setIsUploadDialogOpen(true);
                 }}
                 className="bg-brown-600 hover:bg-brown-700 text-white"

@@ -8,8 +8,8 @@ export const config = {
   DATABASE_URL: requireEnvVar('DATABASE_URL', 'Database connection string is required'),
   
   // Bot Configuration
-  // OPTIONAL: Set TELEGRAM_BOT_TOKEN environment variable (empty = disabled)
-  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
+  // DISABLED: Telegram bot functionality removed from testing server
+  // TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
   
   // JWT Secret for authentication
   // Production: REQUIRED - Set JWT_SECRET environment variable with a secure random key
@@ -93,7 +93,7 @@ function validateJWTSecret(jwtSecret?: string): string {
 // Export individual config values for easy access
 export const {
   DATABASE_URL,
-  TELEGRAM_BOT_TOKEN,
+  // TELEGRAM_BOT_TOKEN, // DISABLED for testing server
   NODE_ENV,
   PORT,
   WHATSAPP_SESSION_PATH,

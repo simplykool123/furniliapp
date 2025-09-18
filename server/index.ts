@@ -2,7 +2,7 @@ import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { FurniliTelegramBot } from "./services/telegramBotSimple.js";
+// import { FurniliTelegramBot } from "./services/telegramBotSimple.js"; // DISABLED for testing server
 import { FurniliWhatsAppBot } from "./services/whatsappBot.js";
 
 const app = express();

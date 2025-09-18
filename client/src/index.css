@@ -204,16 +204,27 @@
     font-size: 0.875rem !important;
   }
   
-  /* Mobile-friendly switches */
+  /* Mobile-friendly switches - make them much smaller */
   .switch {
-    transform: scale(0.8) !important;
+    transform: scale(0.6) !important;
   }
   
   /* Switch specific scaling */
   .switch [data-state], 
   [role="switch"][data-state], 
   button[role="switch"] {
-    transform: scale(0.8) !important;
+    transform: scale(0.6) !important;
+  }
+  
+  /* Additional switch container scaling */
+  [data-radix-collection-item] {
+    transform: scale(0.6) !important;
+  }
+  
+  /* Switch root elements */
+  button[role="switch"] {
+    height: 1.5rem !important;
+    width: 2.5rem !important;
   }
   
   /* Compact stats cards */

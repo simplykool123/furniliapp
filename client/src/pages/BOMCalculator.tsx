@@ -14,8 +14,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useIsMobile } from "@/components/Mobile/MobileOptimizer";
-import MobileTable from "@/components/Mobile/MobileTable";
 import { useToast } from "@/hooks/use-toast";
 import ResponsiveLayout from "@/components/Layout/ResponsiveLayout";
 import FurnitureTechnicalDrawing from "@/components/FurnitureTechnicalDrawing";
@@ -391,7 +389,7 @@ const thicknessOptions = [
 ];
 
 export default function BOMCalculator() {
-  const isMobile = useIsMobile();
+  // Mobile optimization is now handled via Tailwind responsive classes
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedFurnitureType, setSelectedFurnitureType] = useState<string>("wardrobe");

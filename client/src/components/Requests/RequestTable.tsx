@@ -11,9 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Check, X, Truck, FileText, Download, Search, CheckCircle, XCircle, Package, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useIsMobile } from "@/components/Mobile/MobileOptimizer";
-import MobileTable from "@/components/Mobile/MobileTable";
-import MobileFilters from "@/components/Mobile/MobileFilters";
+// Removed mobile-specific imports - using responsive design instead
 
 interface MaterialRequest {
   id: number;
@@ -38,7 +36,7 @@ export default function RequestTable() {
   const [selectedRequest, setSelectedRequest] = useState<MaterialRequest | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-  const isMobile = useIsMobile();
+  // Mobile optimization now handled via Tailwind responsive classes
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -293,14 +291,7 @@ export default function RequestTable() {
         </Select>
       </div>
 
-      {/* Mobile Filters */}
-      <div className="block md:hidden mb-4">
-        <MobileFilters
-          filters={mobileFilters}
-          onClearAll={() => setFilters({ search: "", status: "", clientName: "" })}
-          className="mb-4"
-        />
-      </div>
+      {/* Mobile Filters removed - using responsive design */}
 
       {/* Desktop Status Tabs */}
       <div className="hidden md:block">
@@ -381,21 +372,10 @@ export default function RequestTable() {
         </Card>
       </div>
 
-      {/* Mobile Table */}
-      <div className="block md:hidden">
-        <MobileTable
-          data={filteredRequests}
-          columns={mobileColumns}
-          onRowClick={(request) => {
-            setSelectedRequest(request);
-            setShowDetails(true);
-          }}
-          emptyMessage="No material requests found"
-        />
-      </div>
+      {/* Mobile Table removed - using responsive design in desktop table */}
 
-      {/* Desktop Table */}
-      <div className="hidden md:block">
+      {/* Responsive Table */}
+      <div>
         <Card>
           <CardHeader>
             <CardTitle>Material Requests ({filteredRequests.length})</CardTitle>

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { authService } from "@/lib/auth";
-import { useIsMobile, MobileCard, MobileHeading, MobileText } from "@/components/Mobile/MobileOptimizer";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -180,7 +179,7 @@ const MonthlyAttendanceCalendar = ({
   attendanceData: any[];
   onUpdate: (date: string, status: string) => void;
 }) => {
-  const isMobile = useIsMobile();
+  // Mobile optimization is now handled via Tailwind responsive classes
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
   
@@ -199,7 +198,7 @@ const MonthlyAttendanceCalendar = ({
     onUpdate(dateStr, newStatus);
   };
 
-  if (isMobile) {
+  if (false) { // Mobile layout removed - using responsive design instead
     // Enhanced Mobile Calendar View
     return (
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -480,7 +479,7 @@ export default function Attendance() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const { toast } = useToast();
   const user = authService.getUser();
-  const isMobile = useIsMobile();
+  // Mobile optimization is now handled via Tailwind responsive classes
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isExporting, setIsExporting] = useState(false);

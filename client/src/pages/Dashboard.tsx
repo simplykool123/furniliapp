@@ -27,9 +27,6 @@ import {
 import { authService } from "@/lib/auth";
 import { useState, useEffect } from "react";
 import StockWarnings from "@/components/Dashboard/StockWarnings";
-import MobileDashboard from "@/components/Mobile/MobileDashboard";
-import { useIsMobile } from "@/components/Mobile/MobileOptimizer";
-import MobileLayout from "@/components/Mobile/MobileLayout";
 import { DashboardSkeleton } from "@/components/LoadingOptimizer";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -156,7 +153,6 @@ export default function Dashboard() {
   const currentUser = authService.getUser();
   const admin = authService.hasRole(['admin']);
   const [dailyQuote, setDailyQuote] = useState<typeof motivationalQuotes[0] | null>(null);
-  const isMobile = useIsMobile();
   const [, setLocation] = useLocation();
 
   // Memoized daily quote to prevent re-calculation on each render
@@ -295,17 +291,6 @@ export default function Dashboard() {
     return <DashboardSkeleton />;
   }
 
-  // Use mobile dashboard for mobile devices
-  if (isMobile) {
-    return (
-      <MobileLayout
-        title={`Welcome back, ${currentUser?.name || 'Admin'}!`}
-        subtitle="Here's your business overview and key metrics for today."
-      >
-        <MobileDashboard stats={stats || {}} tasks={pendingTasks || []} isLoading={isLoading} />
-      </MobileLayout>
-    );
-  }
 
   return (
     <ResponsiveLayout

@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useIsMobile, MobileCard, MobileHeading, MobileText } from "@/components/Mobile/MobileOptimizer";
-import MobileTable from "@/components/Mobile/MobileTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,8 +80,7 @@ export default function PettyCash() {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   
-  // Mobile optimization hook
-  const isMobile = useIsMobile();
+  // Mobile optimization is now handled via Tailwind responsive classes
   
   // Get current user
   const user = authService.getUser();
@@ -1416,7 +1413,7 @@ export default function PettyCash() {
           <Button onClick={() => {
             resetFormData();
             setShowAddDialog(true);
-          }} className={`flex-1 sm:flex-none ${isMobile ? 'h-9 text-sm' : ''}`}>
+          }} className={`flex-1 sm:flex-none ${false ? 'h-9 text-sm' : ''}`}>
             <Plus className="mr-2 h-4 w-4" />
             Add Expense
           </Button>
@@ -1424,7 +1421,7 @@ export default function PettyCash() {
             <Button onClick={() => {
               resetFundsFormData();
               setShowAddFundsDialog(true);
-            }} variant="outline" className={`flex-1 sm:flex-none bg-green-50 border-green-200 hover:bg-green-100 text-green-700 ${isMobile ? 'h-9 text-sm' : ''}`}>
+            }} variant="outline" className={`flex-1 sm:flex-none bg-green-50 border-green-200 hover:bg-green-100 text-green-700 ${false ? 'h-9 text-sm' : ''}`}>
               <Plus className="mr-2 h-4 w-4" />
               Add Funds
             </Button>
@@ -1435,7 +1432,7 @@ export default function PettyCash() {
       {stats && (
         <>
           {/* Mobile Compact Stats - Single Line */}
-          {isMobile && (
+          {false && (
             <Card className="p-3">
               {user?.role === 'staff' ? (
                 // Personal stats for staff users
@@ -1495,7 +1492,7 @@ export default function PettyCash() {
           )}
           
           {/* Desktop Stats Cards */}
-          {!isMobile && (
+          {!false && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               {user?.role === 'staff' ? (
                 // Personal stats cards for staff users
@@ -1672,10 +1669,10 @@ export default function PettyCash() {
 
       {/* Filters */}
       <Card>
-        <CardContent className={`${isMobile ? 'pt-4' : 'pt-6'}`}>
-          <div className={`${isMobile ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 lg:gap-4'}`}>
-            <div className={`${isMobile ? '' : 'lg:flex-1 lg:min-w-[200px] sm:col-span-2'}`}>
-              <Label htmlFor="search" className={`${isMobile ? 'text-sm' : ''}`}>Search</Label>
+        <CardContent className={`${false ? 'pt-4' : 'pt-6'}`}>
+          <div className={`${false ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 lg:gap-4'}`}>
+            <div className={`${false ? '' : 'lg:flex-1 lg:min-w-[200px] sm:col-span-2'}`}>
+              <Label htmlFor="search" className={`${false ? 'text-sm' : ''}`}>Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -1683,15 +1680,15 @@ export default function PettyCash() {
                   placeholder="Search by name or note..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`pl-10 ${isMobile ? 'h-9 text-sm' : ''}`}
+                  className={`pl-10 ${false ? 'h-9 text-sm' : ''}`}
                 />
               </div>
             </div>
-            <div className={`${isMobile ? 'grid grid-cols-2 gap-3' : 'contents'}`}>
+            <div className={`${false ? 'grid grid-cols-2 gap-3' : 'contents'}`}>
               <div>
-                <Label htmlFor="category-filter" className={`${isMobile ? 'text-sm' : ''}`}>Category</Label>
+                <Label htmlFor="category-filter" className={`${false ? 'text-sm' : ''}`}>Category</Label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger id="category-filter" className={`w-full ${isMobile ? 'h-9 text-sm' : 'lg:w-[150px]'}`}>
+                  <SelectTrigger id="category-filter" className={`w-full ${false ? 'h-9 text-sm' : 'lg:w-[150px]'}`}>
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1706,9 +1703,9 @@ export default function PettyCash() {
               </div>
               {user?.role !== 'staff' && (
                 <div>
-                  <Label htmlFor="paid-by-filter" className={`${isMobile ? 'text-sm' : ''}`}>Paid By</Label>
+                  <Label htmlFor="paid-by-filter" className={`${false ? 'text-sm' : ''}`}>Paid By</Label>
                   <Select value={selectedPaidBy} onValueChange={setSelectedPaidBy}>
-                    <SelectTrigger id="paid-by-filter" className={`w-full ${isMobile ? 'h-9 text-sm' : 'lg:w-[150px]'}`}>
+                    <SelectTrigger id="paid-by-filter" className={`w-full ${false ? 'h-9 text-sm' : 'lg:w-[150px]'}`}>
                       <SelectValue placeholder="All Staff" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1723,24 +1720,24 @@ export default function PettyCash() {
                 </div>
               )}
               <div className={`${user?.role === 'staff' ? 'col-span-1' : ''}`}>
-                <Label htmlFor="date-filter" className={`${isMobile ? 'text-sm' : ''}`}>Date</Label>
+                <Label htmlFor="date-filter" className={`${false ? 'text-sm' : ''}`}>Date</Label>
                 <Input
                   id="date-filter"
                   type="date"
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className={`w-full ${isMobile ? 'h-9 text-sm' : 'lg:w-[150px]'}`}
+                  className={`w-full ${false ? 'h-9 text-sm' : 'lg:w-[150px]'}`}
                 />
               </div>
             </div>
-            <div className={`${isMobile ? 'grid grid-cols-2 gap-2' : 'flex flex-col sm:flex-row items-stretch sm:items-end gap-2 sm:col-span-2 lg:col-span-1'}`}>
-              <Button variant="outline" onClick={exportToWhatsApp} className={`${isMobile ? 'h-9 text-sm' : 'flex-1 sm:flex-none'}`}>
+            <div className={`${false ? 'grid grid-cols-2 gap-2' : 'flex flex-col sm:flex-row items-stretch sm:items-end gap-2 sm:col-span-2 lg:col-span-1'}`}>
+              <Button variant="outline" onClick={exportToWhatsApp} className={`${false ? 'h-9 text-sm' : 'flex-1 sm:flex-none'}`}>
                 <Share2 className="mr-2 h-4 w-4" />
-                {isMobile ? 'WhatsApp' : 'WhatsApp'}
+                {false ? 'WhatsApp' : 'WhatsApp'}
               </Button>
-              <Button variant="outline" onClick={exportToExcel} className={`${isMobile ? 'h-9 text-sm' : 'flex-1 sm:flex-none'}`}>
+              <Button variant="outline" onClick={exportToExcel} className={`${false ? 'h-9 text-sm' : 'flex-1 sm:flex-none'}`}>
                 <Download className="mr-2 h-4 w-4" />
-                {isMobile ? 'Excel' : 'Excel'}
+                {false ? 'Excel' : 'Excel'}
               </Button>
             </div>
           </div>
@@ -1793,7 +1790,7 @@ export default function PettyCash() {
           {/* Mobile Cards */}
           <div className="block md:hidden space-y-2 p-4">
             {filteredExpenses.map((expense: PettyCashExpense) => (
-              <MobileCard
+              <Card
                 key={expense.id}
                 className="cursor-pointer"
                 onClick={() => handleShowExpenseDetails(expense)}
@@ -1874,7 +1871,7 @@ export default function PettyCash() {
                     )}
                   </div>
                 </div>
-              </MobileCard>
+              </Card>
             ))}
             {filteredExpenses.length === 0 && (
               <div className="text-center text-gray-500 py-8">

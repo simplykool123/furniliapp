@@ -14,9 +14,7 @@ import { Edit, Trash2, Search, Grid3X3, List, Package, ChevronUp, ChevronDown, C
 import { ImageViewer } from "@/components/ui/image-viewer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useIsMobile } from "@/components/Mobile/MobileOptimizer";
-import MobileTable from "@/components/Mobile/MobileTable";
-import MobileFilters from "@/components/Mobile/MobileFilters";
+// Removed mobile-specific imports - using responsive design instead
 
 interface Product {
   id: number;
@@ -54,7 +52,7 @@ export default function ProductTable() {
     key: keyof Product | null;
     direction: 'asc' | 'desc';
   }>({ key: null, direction: 'asc' });
-  const isMobile = useIsMobile();
+  // Mobile optimization now handled via Tailwind responsive classes
   const user = authService.getUser();
 
   const { toast } = useToast();
@@ -685,15 +683,15 @@ export default function ProductTable() {
   return (
     <div className="space-y-4">
       {/* Mobile Filters */}
-      {isMobile && (
-        <MobileFilters
+      {false && ( // Mobile filters removed - using responsive design
+        <div
           filters={mobileFilters}
           onClearAll={() => setFilters({ search: '', category: '', stockStatus: '' })}
         />
       )}
 
       {/* Desktop Filters & Controls */}
-      {!isMobile && (
+      {true && ( // Always show responsive filters
         <div className="bg-white rounded-lg border p-3">
           <div className="flex items-center gap-3 flex-wrap">
             <Input
@@ -737,8 +735,8 @@ export default function ProductTable() {
       )}
 
       {/* Mobile Products Table */}
-      {isMobile ? (
-        <MobileTable
+      {false ? ( // MobileTable removed - using responsive design
+        <div
           data={filteredProducts}
           columns={mobileColumns}
           emptyMessage="No products found"

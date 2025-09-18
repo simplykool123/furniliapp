@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { authService } from "@/lib/auth";
 import { Plus, FileText } from "lucide-react";
 import { useLocation } from "wouter";
-import { useIsMobile, MobileCard, MobileHeading, MobileText } from "@/components/Mobile/MobileOptimizer";
 import ResponsiveLayout from "@/components/Layout/ResponsiveLayout";
 import FurniliCard from "@/components/UI/FurniliCard";
 import FurniliButton from "@/components/UI/FurniliButton";
@@ -16,7 +15,6 @@ export default function MaterialRequests() {
   const [, setLocation] = useLocation();
   const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>();
   const user = authService.getUser();
-  const isMobile = useIsMobile();
 
   // Parse projectId from URL parameters
   useEffect(() => {
@@ -64,25 +62,24 @@ export default function MaterialRequests() {
       
       <Dialog open={showNewRequest} onOpenChange={setShowNewRequest}>
         <DialogContent 
-          className={`${isMobile ? 'max-w-[95vw] max-h-[95vh] m-1 p-0' : 'max-w-4xl max-h-[90vh]'} overflow-hidden`} 
+          className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-hidden" 
           aria-describedby="new-request-description"
         >
-          <DialogHeader className={`${isMobile ? 'p-3 pb-2 border-b' : 'space-y-3'}`}>
-            <DialogTitle className={`${isMobile ? 'text-base' : 'text-xl'} font-semibold text-foreground`}>
+          <DialogHeader className="space-y-3 p-3 sm:p-6">
+            <DialogTitle className="text-base sm:text-xl font-semibold text-foreground">
               Create New Material Request
             </DialogTitle>
             <p id="new-request-description" className="sr-only">
               Form to create a new material request with client details and product items
             </p>
           </DialogHeader>
-          <div className={isMobile ? "h-full overflow-hidden" : ""}>
+          <div className="h-full overflow-hidden">
             <RequestFormSimplified 
               preSelectedProjectId={selectedProjectId}
               onClose={() => {
                 setShowNewRequest(false);
                 setSelectedProjectId(undefined);
               }}
-              isMobile={isMobile}
             />
           </div>
         </DialogContent>

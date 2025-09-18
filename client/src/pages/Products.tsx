@@ -7,8 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { authService } from "@/lib/auth";
-import MobileProductTable from "@/components/Mobile/MobileProductTable";
-import { useIsMobile } from "@/components/Mobile/MobileOptimizer";
 import type { Product } from "@shared/schema";
 import ResponsiveLayout from "@/components/Layout/ResponsiveLayout";
 import FurniliCard from "@/components/UI/FurniliCard";
@@ -18,7 +16,6 @@ export default function Products() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const user = authService.getUser();
-  const isMobile = useIsMobile();
   
   const canManageProducts = user && ['admin', 'manager'].includes(user.role);
 
@@ -72,37 +69,15 @@ export default function Products() {
         )}
       </div>
 
-      {isMobile ? (
-        <MobileProductTable 
-          onEdit={(product) => {
-            // Transform product for form compatibility
-            const formProduct = {
-              ...product,
-              pricePerUnit: product.pricePerUnit
-            };
-            setEditingProduct(formProduct as any);
-            setShowAddProduct(true);
-          }}
-          onDelete={(product) => {
-            // Handle delete - could add confirmation dialog
-            console.log("Delete product:", product);
-          }}
-          onView={(product) => {
-            // Handle view details
-            console.log("View product:", product);
-          }}
-        />
-      ) : (
-        <ProductTable />
-      )}
+      <ProductTable />
       
       <Dialog open={showAddProduct} onOpenChange={(open) => {
         setShowAddProduct(open);
         if (!open) setEditingProduct(null);
       }}>
-        <DialogContent className={`${isMobile ? 'max-w-[95vw] h-[95vh] p-0' : 'max-w-[90vw] sm:max-w-2xl lg:max-w-4xl'} max-h-[90vh] overflow-hidden`} aria-describedby="product-form-description">
-          <div className={`${isMobile ? 'h-full flex flex-col' : 'max-h-[80vh] flex flex-col'}`}>
-            <DialogHeader className={`space-y-3 ${isMobile ? 'p-4 pb-2 border-b' : 'px-6 pt-6 pb-2 border-b'} flex-shrink-0`}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-4xl max-h-[90vh] overflow-hidden" aria-describedby="product-form-description">
+          <div className="h-full max-h-[80vh] flex flex-col">
+            <DialogHeader className="space-y-3 p-4 sm:px-6 sm:pt-6 pb-2 border-b flex-shrink-0">
               <DialogTitle className="text-xl font-semibold text-foreground">
                 {editingProduct ? 'Edit Product' : 'Add New Product'}
               </DialogTitle>
@@ -110,7 +85,7 @@ export default function Products() {
                 {editingProduct ? 'Update product details and specifications' : 'Add a new product to your inventory with details and specifications'}
               </DialogDescription>
           </DialogHeader>
-          <div className={`${isMobile ? 'flex-1 overflow-y-auto' : 'flex-1 overflow-y-auto px-6'}`}>
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6">
             <ProductForm 
               product={editingProduct ? {
                 ...editingProduct,
@@ -120,7 +95,6 @@ export default function Products() {
                 setShowAddProduct(false);
                 setEditingProduct(null);
               }}
-              isMobile={isMobile}
             />
           </div>
           </div>

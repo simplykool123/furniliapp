@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useIsMobile, MobileCard, MobileHeading, MobileText } from "@/components/Mobile/MobileOptimizer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +17,6 @@ import ResponsiveLayout from "@/components/Layout/ResponsiveLayout";
 
 export default function WhatsAppExport() {
   const { toast } = useToast();
-  const isMobile = useIsMobile();
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [customMessage, setCustomMessage] = useState("");

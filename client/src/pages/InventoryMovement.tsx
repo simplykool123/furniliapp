@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useIsMobile, MobileCard, MobileHeading, MobileText } from "@/components/Mobile/MobileOptimizer";
 import { authenticatedApiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,6 @@ type MovementFormData = z.infer<typeof movementSchema>;
 export default function InventoryMovement() {
   const [showAddMovement, setShowAddMovement] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<any>(null);
-  const { isMobile } = useIsMobile();
   const [activeTab, setActiveTab] = useState("recent");
   const { toast } = useToast();
   const queryClient = useQueryClient();

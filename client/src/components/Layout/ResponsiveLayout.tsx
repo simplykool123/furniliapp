@@ -1,6 +1,4 @@
-import { useIsMobile } from "@/components/Mobile/MobileOptimizer";
 import FurniliLayout from "./FurniliLayout";
-import MobileLayout from "@/components/Mobile/MobileLayout";
 
 interface ResponsiveLayoutProps {
   children: React.ReactNode;
@@ -25,31 +23,14 @@ export default function ResponsiveLayout({
   actions,
   className
 }: ResponsiveLayoutProps) {
-  const isMobile = useIsMobile();
-
-  // Use mobile layout for mobile devices
-  if (isMobile) {
-    return (
-      <MobileLayout
-        title={title}
-        subtitle={subtitle}
-        showBack={showBack}
-        onBack={onBack}
-        actions={actions}
-        className={className}
-      >
-        {children}
-      </MobileLayout>
-    );
-  }
-
-  // Use desktop layout for larger screens
+  // Always use FurniliLayout - it handles responsive behavior internally
   return (
     <FurniliLayout
       title={title}
       subtitle={subtitle || ""}
       showAddButton={showAddButton}
       onAddClick={onAddClick}
+      actions={actions}
       className={className}
     >
       {children}

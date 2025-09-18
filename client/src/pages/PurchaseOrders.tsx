@@ -16,8 +16,6 @@ import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 import ResponsiveLayout from "@/components/Layout/ResponsiveLayout";
 import type { PurchaseOrderWithDetails, Supplier, Product } from "@shared/schema";
-import { useIsMobile } from "@/components/Mobile/MobileOptimizer";
-import MobileTable from "@/components/Mobile/MobileTable";
 // @ts-ignore
 import html2pdf from "html2pdf.js";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -32,7 +30,6 @@ export default function PurchaseOrders() {
   const [selectedPO, setSelectedPO] = useState<PurchaseOrderWithDetails | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
 
   // Fetch purchase orders
   const { data: pos = [], isLoading: posLoading } = useQuery<PurchaseOrderWithDetails[]>({

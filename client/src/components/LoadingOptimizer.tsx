@@ -1,15 +1,15 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useIsMobile } from "./Mobile/MobileOptimizer";
+// Removed mobile-specific import - using responsive design instead
 
 // Optimized loading skeletons for different components
 export function DashboardSkeleton() {
-  const isMobile = useIsMobile();
+  // Mobile optimization now handled via Tailwind responsive classes
   
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -25,7 +25,7 @@ export function DashboardSkeleton() {
       </div>
 
       {/* Charts and Tables */}
-      <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
         <Card>
           <CardHeader>
             <Skeleton className="h-5 w-32" />
@@ -54,21 +54,21 @@ export function DashboardSkeleton() {
 }
 
 export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
-  const isMobile = useIsMobile();
+  // Mobile optimization now handled via Tailwind responsive classes
   
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : `grid-cols-${columns}`}`}>
-        {Array.from({ length: isMobile ? 2 : columns }).map((_, i) => (
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-4 w-20" />
         ))}
       </div>
       
       {/* Rows */}
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className={`grid gap-4 ${isMobile ? 'grid-cols-2' : `grid-cols-${columns}`}`}>
-          {Array.from({ length: isMobile ? 2 : columns }).map((_, j) => (
+        <div key={i} className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, j) => (
             <Skeleton key={j} className="h-4 w-full" />
           ))}
         </div>
@@ -78,14 +78,14 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
 }
 
 export function FormSkeleton() {
-  const isMobile = useIsMobile();
+  // Mobile optimization now handled via Tailwind responsive classes
   
   return (
     <div className="space-y-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className={isMobile ? "space-y-2" : "grid grid-cols-4 items-center gap-4"}>
+        <div key={i} className="space-y-2 md:grid md:grid-cols-4 md:items-center md:gap-4 md:space-y-0">
           <Skeleton className="h-4 w-20" />
-          <Skeleton className={`h-9 ${isMobile ? 'w-full' : 'col-span-3'}`} />
+          <Skeleton className="h-9 w-full md:col-span-3" />
         </div>
       ))}
       

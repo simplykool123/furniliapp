@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useIsMobile, MobileCard, MobileHeading, MobileText } from "@/components/Mobile/MobileOptimizer";
 import { authenticatedApiRequest, authService } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 

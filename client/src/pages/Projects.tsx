@@ -25,8 +25,6 @@ import { getCitiesByState } from "@/data/indianCities";
 import ResponsiveLayout from "@/components/Layout/ResponsiveLayout";
 import FurniliCard from "@/components/UI/FurniliCard";
 import FurniliButton from "@/components/UI/FurniliButton";
-import { useIsMobile, MobileCard } from "@/components/Mobile/MobileOptimizer";
-import MobileTable from "@/components/Mobile/MobileTable";
 import { authService } from "@/lib/auth";
 
 const createProjectSchema = z.object({
@@ -48,7 +46,6 @@ export default function Projects() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location, setLocation] = useLocation();
-  const isMobile = useIsMobile();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreateClientDialogOpen, setIsCreateClientDialogOpen] = useState(false);
@@ -708,9 +705,9 @@ export default function Projects() {
             </div>
           </div>
 
-          {/* Mobile Table */}
-          <div className="block md:hidden">
-            <MobileTable
+          {/* Mobile Table removed - using responsive design */}
+          <div className="hidden">
+            <div
               data={filteredProjects}
               columns={[
                 {

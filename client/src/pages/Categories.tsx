@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useIsMobile, MobileCard, MobileHeading, MobileText } from "@/components/Mobile/MobileOptimizer";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Package, Tag, Users, Settings } from "lucide-react";
@@ -11,7 +10,6 @@ import type { Category } from "@shared/schema";
 
 export default function Categories() {
   const [isCreating, setIsCreating] = useState(false);
-  const isMobile = useIsMobile();
 
   const {
     data: categoriesData = [],
@@ -35,23 +33,23 @@ export default function Categories() {
       subtitle="Organize and manage product categories"
     >
       <div className="space-y-4">
-        {/* Mobile-optimized Header */}
-        <MobileCard className="space-y-4">
+        {/* Header */}
+        <div className="bg-background border rounded-lg shadow-sm space-y-4 p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="space-y-1">
             </div>
           <Button 
             onClick={() => setIsCreating(true)}
-            className={`furnili-gradient hover:opacity-90 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200 ${isMobile ? 'w-full' : ''}`}
+            className="furnili-gradient hover:opacity-90 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Category
           </Button>
         </div>
-      </MobileCard>
+      </div>
 
       {/* Statistics Cards */}
-      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1 sm:grid-cols-2' : 'md:grid-cols-3'}`}>
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center">
             <Tag className="h-4 w-4 text-blue-600" />

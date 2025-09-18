@@ -1787,21 +1787,23 @@ export default function ProjectDetail() {
               </Button>
               <div>
                 <div>
-                  <h1 className="text-base sm:text-lg font-bold text-gray-900">
-                    {project.name}
-                  </h1>
-                  <p className="text-sm text-gray-600">
-                    {project.code}
-                  </p>
-                  <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
+                  <div className="space-y-1">
+                    <h1 className="text-base sm:text-lg font-bold text-gray-900 break-words">
+                      {project.name}
+                    </h1>
+                    <p className="text-xs sm:text-sm text-gray-600 font-medium">
+                      {project.code}
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 space-y-1 sm:space-y-0 text-xs sm:text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
-                      <User className="h-4 w-4" />
-                      <span>{project.client_name || client?.name || "No Client"}</span>
+                      <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="break-all">{project.client_name || client?.name || "No Client"}</span>
                     </div>
                     {canViewFinances && (
                       <div className="flex items-center space-x-1">
-                        <Phone className="h-4 w-4" />
-                        <span>{project.client_mobile || project.client_phone || client?.mobile || client?.phone || "No Contact"}</span>
+                        <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="break-all">{project.client_mobile || project.client_phone || client?.mobile || client?.phone || "No Contact"}</span>
                       </div>
                     )}
                   </div>
@@ -2458,31 +2460,33 @@ export default function ProjectDetail() {
 
             {/* Show empty state only if no moodboards AND no uploaded images */}
             {projectMoodboards.length === 0 && moodboardImages.length === 0 && (
-              <div className="text-center py-12">
-                <div className="bg-white rounded-lg p-12 shadow-sm border border-gray-200">
-                  <div className="text-6xl mb-6">🎨</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              <div className="text-center py-6 sm:py-12">
+                <div className="bg-white rounded-lg p-6 sm:p-12 shadow-sm border border-gray-200">
+                  <div className="text-4xl sm:text-6xl mb-4 sm:mb-6">🎨</div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">
                     No moodboards created yet
                   </h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 max-w-md mx-auto">
                     Create beautiful moodboards with AI-generated inspiration or
                     curated real photos from design platforms, or upload your
                     own images
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
                     <Button
                       onClick={() => setIsMoodboardDialogOpen(true)}
-                      className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3"
+                      className="bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base w-full sm:w-auto"
+                      size="sm"
                     >
-                      <Star className="h-5 w-5 mr-2" />
+                      <Star className="h-4 w-4 mr-2" />
                       Create Moodboard
                     </Button>
                     <Button
                       onClick={() => setIsUploadDialogOpen(true)}
                       variant="outline"
-                      className="border-purple-200 text-purple-700 hover:bg-purple-50 px-8 py-3"
+                      className="border-purple-200 text-purple-700 hover:bg-purple-50 text-sm sm:text-base w-full sm:w-auto"
+                      size="sm"
                     >
-                      <Upload className="h-5 w-5 mr-2" />
+                      <Upload className="h-4 w-4 mr-2" />
                       Upload Images
                     </Button>
                   </div>

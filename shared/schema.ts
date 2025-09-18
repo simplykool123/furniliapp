@@ -717,6 +717,10 @@ export const insertClientSchema = createInsertSchema(clients, {
   gstNumber: z.string().optional().or(z.literal("")),
 }).omit({
   id: true,
+  type: true, // Omit type - will use default 'client'
+  leadSourceId: true, // Omit CRM fields for basic client creation
+  pipelineStageId: true, // Omit CRM fields for basic client creation
+  isActive: true, // Will use default true
   createdAt: true,
   updatedAt: true,
 });

@@ -239,11 +239,14 @@ export default function Clients() {
     client.city.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Mobile focus fix handler - only affects mobile devices
+  // Mobile focus fix handler - prevent form container focus on mobile
   const handleMobileInput = (e: React.FormEvent<HTMLInputElement>) => {
     if (isMobile) {
-      // Prevent focus loss on mobile during typing
+      // Prevent event bubbling to form container
       e.stopPropagation();
+      // Keep focus on the input element
+      const target = e.target as HTMLInputElement;
+      setTimeout(() => target.focus(), 0);
     }
   };
 

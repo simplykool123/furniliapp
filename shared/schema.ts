@@ -703,7 +703,19 @@ export const insertQuoteItemSchema = createInsertSchema(quoteItems).omit({
   id: true,
 });
 
-export const insertClientSchema = createInsertSchema(clients).omit({
+export const insertClientSchema = createInsertSchema(clients, {
+  name: z.string().min(1, "Client name is required"),
+  mobile: z.string().min(1, "Mobile number is required"),
+  city: z.string().min(1, "City is required"),
+  email: z.string().optional().or(z.literal("")),
+  contactPerson: z.string().optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  address1: z.string().optional().or(z.literal("")),
+  address2: z.string().optional().or(z.literal("")),
+  state: z.string().optional().or(z.literal("")),
+  pinCode: z.string().optional().or(z.literal("")),
+  gstNumber: z.string().optional().or(z.literal("")),
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,

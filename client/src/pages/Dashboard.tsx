@@ -299,7 +299,7 @@ export default function Dashboard() {
     >
       {/* Daily Motivation Quote */}
       {dailyQuote && (
-        <FurniliCard variant="gradient" className="border-l-4 border-l-primary">
+        <FurniliCard variant="gradient" className="border-l-4 border-l-primary dashboard-card">
           <div className="flex items-center space-x-4">
             <div className="furnili-gradient p-3 rounded-lg flex-shrink-0 self-center">
               <Quote className="h-7 w-7 text-white" />

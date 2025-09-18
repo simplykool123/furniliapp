@@ -94,12 +94,10 @@ export default function Categories() {
       )}
 
       {/* Categories List Section */}
-      <MobileCard>
-        <CategoryTable 
-          categories={categories}
-          isLoading={isLoading}
-        />
-      </MobileCard>
+      <CategoryTable 
+        categories={categories}
+        isLoading={isLoading}
+      />
       
         {/* Hidden Dialog for Add Category */}
         <Dialog open={isCreating} onOpenChange={setIsCreating}>

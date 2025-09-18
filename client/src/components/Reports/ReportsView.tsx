@@ -8,8 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile, MobileCard } from "@/components/Mobile/MobileOptimizer";
-import MobileTable from "@/components/Mobile/MobileTable";
 import { 
   Download, 
   Package, 
@@ -446,13 +444,13 @@ const renderDetailedTable = (type: string, data: any[]) => {
                 <TableCell><Badge variant="outline">{request.orderNumber}</Badge></TableCell>
                 <TableCell className="font-medium">
                   {request.items && request.items.length > 0 
-                    ? request.items.map(item => item.product?.name).filter(Boolean).join(', ') || 'N/A'
+                    ? request.items.map((item: any) => item.product?.name).filter(Boolean).join(', ') || 'N/A'
                     : 'N/A'
                   }
                 </TableCell>
                 <TableCell>
                   {request.items && request.items.length > 0
-                    ? request.items.reduce((total, item) => total + (item.requestedQuantity || 0), 0)
+                    ? request.items.reduce((total: number, item: any) => total + (item.requestedQuantity || 0), 0)
                     : 0
                   }
                 </TableCell>

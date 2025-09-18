@@ -968,7 +968,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Client Name <span className="text-red-500">*</span></FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter client name" {...field} />
+                                            <Input className="h-8" placeholder="Enter client name" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -982,7 +982,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Contact Person</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter contact person" {...field} />
+                                            <Input className="h-8" placeholder="Enter contact person" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -996,7 +996,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">GST Number</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter GST number" {...field} />
+                                            <Input className="h-8" placeholder="Enter GST number" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1013,7 +1013,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Mobile <span className="text-red-500">*</span></FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter mobile number" {...field} />
+                                            <Input className="h-8" placeholder="Enter mobile number" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1027,7 +1027,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Phone</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter phone number" {...field} />
+                                            <Input className="h-8" placeholder="Enter phone number" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1041,7 +1041,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Email</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" type="email" placeholder="Enter email address" {...field} />
+                                            <Input className="h-8" type="email" placeholder="Enter email address" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1062,7 +1062,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Address Line 1</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter address line 1" {...field} />
+                                            <Input className="h-8" placeholder="Enter address line 1" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1076,7 +1076,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Address Line 2</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter address line 2" {...field} />
+                                            <Input className="h-8" placeholder="Enter address line 2" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1180,7 +1180,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Pin Code</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter pin code" {...field} />
+                                            <Input className="h-8" placeholder="Enter pin code" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>

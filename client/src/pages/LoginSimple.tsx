@@ -88,12 +88,12 @@ export default function LoginSimple() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Username</label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <User className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 z-10" />
                 <Input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="admin"
-                  className="pl-10 border-gray-300 focus:border-blue-500"
+                  className="pl-8 sm:pl-10 border-gray-300 focus:border-blue-500 h-10 text-base"
                   disabled={isLoading}
                 />
               </div>
@@ -102,26 +102,26 @@ export default function LoginSimple() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <Lock className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 z-10" />
                 <Input
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   type={showPassword ? "text" : "password"}
                   placeholder="demo123"
-                  className="pl-10 pr-10 border-gray-300 focus:border-blue-500"
+                  className="pl-8 sm:pl-10 pr-12 border-gray-300 focus:border-blue-500 h-10 text-base"
                   disabled={isLoading}
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100 rounded"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-500" />
+                    <EyeOff className="h-3 w-3 text-gray-500" />
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-500" />
+                    <Eye className="h-3 w-3 text-gray-500" />
                   )}
                 </Button>
               </div>

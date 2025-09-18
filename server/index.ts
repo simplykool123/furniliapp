@@ -2,8 +2,7 @@ import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-// import { FurniliTelegramBot } from "./services/telegramBotSimple.js"; // DISABLED for testing server
-import { FurniliWhatsAppBot } from "./services/whatsappBot.js";
+import { botManager } from "./services/botManager.js";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -138,54 +137,17 @@ app.use((req, res, next) => {
   }, async () => {
     log(`serving on port ${port}`);
     
-    // Initialize Telegram Bot - TEMPORARILY DISABLED
-    // Uncomment when you want to enable the bot again
-    /*
+    // Initialize Bot Manager - Database-driven bot initialization
     try {
-      const { TELEGRAM_BOT_TOKEN } = await import('./config.js');
-      if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN.trim() !== "") {
-        new FurniliTelegramBot(TELEGRAM_BOT_TOKEN);
-        log("🤖 Telegram bot initialized successfully");
-      } else {
-        console.log("⚠️ No valid TELEGRAM_BOT_TOKEN found in config, skipping bot initialization");
-      }
+      await botManager.initializeBots();
+      log("🤖 Bot Manager initialized - bots started based on database configuration");
     } catch (error) {
-      console.error("❌ Failed to initialize Telegram bot:", error);
-    }
-    */
-    console.log("⏸️ Telegram bot is temporarily disabled - using elsewhere")
-
-    // Initialize WhatsApp Bot - DISABLED to prevent continuous connection attempts
-    // Uncomment the code below when you need WhatsApp functionality
-    /*
-    try {
-      const whatsappBot = new FurniliWhatsAppBot();
+      console.error("❌ Failed to initialize Bot Manager:", error);
       
-      // Store global references for API access
-      global.whatsappClient = whatsappBot.getClient();
+      // Initialize global WhatsApp references as disabled on failure
+      global.whatsappClient = undefined;
       global.qrCodeData = null;
-      global.initializeWhatsAppBot = async () => {
-        try {
-          const newBot = new FurniliWhatsAppBot();
-          await newBot.initialize();
-          global.whatsappClient = newBot.getClient();
-          log("📱 WhatsApp bot reinitialized successfully");
-        } catch (error) {
-          console.error("❌ Failed to reinitialize WhatsApp bot:", error);
-        }
-      };
-      
-      await whatsappBot.initialize();
-      log("📱 WhatsApp bot initialized successfully");
-    } catch (error) {
-      console.error("❌ Failed to initialize WhatsApp bot:", error);
+      global.initializeWhatsAppBot = undefined;
     }
-    */
-    
-    // Initialize global WhatsApp references as disabled
-    global.whatsappClient = undefined;
-    global.qrCodeData = null;
-    global.initializeWhatsAppBot = undefined;
-    log("📱 WhatsApp bot initialization DISABLED - enable in code when needed");
   });
 })();

@@ -522,105 +522,65 @@ export default function Dashboard() {
 
         </>
       ) : (
-        /* ADMIN/MANAGER DASHBOARD - Keep existing layout */
-        <div className="grid gap-2 sm:gap-3 grid-cols-5 sm:grid-cols-3 lg:grid-cols-5 mb-4 dashboard-grid-5">
-          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 bg-gradient-to-br from-card to-blue-50/20 cursor-pointer dashboard-card" onClick={() => setLocation('/products')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-semibold text-card-foreground">Products</CardTitle>
-              <Package className="h-3 w-3 text-blue-600" />
-            </CardHeader>
-            <CardContent className="pb-2 pt-1">
-              <div className="text-xl font-bold text-foreground">{stats?.totalProducts || 0}</div>
-              <p className="text-xs text-muted-foreground mt-0.5">Active items</p>
-            </CardContent>
-          </Card>
+        /* ADMIN/MANAGER DASHBOARD - Clean 2x2 Grid */
+        <div className="grid grid-cols-2 gap-3 mb-4">
 
-          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-l-4 border-l-red-500 bg-gradient-to-br from-red-50 to-red-100 border-red-200 cursor-pointer group dashboard-card" onClick={() => setLocation('/products?filter=low-stock')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold text-red-900 group-hover:text-red-700">Low Stock Alert</CardTitle>
-              <div className="p-2 bg-red-500 rounded-full group-hover:bg-red-600 transition-colors">
-                <AlertTriangle className="h-3 w-3 text-white animate-pulse" />
-              </div>
-            </CardHeader>
-            <CardContent className="pb-3 pt-1">
-              <div className="text-2xl font-bold text-red-600 mb-1">
-                {Array.isArray(stats?.lowStockProducts) ? stats.lowStockProducts.length : 0}
-              </div>
-              <p className="text-xs font-medium text-red-700">Items need restocking</p>
-              {Array.isArray(stats?.lowStockProducts) && stats.lowStockProducts.length > 0 && (
-                <div className="mt-2 text-xs text-red-600 bg-red-200/50 px-2 py-1 rounded">
-                  Action required!
+          {/* Low Stock Alert */}
+          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-red-500 bg-gradient-to-br from-red-50 to-red-100 border-red-200 cursor-pointer" onClick={() => setLocation('/products?filter=low-stock')}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <div className="text-xl font-bold text-red-600">
+                  {Array.isArray(stats?.lowStockProducts) ? stats.lowStockProducts.length : 0}
                 </div>
-              )}
+              </div>
+              <div className="text-sm font-medium text-red-700">Low Stock</div>
             </CardContent>
           </Card>
 
           {/* Check In/Out Button for Managers */}
           {currentUser?.role === 'manager' && (
             <Card className="hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-green-50 to-green-100 border-green-200 cursor-pointer" onClick={handleCheckInOut}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-bold text-green-900">
-                  {hasCheckedInToday ? 'Check Out' : 'Check In'}
-                </CardTitle>
-                <div className="p-2 bg-green-500 rounded-full">
-                  {hasCheckedInToday ? <LogOut className="h-5 w-5 text-white" /> : <LogIn className="h-5 w-5 text-white" />}
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-2">
+                  {hasCheckedInToday ? <LogOut className="h-4 w-4 text-green-500" /> : <LogIn className="h-4 w-4 text-green-500" />}
+                  <div className="text-sm font-bold text-green-600">
+                    {hasCheckedInToday ? 'Out' : 'In'}
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent className="pb-3 pt-1">
                 <div className="text-sm font-medium text-green-700">
-                  {hasCheckedInToday ? 'End your work day' : 'Start your work day'}
+                  {hasCheckedInToday ? 'Check Out' : 'Check In'}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-l-4 border-l-orange-500 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 cursor-pointer group" onClick={() => setLocation('/attendance')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold text-orange-900 group-hover:text-orange-700">Today's Attendance</CardTitle>
-              <div className="p-2 bg-orange-500 rounded-full group-hover:bg-orange-600 transition-colors">
-                <Clock className="h-5 w-5 text-white" />
+          {/* Today's Attendance */}
+          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-orange-500 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 cursor-pointer" onClick={() => setLocation('/attendance')}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <Clock className="h-4 w-4 text-orange-500" />
+                <div className="text-xl font-bold text-orange-600">
+                  {stats?.todayAttendance || 0}
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="pb-3 pt-1">
-              <div className="text-2xl font-bold text-orange-600 mb-1">{stats?.todayAttendance || 0}</div>
-              <p className="text-xs font-medium text-orange-700">Staff present today</p>
-              <div className="mt-2 flex items-center space-x-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-orange-600">Live tracking</span>
-              </div>
+              <div className="text-sm font-medium text-orange-700">Attendance</div>
             </CardContent>
           </Card>
 
 
 
+          {/* Requests */}
           <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-indigo-500 bg-gradient-to-br from-card to-indigo-50/20 cursor-pointer" onClick={() => setLocation('/requests')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-semibold text-card-foreground">Requests</CardTitle>
-              <TrendingUp className="h-5 w-5 text-indigo-600" />
-            </CardHeader>
-            <CardContent className="pb-2 pt-1">
-              <div className="text-xl font-bold text-foreground">{stats?.pendingRequests || 0}</div>
-              <p className="text-xs text-muted-foreground mt-0.5">Pending</p>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <TrendingUp className="h-4 w-4 text-indigo-600" />
+                <div className="text-xl font-bold text-foreground">{stats?.pendingRequests || 0}</div>
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">Requests</div>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-l-4 border-l-yellow-500 bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 cursor-pointer group" onClick={() => setLocation('/petty-cash')}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold text-yellow-900 group-hover:text-yellow-700">Monthly Expenses</CardTitle>
-              <div className="p-2 bg-yellow-500 rounded-full group-hover:bg-yellow-600 transition-colors">
-                <DollarSign className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent className="pb-3 pt-1">
-              <div className="text-2xl font-bold text-yellow-600 mb-1">
-                ₹{stats?.monthlyExpenses?.toLocaleString() || 0}
-              </div>
-              <p className="text-xs font-medium text-yellow-700">Total this month</p>
-              <div className="mt-2 text-xs text-yellow-600 bg-yellow-200/50 px-2 py-1 rounded">
-                Track & manage
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
 

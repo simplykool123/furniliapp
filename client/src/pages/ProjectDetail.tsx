@@ -1787,7 +1787,7 @@ export default function ProjectDetail() {
               </Button>
               <div>
                 <div className="flex items-center space-x-3">
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 line-clamp-2">
                     {project.name} - {project.code}
                   </h1>
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -1862,14 +1862,14 @@ export default function ProjectDetail() {
                 className="flex items-center space-x-1 px-0 py-2 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-sm">📂</span>
-                <span className="font-medium text-xs">Files</span>
+                <span className="font-medium text-sm sm:text-xs">Files</span>
               </TabsTrigger>
               <TabsTrigger
                 value="moodboard"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-base">🎨</span>
-                <span className="font-medium text-sm">Moodboard</span>
+                <span className="font-medium text-base sm:text-sm">Moodboard</span>
               </TabsTrigger>
               {canViewFinances && (
                 <TabsTrigger
@@ -1877,7 +1877,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
                   <span className="text-base">🗒️</span>
-                  <span className="font-medium text-sm">Notes</span>
+                  <span className="font-medium text-base sm:text-sm">Notes</span>
                 </TabsTrigger>
               )}
               <TabsTrigger
@@ -1885,7 +1885,7 @@ export default function ProjectDetail() {
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-base">✅</span>
-                <span className="font-medium text-sm">Tasks</span>
+                <span className="font-medium text-base sm:text-sm">Tasks</span>
               </TabsTrigger>
               {canViewFinances && (
                 <TabsTrigger
@@ -1893,7 +1893,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
                   <span className="text-base">💸</span>
-                  <span className="font-medium text-sm">Quotes</span>
+                  <span className="font-medium text-base sm:text-sm">Quotes</span>
                 </TabsTrigger>
               )}
               {canViewFinances && (
@@ -1902,7 +1902,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
                   <span className="text-base">🏭</span>
-                  <span className="font-medium text-sm">Production</span>
+                  <span className="font-medium text-base sm:text-sm">Production</span>
                 </TabsTrigger>
               )}
               <TabsTrigger
@@ -1910,21 +1910,21 @@ export default function ProjectDetail() {
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-base">📦</span>
-                <span className="font-medium text-sm">Orders</span>
+                <span className="font-medium text-base sm:text-sm">Orders</span>
               </TabsTrigger>
               <TabsTrigger
                 value="activities"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-base">📅</span>
-                <span className="font-medium text-sm">Activities</span>
+                <span className="font-medium text-base sm:text-sm">Activities</span>
               </TabsTrigger>
               <TabsTrigger
                 value="progress"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-base">📊</span>
-                <span className="font-medium text-sm">Progress</span>
+                <span className="font-medium text-base sm:text-sm">Progress</span>
               </TabsTrigger>
 
               {canViewFinances && (
@@ -1933,7 +1933,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
                   <span className="text-base">💰</span>
-                  <span className="font-medium text-sm">Finances</span>
+                  <span className="font-medium text-base sm:text-sm">Finances</span>
                 </TabsTrigger>
               )}
               {canViewFinances && (
@@ -1942,7 +1942,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-transparent text-gray-600 data-[state=active]:text-blue-600 rounded-none"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  <span className="font-medium">Details</span>
+                  <span className="font-medium text-base sm:text-sm">Details</span>
                 </TabsTrigger>
               )}
             </TabsList>
@@ -2027,7 +2027,7 @@ export default function ProjectDetail() {
                       className="btn-primary btn-sm"
                     >
                       <Upload className="h-3 w-3 mr-1" />
-                      Upload Files
+                      Upload
                     </Button>
                   )}
                 </div>
@@ -4093,7 +4093,7 @@ export default function ProjectDetail() {
                 >
                   {fileUploadMutation.isPending
                     ? "Uploading..."
-                    : "Upload Files"}
+                    : "Upload"}
                 </Button>
               </div>
             </form>

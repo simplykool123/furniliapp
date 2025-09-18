@@ -1585,16 +1585,280 @@ export default function Projects() {
                               <DialogHeader className="p-4 border-b">
                                 <DialogTitle className="text-lg font-semibold">Add New Client</DialogTitle>
                               </DialogHeader>
-                              <div className="flex-1 overflow-y-auto p-4">
-                                <div className="space-y-4">
-                                  <div className="text-sm text-gray-600 mb-4">
-                                    Add a new client to the system. All fields marked with * are required.
-                                  </div>
-                                  {/* Client form fields would go here - simplified for now */}
-                                  <div className="text-center py-8 text-gray-500">
-                                    Client creation form will be implemented here
-                                  </div>
-                                </div>
+                              <div className="flex-1 overflow-y-auto p-3">
+                                <Form {...clientForm}>
+                                  <form onSubmit={clientForm.handleSubmit(onSubmitClient)} className="space-y-2">
+                                    <div className="text-xs text-gray-600 mb-3">
+                                      Enter client information and contact details.
+                                    </div>
+                                    
+                                    {/* Basic Information */}
+                                    <div className="space-y-2">
+                                      <h3 className="text-xs font-semibold text-gray-900 border-b pb-1">Basic Information</h3>
+                                      
+                                      {/* Client Name - Full width on mobile */}
+                                      <FormField
+                                        control={clientForm.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel className="text-xs font-medium text-gray-700">Client Name <span className="text-red-500">*</span></FormLabel>
+                                            <FormControl>
+                                              <Input 
+                                                className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
+                                                placeholder="Client name" 
+                                                inputMode="text" 
+                                                autoComplete="off" 
+                                                {...field} 
+                                                data-testid="input-clientname"
+                                              />
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+
+                                      {/* Email and Mobile - Two columns */}
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="email"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">Email</FormLabel>
+                                              <FormControl>
+                                                <Input 
+                                                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
+                                                  type="email" 
+                                                  placeholder="Email address" 
+                                                  inputMode="email" 
+                                                  autoComplete="off" 
+                                                  {...field} 
+                                                  data-testid="input-email"
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="mobile"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">Mobile <span className="text-red-500">*</span></FormLabel>
+                                              <FormControl>
+                                                <Input 
+                                                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
+                                                  placeholder="Mobile number" 
+                                                  inputMode="tel" 
+                                                  autoComplete="off" 
+                                                  {...field} 
+                                                  data-testid="input-mobile"
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+
+                                      {/* Contact Person and Phone */}
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="contactPerson"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">Contact Person</FormLabel>
+                                              <FormControl>
+                                                <Input 
+                                                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
+                                                  placeholder="Contact person" 
+                                                  inputMode="text" 
+                                                  autoComplete="off" 
+                                                  {...field} 
+                                                  data-testid="input-contact"
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="phone"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">Phone</FormLabel>
+                                              <FormControl>
+                                                <Input 
+                                                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
+                                                  placeholder="Phone number" 
+                                                  inputMode="tel" 
+                                                  autoComplete="off" 
+                                                  {...field} 
+                                                  data-testid="input-phone"
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+
+                                      {/* Address Lines */}
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="address1"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">Address 1</FormLabel>
+                                              <FormControl>
+                                                <Input 
+                                                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
+                                                  placeholder="Address line 1" 
+                                                  inputMode="text" 
+                                                  autoComplete="off" 
+                                                  {...field} 
+                                                  data-testid="input-address1"
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="address2"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">Address 2</FormLabel>
+                                              <FormControl>
+                                                <Input 
+                                                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
+                                                  placeholder="Address line 2" 
+                                                  inputMode="text" 
+                                                  autoComplete="off" 
+                                                  {...field} 
+                                                  data-testid="input-address2"
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+
+                                      {/* State and City */}
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="state"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">State</FormLabel>
+                                              <Select 
+                                                value={field.value} 
+                                                onValueChange={(value) => {
+                                                  field.onChange(value);
+                                                  handleStateChange(value);
+                                                }}
+                                              >
+                                                <FormControl>
+                                                  <SelectTrigger className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`}>
+                                                    <SelectValue placeholder="State" />
+                                                  </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                  <SelectItem value="Maharashtra">Maharashtra</SelectItem>
+                                                  <SelectItem value="Gujarat">Gujarat</SelectItem>
+                                                  <SelectItem value="Karnataka">Karnataka</SelectItem>
+                                                  <SelectItem value="Tamil Nadu">Tamil Nadu</SelectItem>
+                                                  <SelectItem value="Telangana">Telangana</SelectItem>
+                                                  <SelectItem value="West Bengal">West Bengal</SelectItem>
+                                                  <SelectItem value="Rajasthan">Rajasthan</SelectItem>
+                                                  <SelectItem value="Uttar Pradesh">Uttar Pradesh</SelectItem>
+                                                  <SelectItem value="Delhi">Delhi</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="city"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">City <span className="text-red-500">*</span></FormLabel>
+                                              <Select value={field.value} onValueChange={field.onChange}>
+                                                <FormControl>
+                                                  <SelectTrigger className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`}>
+                                                    <SelectValue placeholder="City" />
+                                                  </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                  {availableCities.map((city) => (
+                                                    <SelectItem key={city} value={city}>
+                                                      {city}
+                                                    </SelectItem>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+
+                                      {/* Pin Code and GST Number */}
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="pinCode"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">Pin Code</FormLabel>
+                                              <FormControl>
+                                                <Input 
+                                                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
+                                                  placeholder="Pin code" 
+                                                  inputMode="numeric" 
+                                                  autoComplete="off" 
+                                                  {...field} 
+                                                  data-testid="input-pincode"
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={clientForm.control}
+                                          name="gstNumber"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs font-medium text-gray-700">GST Number</FormLabel>
+                                              <FormControl>
+                                                <Input 
+                                                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
+                                                  placeholder="Enter GST number" 
+                                                  inputMode="text" 
+                                                  autoComplete="off" 
+                                                  {...field} 
+                                                  data-testid="input-gst"
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+                                    </div>
+                                  </form>
+                                </Form>
                               </div>
                               <div className="p-4 border-t bg-white">
                                 <div className="flex gap-3">

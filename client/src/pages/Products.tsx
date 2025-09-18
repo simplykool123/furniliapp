@@ -50,7 +50,7 @@ export default function Products() {
       onAddClick={() => setShowAddProduct(true)}
     >
       {/* Bulk Operations - Mobile Optimized */}
-      <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
+      <div className="flex flex-row flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
         <BulkExportModal />
         {canManageProducts && (
           <BulkImportModal onSuccess={() => {

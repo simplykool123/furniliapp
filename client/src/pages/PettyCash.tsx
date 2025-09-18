@@ -1409,7 +1409,7 @@ export default function PettyCash() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
           <div>
           </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div className="flex flex-row gap-2 w-full sm:w-auto">
           <Button onClick={() => {
             resetFormData();
             setShowAddDialog(true);

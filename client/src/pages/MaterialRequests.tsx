@@ -35,7 +35,7 @@ export default function MaterialRequests() {
       subtitle="Manage and track material request workflows"
     >
       {/* Action Buttons - Mobile Optimized */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
+      <div className="flex flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
         {canCreateRequests && (
           <FurniliButton
             onClick={() => setShowNewRequest(true)}

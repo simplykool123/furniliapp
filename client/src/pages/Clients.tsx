@@ -110,6 +110,23 @@ export default function Clients() {
     queryKey: ["/api/clients"],
   });
 
+  // Get projects data for stats
+  const { data: projects = [] } = useQuery<any[]>({
+    queryKey: ["/api/projects"],
+  });
+
+  // Calculate dynamic stats
+  const activeProjects = projects.filter(p => 
+    p.stage !== 'completed' && p.stage !== 'lost' && p.stage !== 'archive'
+  ).length;
+  
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const thisMonthClients = clients.filter(client => {
+    const clientDate = new Date(client.createdAt);
+    return clientDate.getMonth() === currentMonth && clientDate.getFullYear() === currentYear;
+  }).length;
+
   const createClientMutation = useMutation({
     mutationFn: async (data: ClientFormData) => {
       const response = await apiRequest("/api/clients", {
@@ -238,7 +255,8 @@ export default function Clients() {
               <Input 
                 className="h-8 text-sm border-gray-200" 
                 placeholder="Enter client name" 
-                {...field} 
+                {...field}
+                autoComplete="off"
               />
             </FormControl>
             <FormMessage />
@@ -259,7 +277,8 @@ export default function Clients() {
                   type="email" 
                   className="h-8 text-sm border-gray-200" 
                   placeholder="Email address" 
-                  {...field} 
+                  {...field}
+                  autoComplete="off"
                 />
               </FormControl>
               <FormMessage />
@@ -278,7 +297,8 @@ export default function Clients() {
                 <Input 
                   className="h-8 text-sm border-gray-200" 
                   placeholder="Mobile number" 
-                  {...field} 
+                  {...field}
+                  autoComplete="off"
                 />
               </FormControl>
               <FormMessage />
@@ -299,7 +319,8 @@ export default function Clients() {
                 <Input 
                   className="h-8 text-sm border-gray-200" 
                   placeholder="Contact person" 
-                  {...field} 
+                  {...field}
+                  autoComplete="off"
                 />
               </FormControl>
               <FormMessage />
@@ -316,7 +337,8 @@ export default function Clients() {
                 <Input 
                   className="h-8 text-sm border-gray-200" 
                   placeholder="Phone number" 
-                  {...field} 
+                  {...field}
+                  autoComplete="off"
                 />
               </FormControl>
               <FormMessage />
@@ -337,7 +359,8 @@ export default function Clients() {
                 <Input 
                   className="h-8 text-sm border-gray-200" 
                   placeholder="Address line 1" 
-                  {...field} 
+                  {...field}
+                  autoComplete="off"
                 />
               </FormControl>
               <FormMessage />
@@ -354,7 +377,8 @@ export default function Clients() {
                 <Input 
                   className="h-8 text-sm border-gray-200" 
                   placeholder="Address line 2" 
-                  {...field} 
+                  {...field}
+                  autoComplete="off"
                 />
               </FormControl>
               <FormMessage />
@@ -432,7 +456,8 @@ export default function Clients() {
                 <Input 
                   className="h-8 text-sm border-gray-200" 
                   placeholder="Pin code" 
-                  {...field} 
+                  {...field}
+                  autoComplete="off"
                 />
               </FormControl>
               <FormMessage />
@@ -452,7 +477,8 @@ export default function Clients() {
               <Input 
                 className="h-8 text-sm border-gray-200" 
                 placeholder="Enter GST number" 
-                {...field} 
+                {...field}
+                autoComplete="off"
               />
             </FormControl>
             <FormMessage />
@@ -509,8 +535,8 @@ export default function Clients() {
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Stats Cards - All in one line */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <FurniliStatsCard
             title="Total Clients"
             value={clients.length}
@@ -518,12 +544,12 @@ export default function Clients() {
           />
           <FurniliStatsCard
             title="Active Projects"
-            value="12"
+            value={activeProjects}
             icon={Building}
           />
           <FurniliStatsCard
             title="This Month"
-            value="3"
+            value={thisMonthClients}
             icon={Plus}
           />
         </div>

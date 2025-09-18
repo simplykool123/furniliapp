@@ -230,7 +230,7 @@ export default function Sidebar({ onItemClick, collapsed = false, onToggleCollap
 
   return (
     <aside className={cn(
-      "shadow-xl border-r border-primary-foreground/20 h-full flex flex-col w-full",
+      "shadow-xl border-r border-primary-foreground/20 h-full flex flex-col fixed left-0 top-0 z-40",
       collapsed ? "w-16" : "w-56 lg:w-60"
     )} style={{backgroundColor: '#D4B896'}} data-testid="main-sidebar">
       {/* Logo/Brand & Toggle */}

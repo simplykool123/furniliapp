@@ -116,25 +116,30 @@ export default function FurniliLayout({
               />
             )}
             
-            {/* Mobile sidebar - left-anchored panel only */}
+            {/* Mobile sidebar - full screen overlay when open */}
             <div 
               className={cn(
-                "fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] transform transition-transform duration-300 ease-in-out bg-white shadow-xl",
-                sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                "fixed inset-0 z-50 transform transition-all duration-300 ease-in-out mobile-sidebar",
+                sidebarOpen ? "translate-x-0 pointer-events-auto" : "-translate-x-full pointer-events-none"
               )}
               data-testid="main-sidebar"
+              style={{
+                visibility: sidebarOpen ? 'visible' : 'hidden'
+              }}
             >
-              <Sidebar 
-                onItemClick={() => {
-                  console.log('Sidebar item clicked - closing mobile sidebar');
-                  setSidebarOpen(false);
-                }} 
-                collapsed={false}
-                onToggleCollapse={() => {
-                  console.log('Mobile sidebar collapse button clicked - closing sidebar');
-                  setSidebarOpen(false);
-                }}
-              />
+              <div className="w-64 max-w-[85vw] h-full bg-white shadow-xl border-r border-border/50">
+                <Sidebar 
+                  onItemClick={() => {
+                    console.log('Sidebar item clicked - closing mobile sidebar');
+                    setSidebarOpen(false);
+                  }} 
+                  collapsed={false}
+                  onToggleCollapse={() => {
+                    console.log('Mobile sidebar collapse button clicked - closing sidebar');
+                    setSidebarOpen(false);
+                  }}
+                />
+              </div>
             </div>
           </>
         )}

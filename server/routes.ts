@@ -165,6 +165,44 @@ function calculateAdvancedSheetOptimization(boardPanels: any[]) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ===== REQUEST THROTTLING MIDDLEWARE =====
+  const requestCounts = new Map<string, { count: number; resetTime: number }>();
+  const THROTTLE_WINDOW_MS = 60000; // 1 minute window
+  const MAX_REQUESTS_PER_WINDOW = 120; // Max 120 requests per minute per IP (2 per second average)
+  
+  app.use("/api", (req, res, next) => {
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    
+    // Clean up old entries
+    if (now % 10000 < 100) { // Cleanup every ~10 seconds
+      for (const [ip, data] of requestCounts.entries()) {
+        if (now > data.resetTime) {
+          requestCounts.delete(ip);
+        }
+      }
+    }
+    
+    // Get or initialize counter for this IP
+    let clientData = requestCounts.get(clientIP);
+    if (!clientData || now > clientData.resetTime) {
+      clientData = { count: 0, resetTime: now + THROTTLE_WINDOW_MS };
+      requestCounts.set(clientIP, clientData);
+    }
+    
+    // Check if client has exceeded the limit
+    if (clientData.count >= MAX_REQUESTS_PER_WINDOW) {
+      return res.status(429).json({ 
+        error: "Too many requests", 
+        retryAfter: Math.ceil((clientData.resetTime - now) / 1000) 
+      });
+    }
+    
+    // Increment counter and continue
+    clientData.count++;
+    next();
+  });
+
   // ===== HEALTH CHECK ENDPOINT =====
   // Lightweight endpoint to handle frequent HEAD requests for server health/connectivity checks
   app.get("/api", (req, res) => {

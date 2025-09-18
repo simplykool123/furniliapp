@@ -83,11 +83,52 @@
     display: block;
     overflow-x: auto;
     white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
   
   .table-responsive table {
     width: 100%;
     min-width: 600px;
+    font-size: 0.875rem;
+  }
+  
+  .table-responsive th,
+  .table-responsive td {
+    padding: 0.5rem 0.75rem !important;
+    min-width: 120px;
+  }
+  
+  /* Mobile card-like table */
+  .mobile-table-card {
+    display: block !important;
+    margin-bottom: 1rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .mobile-table-card tr {
+    display: block;
+    border: none;
+  }
+  
+  .mobile-table-card td {
+    display: block;
+    text-align: left !important;
+    border: none;
+    padding: 0.5rem 1rem;
+  }
+  
+  .mobile-table-card td:before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
   }
 }
 
@@ -118,6 +159,67 @@
   
   .shadow-xl {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Enhanced mobile icon and button sizing */
+@media (max-width: 768px) {
+  /* Compact icons for mobile */
+  .lucide {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+  
+  /* Compact buttons */
+  .btn-sm, button.btn-sm {
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    min-height: 32px !important;
+  }
+  
+  /* Status badges */
+  .badge {
+    font-size: 0.625rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+  
+  /* Form controls */
+  .form-control, input, select, textarea {
+    font-size: 16px !important; /* Prevent zoom on iOS */
+    padding: 0.5rem !important;
+  }
+  
+  /* Compact card headers */
+  .card-header {
+    padding: 0.75rem !important;
+  }
+  
+  .card-content {
+    padding: 0.75rem !important;
+  }
+  
+  /* Compact navigation */
+  .nav-item {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Mobile-friendly switches */
+  .switch {
+    transform: scale(0.8) !important;
+  }
+  
+  /* Compact stats cards */
+  .stats-card {
+    padding: 0.75rem !important;
+  }
+  
+  .stats-card h3 {
+    font-size: 0.875rem !important;
+  }
+  
+  .stats-card .text-2xl {
+    font-size: 1.25rem !important;
   }
 }
 

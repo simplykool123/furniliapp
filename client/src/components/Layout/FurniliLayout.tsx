@@ -28,12 +28,20 @@ export default function FurniliLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   
-  // Simple mobile detection - use same breakpoint as other components
-  const [isMobile, setIsMobile] = useState(false);
+  // Robust mobile detection with proper initial state
+  const [isMobile, setIsMobile] = useState(() => {
+    // Check on initial render
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
   
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      console.log('Mobile detection:', mobile, 'Width:', window.innerWidth);
+      setIsMobile(mobile);
     };
     
     checkMobile();
@@ -96,12 +104,15 @@ export default function FurniliLayout({
             )}
             
             <div className={cn(
-              "fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] transform transition-all duration-300 ease-in-out",
+              "fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] transform transition-all duration-300 ease-in-out mobile-sidebar",
               sidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}>
               <div className="furnili-sidebar h-full shadow-xl border-r border-border/50">
                 <Sidebar 
-                  onItemClick={() => setSidebarOpen(false)} 
+                  onItemClick={() => {
+                    console.log('Sidebar item clicked - closing mobile sidebar');
+                    setSidebarOpen(false);
+                  }} 
                   collapsed={false}
                   onToggleCollapse={() => {}}
                 />

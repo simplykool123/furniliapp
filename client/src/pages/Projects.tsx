@@ -705,88 +705,80 @@ export default function Projects() {
             </div>
           </div>
 
-          {/* Mobile Table removed - using responsive design */}
-          <div className="hidden">
-            <div
-              data={filteredProjects}
-              columns={[
-                {
-                  key: 'project',
-                  label: 'Project',
-                  render: (value: any, project: Project) => (
-                    <div>
-                      <div className="font-medium text-sm">{project.name}</div>
-                      <div className="text-xs text-furnili-brown font-medium">{project.code}</div>
-                      <div className="text-xs text-gray-600 mt-1">{getClientName(project)}</div>
-                      <div className="text-xs text-gray-500">
-                        {(project as any).city || project.siteCity || (project as any).client_city || 'N/A'}
-                      </div>
+          {/* Mobile Project Cards */}
+          <div className="block md:hidden space-y-3">
+            {filteredProjects.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No projects found
+              </div>
+            ) : (
+              filteredProjects.map((project: Project) => (
+                <Card key={project.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation(`/projects/${project.id}`)}>
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-base text-gray-900">{project.name}</div>
+                      <div className="text-sm text-furnili-brown font-medium">{project.code}</div>
                     </div>
-                  )
-                },
-                {
-                  key: 'details',
-                  label: 'Details',
-                  render: (value: any, project: Project) => (
-                    <div className="text-right">
-                      <Badge variant="secondary" className={`text-xs mb-2 ${getStageColor(project.stage)}`}>
-                        {project.stage.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </Badge>
-                      <div className="text-xs text-gray-500">
-                        {(project as any).formatted_created_at || (project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: '2-digit', 
-                          year: 'numeric'
-                        }) : 'N/A')}
-                      </div>
+                    <Badge variant="secondary" className={`text-xs ${getStageColor(project.stage)}`}>
+                      {project.stage.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1 text-sm text-gray-600 mb-3">
+                    <div>Client: {getClientName(project)}</div>
+                    <div>City: {(project as any).city || project.siteCity || (project as any).client_city || 'N/A'}</div>
+                    <div className="text-xs text-gray-500">
+                      Created: {(project as any).formatted_created_at || (project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit', 
+                        year: 'numeric'
+                      }) : 'N/A')}
                     </div>
-                  )
-                }
-              ]}
-              onRowClick={(project) => setLocation(`/projects/${project.id}`)}
-              actions={(project: Project) => (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLocation(`/projects/${project.id}`);
-                    }}
-                    className="text-gray-500 p-1"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  {canManageProjects && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditProject(project);
-                        }}
-                        className="text-blue-500 p-1"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteProject(project);
-                        }}
-                        className="text-red-500 p-1"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
-              emptyMessage="No projects found"
-            />
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLocation(`/projects/${project.id}`);
+                      }}
+                      className="text-gray-500 h-8 w-8 p-0"
+                      title="View Details"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    {canManageProjects && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditProject(project);
+                          }}
+                          className="text-blue-500 h-8 w-8 p-0"
+                          title="Edit Project"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProject(project);
+                          }}
+                          className="text-red-500 h-8 w-8 p-0"
+                          title="Delete Project"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
 
           {/* Desktop Table */}

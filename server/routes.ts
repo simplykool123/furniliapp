@@ -165,6 +165,16 @@ function calculateAdvancedSheetOptimization(boardPanels: any[]) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ===== HEALTH CHECK ENDPOINT =====
+  // Lightweight endpoint to handle frequent HEAD requests for server health/connectivity checks
+  app.get("/api", (req, res) => {
+    res.status(200).json({ status: "ok", timestamp: Date.now() });
+  });
+  
+  app.head("/api", (req, res) => {
+    res.status(200).end();
+  });
+
   // ===== TEMPORARY DATA FIX ROUTE =====
   app.get("/api/fix-client-5", async (req, res) => {
     try {

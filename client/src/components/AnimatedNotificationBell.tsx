@@ -45,7 +45,7 @@ export function AnimatedNotificationBell() {
   
   const { data: tasks = [], error, isLoading } = useQuery<Task[]>({
     queryKey: ["/api/dashboard/tasks"],
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced from 30s)
   });
 
   // Fetch dashboard stats for other notifications
@@ -54,7 +54,7 @@ export function AnimatedNotificationBell() {
     queryFn: async () => {
       return await authenticatedApiRequest('GET', '/api/dashboard/stats');
     },
-    refetchInterval: 30000,
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced from 30s)
   });
 
   // Count pending and in-progress tasks (using lowercase status values)

@@ -147,7 +147,7 @@ export function AnimatedNotificationBell() {
         <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
           {/* Simple header */}
           <div className="px-4 py-3 border-b">
-            <span className="font-semibold text-gray-900">Notifications</span>
+            <span className="font-semibold text-lg sm:text-base text-gray-900">Notifications</span>
           </div>
           
           {/* Low Stock Alerts */}
@@ -159,10 +159,10 @@ export function AnimatedNotificationBell() {
               >
                 <Package className="h-4 w-4 text-gray-600" />
                 <div className="flex-1">
-                  <div className="font-medium text-sm text-gray-900">
+                  <div className="font-medium text-base sm:text-sm text-gray-900">
                     {lowStockCount} products need restocking
                   </div>
-                  <div className="text-xs text-gray-500">Low stock alerts</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Low stock alerts</div>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -178,10 +178,10 @@ export function AnimatedNotificationBell() {
               >
                 <FileText className="h-4 w-4 text-gray-600" />
                 <div className="flex-1">
-                  <div className="font-medium text-sm text-gray-900">
+                  <div className="font-medium text-base sm:text-sm text-gray-900">
                     {pendingRequestsCount} material requests pending
                   </div>
-                  <div className="text-xs text-gray-500">Material requests</div>
+                  <div className="text-sm sm:text-xs text-gray-500">Material requests</div>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -201,10 +201,10 @@ export function AnimatedNotificationBell() {
                     <Clock className="h-4 w-4 text-gray-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-gray-900 truncate">
+                    <div className="font-medium text-base sm:text-sm text-gray-900 truncate">
                       {task.title}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-sm sm:text-xs text-gray-500">
                       {task.priority} priority • {task.status}
                     </div>
                   </div>
@@ -215,7 +215,7 @@ export function AnimatedNotificationBell() {
                   onClick={() => setLocation('/tasks')}
                   className="px-4 py-3 text-gray-600 hover:bg-gray-50 cursor-pointer"
                 >
-                  View all {taskCount} tasks →
+                  <span className="text-base sm:text-sm">View all {taskCount} tasks →</span>
                 </DropdownMenuItem>
               )}
             </>

@@ -103,16 +103,6 @@ const navItems: NavItem[] = [
     roles: ["admin", "manager", "staff"]
   },
   {
-    name: "CRM & Sales",
-    icon: Users,
-    roles: ["admin", "manager", "staff"],
-    children: [
-      { name: "Leads", href: "/leads", icon: TrendingUp, roles: ["admin", "manager", "staff"] },
-      { name: "Interactions", href: "/interactions", icon: MessageSquare, roles: ["admin", "manager", "staff"] },
-      { name: "Quotes", href: "/quotes", icon: FileText, roles: ["admin", "manager", "staff"] },
-    ]
-  },
-  {
     name: "Production",
     icon: Layers,
     roles: ["admin", "manager", "staff"],

@@ -1428,7 +1428,24 @@ class DatabaseStorage implements IStorage {
   }
 
   async createClient(client: InsertClient): Promise<Client> {
-    const result = await db.insert(clients).values(client).returning();
+    // Explicitly specify only the columns we want to insert to avoid schema conflicts
+    const insertData = {
+      name: client.name,
+      email: client.email || null,
+      mobile: client.mobile,
+      city: client.city,
+      contactPerson: client.contactPerson || null,
+      phone: client.phone || null,
+      address1: client.address1 || null,
+      address2: client.address2 || null,
+      state: client.state || null,
+      pinCode: client.pinCode || null,
+      gstNumber: client.gstNumber || null,
+      // type defaults to 'client' in database
+      // isActive defaults to true in database
+    };
+    
+    const result = await db.insert(clients).values(insertData).returning();
     return result[0];
   }
 

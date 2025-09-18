@@ -239,13 +239,9 @@ export default function Clients() {
     client.city.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Mobile focus fix handler - prevent form container focus on mobile
+  // Prevent input focus loss on mobile
   const handleMobileInput = (e: React.FormEvent<HTMLInputElement>) => {
-    if (isMobile) {
-      // Prevent event bubbling to form container
-      e.stopPropagation();
-      e.preventDefault();
-    }
+    e.stopPropagation();
   };
 
   // Compact form component
@@ -253,14 +249,6 @@ export default function Clients() {
     <form 
       onSubmit={clientForm.handleSubmit(onSubmitClient)} 
       className="space-y-3"
-      onFocus={(e) => {
-        // Prevent form container from getting focus on mobile
-        if (isMobile && e.target === e.currentTarget) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }}
-      tabIndex={isMobile ? -1 : undefined}
     >
       {/* Client Name - Full Width */}
       <FormField
@@ -682,12 +670,7 @@ export default function Clients() {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent 
           className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto"
-          onOpenAutoFocus={(e) => {
-            // Only prevent auto-focus on mobile to avoid keyboard conflicts
-            if (isMobile) {
-              e.preventDefault();
-            }
-          }}
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg font-semibold">Add New Client</DialogTitle>
@@ -706,12 +689,7 @@ export default function Clients() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent 
           className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto"
-          onOpenAutoFocus={(e) => {
-            // Only prevent auto-focus on mobile to avoid keyboard conflicts
-            if (isMobile) {
-              e.preventDefault();
-            }
-          }}
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg font-semibold">Edit Client</DialogTitle>

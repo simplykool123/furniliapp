@@ -178,12 +178,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
     
-    // Block requests from other Replit accounts (look for replit.com in user agent or referer)
-    const userAgent = req.get('user-agent') || '';
-    const referer = req.get('referer') || '';
-    
-    if (userAgent.includes('replit') || referer.includes('.replit.') || referer.includes('replit.com')) {
-      return res.status(403).json({ error: "Access denied - external replit account detected" });
+    // EMERGENCY STOP - Block ALL HEAD requests to /api endpoint from external sources
+    if (req.method === 'HEAD' && req.path === '/api') {
+      const userAgent = req.get('user-agent') || '';
+      const referer = req.get('referer') || '';
+      const host = req.get('host') || '';
+      
+      // Only allow HEAD requests from browsers with proper referer from this domain
+      const hasValidReferer = referer && referer.includes(host);
+      const isBrowser = userAgent.includes('Mozilla') || userAgent.includes('Chrome') || userAgent.includes('Safari');
+      
+      if (!hasValidReferer || !isBrowser) {
+        return res.status(403).json({ error: "Unauthorized HEAD request blocked" });
+      }
     }
     
     // Check if this is a health check request

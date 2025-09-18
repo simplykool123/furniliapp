@@ -2,9 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Furnili - Inventory Management System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Furnili - Manufacturing Management System</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#66451c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Furnili" />
+    
+    <!-- Prevent browser zoom and improve mobile experience -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Furnili" />
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Prevent text size adjustment on mobile -->
+    <style>
+      html { -webkit-text-size-adjust: 100%; }
+      body { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+      input, textarea, select { -webkit-user-select: text; user-select: text; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

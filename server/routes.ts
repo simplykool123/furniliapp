@@ -169,10 +169,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const requestCounts = new Map<string, { count: number; resetTime: number }>();
   const THROTTLE_WINDOW_MS = 60000; // 1 minute window
   const MAX_REQUESTS_PER_WINDOW = 120; // Max 120 requests per minute per IP (2 per second average)
+  const MAX_HEALTH_CHECK_REQUESTS = 600; // Higher limit for health checks (10 per second average)
+  
+  // Trust proxy for accurate IP detection
+  app.set('trust proxy', 1);
   
   app.use("/api", (req, res, next) => {
     const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
+    
+    // Check if this is a health check request
+    const isHealthCheck = req.path === '/api' && (req.method === 'HEAD' || req.method === 'GET');
+    const maxRequests = isHealthCheck ? MAX_HEALTH_CHECK_REQUESTS : MAX_REQUESTS_PER_WINDOW;
     
     // Clean up old entries
     if (now % 10000 < 100) { // Cleanup every ~10 seconds
@@ -191,10 +199,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Check if client has exceeded the limit
-    if (clientData.count >= MAX_REQUESTS_PER_WINDOW) {
+    if (clientData.count >= maxRequests) {
+      const retryAfterSeconds = Math.ceil((clientData.resetTime - now) / 1000);
+      res.set('Retry-After', retryAfterSeconds.toString());
       return res.status(429).json({ 
         error: "Too many requests", 
-        retryAfter: Math.ceil((clientData.resetTime - now) / 1000) 
+        retryAfter: retryAfterSeconds
       });
     }
     

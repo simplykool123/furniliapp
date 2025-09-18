@@ -1786,15 +1786,13 @@ export default function ProjectDetail() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <div className="flex items-center space-x-3">
-                  <h1 className="text-sm sm:text-lg font-bold text-gray-900 line-clamp-2">
-                    {project.name} - {project.code}
+                <div>
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 line-clamp-1">
+                    {project.name}
                   </h1>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Edit className="h-4 w-4" />
-                    <span>P-176</span>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {project.code}
+                  </p>
                 </div>
                 <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                   <div className="flex items-center space-x-1">
@@ -1861,14 +1859,14 @@ export default function ProjectDetail() {
                 value="files"
                 className="flex items-center space-x-1 px-0 py-2 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
-                <span className="text-sm">📂</span>
+                <span className="text-lg">📂</span>
                 <span className="font-medium text-base sm:text-sm">Files</span>
               </TabsTrigger>
               <TabsTrigger
                 value="moodboard"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
-                <span className="text-base">🎨</span>
+                <span className="text-xl">🎨</span>
                 <span className="font-medium text-base sm:text-sm">Moodboard</span>
               </TabsTrigger>
               {canViewFinances && (
@@ -1876,7 +1874,7 @@ export default function ProjectDetail() {
                   value="notes"
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
-                  <span className="text-base">🗒️</span>
+                  <span className="text-xl">🗒️</span>
                   <span className="font-medium text-base sm:text-sm">Notes</span>
                 </TabsTrigger>
               )}
@@ -1884,7 +1882,7 @@ export default function ProjectDetail() {
                 value="tasks"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
-                <span className="text-base">✅</span>
+                <span className="text-xl">✅</span>
                 <span className="font-medium text-base sm:text-sm">Tasks</span>
               </TabsTrigger>
               {canViewFinances && (
@@ -1892,7 +1890,7 @@ export default function ProjectDetail() {
                   value="quotes"
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
-                  <span className="text-base">💸</span>
+                  <span className="text-xl">💸</span>
                   <span className="font-medium text-base sm:text-sm">Quotes</span>
                 </TabsTrigger>
               )}
@@ -1901,7 +1899,7 @@ export default function ProjectDetail() {
                   value="workorders"
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
-                  <span className="text-base">🏭</span>
+                  <span className="text-xl">🏭</span>
                   <span className="font-medium text-base sm:text-sm">Production</span>
                 </TabsTrigger>
               )}
@@ -1909,21 +1907,21 @@ export default function ProjectDetail() {
                 value="orders"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
-                <span className="text-base">📦</span>
+                <span className="text-xl">📦</span>
                 <span className="font-medium text-base sm:text-sm">Orders</span>
               </TabsTrigger>
               <TabsTrigger
                 value="activities"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
-                <span className="text-base">📅</span>
+                <span className="text-xl">📅</span>
                 <span className="font-medium text-base sm:text-sm">Activities</span>
               </TabsTrigger>
               <TabsTrigger
                 value="progress"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
-                <span className="text-base">📊</span>
+                <span className="text-xl">📊</span>
                 <span className="font-medium text-base sm:text-sm">Progress</span>
               </TabsTrigger>
 
@@ -1932,7 +1930,7 @@ export default function ProjectDetail() {
                   value="financials"
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
-                  <span className="text-base">💰</span>
+                  <span className="text-xl">💰</span>
                   <span className="font-medium text-base sm:text-sm">Finances</span>
                 </TabsTrigger>
               )}

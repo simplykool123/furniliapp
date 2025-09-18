@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Filter, Building2, Calendar, User, MapPin, Eye, Edit, FolderOpen, Trash2, Upload, FileImage, FileText, Download, X } from "lucide-react";
 import { useLocation } from "wouter";
@@ -59,6 +59,7 @@ export default function Projects() {
   const [activeProjectTab, setActiveProjectTab] = useState("all");
   const [selectedState, setSelectedState] = useState("Maharashtra");
   const [availableCities, setAvailableCities] = useState<string[]>(getCitiesByState("Maharashtra"));
+  const [isMobile, setIsMobile] = useState(false);
 
   // File management states
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
@@ -69,6 +70,14 @@ export default function Projects() {
   // Authentication and role-based permissions
   const user = authService.getUser();
   const canManageProjects = user && ['admin', 'manager'].includes(user.role);
+  
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // File upload mutations
   const manualQuoteUploadMutation = useMutation({
@@ -942,7 +951,10 @@ export default function Projects() {
                           New Client
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-[90vw] max-h-[90vh] p-0">
+                      <DialogContent 
+                        className="max-w-[95vw] sm:max-w-lg max-h-[90vh] p-0"
+                        onOpenAutoFocus={(e) => e.preventDefault()}
+                      >
                         <div className="flex flex-col max-h-[90vh]">
                           <DialogHeader className="p-3 border-b flex-shrink-0">
                             <DialogTitle className="text-base">Add New Client</DialogTitle>
@@ -968,7 +980,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Client Name <span className="text-red-500">*</span></FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter client name" autoComplete="off" {...field} />
+                                            <Input className={`${isMobile ? 'h-9' : 'h-8'}`} placeholder="Enter client name" inputMode="text" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -982,7 +994,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Contact Person</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter contact person" autoComplete="off" {...field} />
+                                            <Input className={`${isMobile ? 'h-9' : 'h-8'}`} placeholder="Enter contact person" inputMode="text" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -996,7 +1008,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">GST Number</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter GST number" autoComplete="off" {...field} />
+                                            <Input className={`${isMobile ? 'h-9' : 'h-8'}`} placeholder="Enter GST number" inputMode="text" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1013,7 +1025,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Mobile <span className="text-red-500">*</span></FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter mobile number" autoComplete="off" {...field} />
+                                            <Input className={`${isMobile ? 'h-9' : 'h-8'}`} placeholder="Enter mobile number" inputMode="tel" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1027,7 +1039,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Phone</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter phone number" autoComplete="off" {...field} />
+                                            <Input className={`${isMobile ? 'h-9' : 'h-8'}`} placeholder="Enter phone number" inputMode="tel" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1041,7 +1053,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Email</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" type="email" placeholder="Enter email address" autoComplete="off" {...field} />
+                                            <Input className={`${isMobile ? 'h-9' : 'h-8'}`} type="email" placeholder="Enter email address" inputMode="email" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1062,7 +1074,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Address Line 1</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter address line 1" autoComplete="off" {...field} />
+                                            <Input className={`${isMobile ? 'h-9' : 'h-8'}`} placeholder="Enter address line 1" inputMode="text" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1076,7 +1088,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Address Line 2</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter address line 2" autoComplete="off" {...field} />
+                                            <Input className={`${isMobile ? 'h-9' : 'h-8'}`} placeholder="Enter address line 2" inputMode="text" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1100,7 +1112,7 @@ export default function Projects() {
                                             }}
                                           >
                                             <FormControl>
-                                              <SelectTrigger className="h-8">
+                                              <SelectTrigger className={`${isMobile ? 'h-9' : 'h-8'}`}>
                                                 <SelectValue placeholder="Select state" />
                                               </SelectTrigger>
                                             </FormControl>
@@ -1156,7 +1168,7 @@ export default function Projects() {
                                           <FormLabel className="text-xs font-medium text-gray-700">City <span className="text-red-500">*</span></FormLabel>
                                           <Select value={field.value} onValueChange={field.onChange}>
                                             <FormControl>
-                                              <SelectTrigger className="h-8">
+                                              <SelectTrigger className={`${isMobile ? 'h-9' : 'h-8'}`}>
                                                 <SelectValue placeholder="Select city" />
                                               </SelectTrigger>
                                             </FormControl>
@@ -1180,7 +1192,7 @@ export default function Projects() {
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-700">Pin Code</FormLabel>
                                           <FormControl>
-                                            <Input className="h-8" placeholder="Enter pin code" autoComplete="off" {...field} />
+                                            <Input className={`${isMobile ? 'h-9' : 'h-8'}`} placeholder="Enter pin code" inputMode="numeric" autoComplete="off" {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1229,8 +1241,9 @@ export default function Projects() {
                         </FormLabel>
                         <FormControl>
                           <Input 
-                            className="h-8 bg-gray-100 border-gray-200 text-sm" 
+                            className={`${isMobile ? 'h-9' : 'h-8'} bg-gray-100 border-gray-200 text-sm`} 
                             placeholder="Enter project name" 
+                            inputMode="text"
                             {...field} 
                           />
                         </FormControl>
@@ -1287,8 +1300,9 @@ export default function Projects() {
                           <FormControl>
                             <Input 
                               type="number" 
-                              className="h-8 bg-gray-100 border-gray-200 text-sm" 
+                              className={`${isMobile ? 'h-9' : 'h-8'} bg-gray-100 border-gray-200 text-sm`} 
                               placeholder="Enter budget" 
+                              inputMode="numeric"
                               {...field} 
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} 
                             />
@@ -1371,8 +1385,9 @@ export default function Projects() {
                               <FormLabel className="text-xs font-medium text-gray-700 mb-1 block">Site Address Line 1</FormLabel>
                               <FormControl>
                                 <Input 
-                                  className="h-8 bg-gray-100 border-gray-200 text-sm" 
+                                  className={`${isMobile ? 'h-9' : 'h-8'} bg-gray-100 border-gray-200 text-sm`} 
                                   placeholder="Enter site address line 1" 
+                                  inputMode="text"
                                   {...field} 
                                 />
                               </FormControl>
@@ -1388,8 +1403,9 @@ export default function Projects() {
                               <FormLabel className="text-xs font-medium text-gray-700 mb-1 block">Site Address Line 2</FormLabel>
                               <FormControl>
                                 <Input 
-                                  className="h-8 bg-gray-100 border-gray-200 text-sm" 
+                                  className={`${isMobile ? 'h-9' : 'h-8'} bg-gray-100 border-gray-200 text-sm`} 
                                   placeholder="Enter site address line 2" 
+                                  inputMode="text"
                                   {...field} 
                                 />
                               </FormControl>
@@ -1408,8 +1424,9 @@ export default function Projects() {
                               <FormLabel className="text-xs font-medium text-gray-700 mb-1 block">Site State</FormLabel>
                               <FormControl>
                                 <Input 
-                                  className="h-8 bg-gray-100 border-gray-200 text-sm" 
+                                  className={`${isMobile ? 'h-9' : 'h-8'} bg-gray-100 border-gray-200 text-sm`} 
                                   placeholder="Enter site state" 
+                                  inputMode="text"
                                   {...field} 
                                 />
                               </FormControl>
@@ -1425,8 +1442,9 @@ export default function Projects() {
                               <FormLabel className="text-xs font-medium text-gray-700 mb-1 block">Site City</FormLabel>
                               <FormControl>
                                 <Input 
-                                  className="h-8 bg-gray-100 border-gray-200 text-sm" 
+                                  className={`${isMobile ? 'h-9' : 'h-8'} bg-gray-100 border-gray-200 text-sm`} 
                                   placeholder="Enter site city" 
+                                  inputMode="text"
                                   {...field} 
                                 />
                               </FormControl>
@@ -1442,8 +1460,9 @@ export default function Projects() {
                               <FormLabel className="text-xs font-medium text-gray-700 mb-1 block">Site Location</FormLabel>
                               <FormControl>
                                 <Input 
-                                  className="h-8 bg-gray-100 border-gray-200 text-sm" 
+                                  className={`${isMobile ? 'h-9' : 'h-8'} bg-gray-100 border-gray-200 text-sm`} 
                                   placeholder="Enter site location" 
+                                  inputMode="text"
                                   {...field} 
                                 />
                               </FormControl>
@@ -1459,8 +1478,9 @@ export default function Projects() {
                               <FormLabel className="text-xs font-medium text-gray-700 mb-1 block">Site Pincode</FormLabel>
                               <FormControl>
                                 <Input 
-                                  className="h-8 bg-gray-100 border-gray-200 text-sm" 
+                                  className={`${isMobile ? 'h-9' : 'h-8'} bg-gray-100 border-gray-200 text-sm`} 
                                   placeholder="Enter site pincode" 
+                                  inputMode="numeric"
                                   {...field} 
                                 />
                               </FormControl>
@@ -1557,7 +1577,10 @@ export default function Projects() {
                               New Client
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0">
+                          <DialogContent 
+                            className="max-w-[95vw] sm:max-w-lg max-h-[90vh] p-0"
+                            onOpenAutoFocus={(e) => e.preventDefault()}
+                          >
                             <div className="flex flex-col max-h-[90vh]">
                               <DialogHeader className="p-4 border-b">
                                 <DialogTitle className="text-lg font-semibold">Add New Client</DialogTitle>

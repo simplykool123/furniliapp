@@ -253,8 +253,9 @@ export default function Clients() {
             </FormLabel>
             <FormControl>
               <Input 
-                className="h-8 text-sm border-gray-200" 
+                className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
                 placeholder="Enter client name" 
+                inputMode="text"
                 {...field}
                 autoComplete="off"
               />
@@ -275,8 +276,9 @@ export default function Clients() {
               <FormControl>
                 <Input 
                   type="email" 
-                  className="h-8 text-sm border-gray-200" 
+                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
                   placeholder="Email address" 
+                  inputMode="email"
                   {...field}
                   autoComplete="off"
                 />
@@ -295,8 +297,9 @@ export default function Clients() {
               </FormLabel>
               <FormControl>
                 <Input 
-                  className="h-8 text-sm border-gray-200" 
+                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
                   placeholder="Mobile number" 
+                  inputMode="tel"
                   {...field}
                   autoComplete="off"
                 />
@@ -317,8 +320,9 @@ export default function Clients() {
               <FormLabel className="text-xs font-medium text-gray-700">Contact Person</FormLabel>
               <FormControl>
                 <Input 
-                  className="h-8 text-sm border-gray-200" 
+                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
                   placeholder="Contact person" 
+                  inputMode="text"
                   {...field}
                   autoComplete="off"
                 />
@@ -335,8 +339,9 @@ export default function Clients() {
               <FormLabel className="text-xs font-medium text-gray-700">Phone</FormLabel>
               <FormControl>
                 <Input 
-                  className="h-8 text-sm border-gray-200" 
+                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
                   placeholder="Phone number" 
+                  inputMode="tel"
                   {...field}
                   autoComplete="off"
                 />
@@ -357,8 +362,9 @@ export default function Clients() {
               <FormLabel className="text-xs font-medium text-gray-700">Address 1</FormLabel>
               <FormControl>
                 <Input 
-                  className="h-8 text-sm border-gray-200" 
+                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
                   placeholder="Address line 1" 
+                  inputMode="text"
                   {...field}
                   autoComplete="off"
                 />
@@ -375,8 +381,9 @@ export default function Clients() {
               <FormLabel className="text-xs font-medium text-gray-700">Address 2</FormLabel>
               <FormControl>
                 <Input 
-                  className="h-8 text-sm border-gray-200" 
+                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
                   placeholder="Address line 2" 
+                  inputMode="text"
                   {...field}
                   autoComplete="off"
                 />
@@ -404,7 +411,7 @@ export default function Clients() {
                 value={field.value}
               >
                 <FormControl>
-                  <SelectTrigger className="h-8 text-sm border-gray-200">
+                  <SelectTrigger className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`}>
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
                 </FormControl>
@@ -430,7 +437,7 @@ export default function Clients() {
               </FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <SelectTrigger className="h-8 text-sm border-gray-200">
+                  <SelectTrigger className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`}>
                     <SelectValue placeholder="Select city" />
                   </SelectTrigger>
                 </FormControl>
@@ -454,8 +461,9 @@ export default function Clients() {
               <FormLabel className="text-xs font-medium text-gray-700">Pin Code</FormLabel>
               <FormControl>
                 <Input 
-                  className="h-8 text-sm border-gray-200" 
+                  className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
                   placeholder="Pin code" 
+                  inputMode="numeric"
                   {...field}
                   autoComplete="off"
                 />
@@ -475,8 +483,9 @@ export default function Clients() {
             <FormLabel className="text-xs font-medium text-gray-700">GST Number</FormLabel>
             <FormControl>
               <Input 
-                className="h-8 text-sm border-gray-200" 
+                className={`${isMobile ? 'h-9' : 'h-8'} text-sm border-gray-200`} 
                 placeholder="Enter GST number" 
+                inputMode="text"
                 {...field}
                 autoComplete="off"
               />
@@ -624,7 +633,10 @@ export default function Clients() {
 
       {/* Create Client Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-[90vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent 
+          className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg font-semibold">Add New Client</DialogTitle>
             <DialogDescription className="text-sm text-gray-600">
@@ -640,7 +652,10 @@ export default function Clients() {
 
       {/* Edit Client Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-[90vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent 
+          className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg font-semibold">Edit Client</DialogTitle>
             <DialogDescription className="text-sm text-gray-600">

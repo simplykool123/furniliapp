@@ -244,15 +244,24 @@ export default function Clients() {
     if (isMobile) {
       // Prevent event bubbling to form container
       e.stopPropagation();
-      // Keep focus on the input element
-      const target = e.target as HTMLInputElement;
-      setTimeout(() => target.focus(), 0);
+      e.preventDefault();
     }
   };
 
   // Compact form component
   const ClientForm = () => (
-    <form onSubmit={clientForm.handleSubmit(onSubmitClient)} className="space-y-3">
+    <form 
+      onSubmit={clientForm.handleSubmit(onSubmitClient)} 
+      className="space-y-3"
+      onFocus={(e) => {
+        // Prevent form container from getting focus on mobile
+        if (isMobile && e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+      tabIndex={isMobile ? -1 : undefined}
+    >
       {/* Client Name - Full Width */}
       <FormField
         control={clientForm.control}

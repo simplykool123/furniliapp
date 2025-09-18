@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "swift-5.8"]
+modules = ["nodejs-20", "web", "swift-5.8", "postgresql-16"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
@@ -26,10 +26,6 @@ externalPort = 8080
 [[ports]]
 localPort = 35461
 externalPort = 8000
-
-[[ports]]
-localPort = 35767
-externalPort = 9000
 
 [[ports]]
 localPort = 36217

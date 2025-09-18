@@ -1787,9 +1787,12 @@ export default function ProjectDetail() {
               </Button>
               <div>
                 <div>
-                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 line-clamp-1">
-                    {project.name} - {project.code}
+                  <h1 className="text-base sm:text-lg font-bold text-gray-900">
+                    {project.name}
                   </h1>
+                  <p className="text-sm text-gray-600">
+                    {project.code}
+                  </p>
                   <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
                       <User className="h-4 w-4" />
@@ -2292,15 +2295,16 @@ export default function ProjectDetail() {
           </TabsContent>
 
           {/* Moodboard Tab */}
-          <TabsContent value="moodboard" className="p-6 bg-gray-50">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
+          <TabsContent value="moodboard" className="p-3 sm:p-6 bg-gray-50">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                 Project Moodboards
               </h3>
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                 <Button
                   onClick={() => setIsMoodboardDialogOpen(true)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  className="bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto text-sm"
+                  size="sm"
                 >
                   <Star className="h-4 w-4 mr-2" />
                   Create Moodboard
@@ -2308,7 +2312,8 @@ export default function ProjectDetail() {
                 <Button
                   onClick={() => setIsUploadDialogOpen(true)}
                   variant="outline"
-                  className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                  className="border-purple-200 text-purple-700 hover:bg-purple-50 w-full sm:w-auto text-sm"
+                  size="sm"
                 >
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Images
@@ -2317,7 +2322,7 @@ export default function ProjectDetail() {
             </div>
 
             {/* Combined Moodboards and Uploaded Images Display */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
               {/* Display Database Moodboards */}
               {projectMoodboards.map((moodboard: any) => (
                 <div

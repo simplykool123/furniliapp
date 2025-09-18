@@ -65,6 +65,9 @@ import {
   insertWorkOrderSchema,
   insertQualityCheckSchema,
   insertProductionScheduleSchema,
+  
+  // Bot Settings schema
+  insertBotSettingsSchema,
 } from "@shared/schema";
 
 // Helper function to get rate from products table or fallback to default
@@ -7098,6 +7101,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating custom default price:', error);
       res.status(500).json({ error: 'Failed to update custom default price' });
+    }
+  });
+
+  // ============================================================================
+  // BOT SETTINGS ROUTES 
+  // ============================================================================
+
+  // Get all bot settings (optionally filtered by environment)
+  app.get("/api/bot-settings", authenticateToken, requireRole(["admin", "manager"]), async (req, res) => {
+    try {
+      const { environment } = req.query;
+      const botSettings = await storage.getAllBotSettings(environment as string);
+      res.json(botSettings);
+    } catch (error) {
+      console.error("Failed to fetch bot settings:", error);
+      res.status(500).json({ message: "Failed to fetch bot settings", error: String(error) });
+    }
+  });
+
+  // Get single bot settings by ID
+  app.get("/api/bot-settings/:id", authenticateToken, requireRole(["admin", "manager"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const botSettings = await storage.getBotSettings(id);
+      
+      if (!botSettings) {
+        return res.status(404).json({ message: "Bot settings not found" });
+      }
+      
+      res.json(botSettings);
+    } catch (error) {
+      console.error("Failed to fetch bot settings:", error);
+      res.status(500).json({ message: "Failed to fetch bot settings", error: String(error) });
+    }
+  });
+
+  // Get bot settings by environment and type
+  app.get("/api/bot-settings/environment/:environment/type/:type", authenticateToken, requireRole(["admin", "manager"]), async (req, res) => {
+    try {
+      const { environment, type } = req.params;
+      const botSettings = await storage.getBotSettingsByEnvironmentAndType(environment, type);
+      
+      if (!botSettings) {
+        return res.status(404).json({ message: "Bot settings not found for this environment and type" });
+      }
+      
+      res.json(botSettings);
+    } catch (error) {
+      console.error("Failed to fetch bot settings:", error);
+      res.status(500).json({ message: "Failed to fetch bot settings", error: String(error) });
+    }
+  });
+
+  // Create new bot settings
+  app.post("/api/bot-settings", authenticateToken, requireRole(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const botSettingsData = insertBotSettingsSchema.parse({
+        ...req.body,
+        createdBy: req.user!.id,
+        updatedBy: req.user!.id,
+      });
+      
+      const botSettings = await storage.createBotSettings(botSettingsData);
+      res.status(201).json(botSettings);
+    } catch (error) {
+      console.error("Failed to create bot settings:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation failed", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create bot settings", error: String(error) });
+    }
+  });
+
+  // Update bot settings
+  app.patch("/api/bot-settings/:id", authenticateToken, requireRole(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = insertBotSettingsSchema.partial().parse({
+        ...req.body,
+        updatedBy: req.user!.id,
+      });
+      
+      const updatedBotSettings = await storage.updateBotSettings(id, updates);
+      
+      if (!updatedBotSettings) {
+        return res.status(404).json({ message: "Bot settings not found" });
+      }
+      
+      res.json(updatedBotSettings);
+    } catch (error) {
+      console.error("Failed to update bot settings:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation failed", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update bot settings", error: String(error) });
+    }
+  });
+
+  // Delete bot settings
+  app.delete("/api/bot-settings/:id", authenticateToken, requireRole(["admin"]), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteBotSettings(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Bot settings not found" });
+      }
+      
+      res.json({ message: "Bot settings deleted successfully" });
+    } catch (error) {
+      console.error("Failed to delete bot settings:", error);
+      res.status(500).json({ message: "Failed to delete bot settings", error: String(error) });
     }
   });
 

@@ -178,6 +178,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
     
+    // Block requests from other Replit accounts (look for replit.com in user agent or referer)
+    const userAgent = req.get('user-agent') || '';
+    const referer = req.get('referer') || '';
+    
+    if (userAgent.includes('replit') || referer.includes('.replit.') || referer.includes('replit.com')) {
+      return res.status(403).json({ error: "Access denied - external replit account detected" });
+    }
+    
     // Check if this is a health check request
     const isHealthCheck = req.path === '/api' && (req.method === 'HEAD' || req.method === 'GET');
     const maxRequests = isHealthCheck ? MAX_HEALTH_CHECK_REQUESTS : MAX_REQUESTS_PER_WINDOW;

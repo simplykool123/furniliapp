@@ -53,6 +53,16 @@ export default function FurniliLayout({
     };
   }, []);
 
+  // Debug sidebar state
+  useEffect(() => {
+    console.log('FurniliLayout state:', {
+      isMobile,
+      sidebarOpen,
+      sidebarCollapsed,
+      windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'undefined'
+    });
+  }, [isMobile, sidebarOpen, sidebarCollapsed]);
+
   // Prevent body scroll when mobile sidebar is open
   useEffect(() => {
     if (isMobile && sidebarOpen) {
@@ -95,26 +105,39 @@ export default function FurniliLayout({
         {/* Mobile Sidebar */}
         {isMobile && (
           <>
-            {/* Mobile overlay */}
+            {/* Mobile overlay - only show when sidebar is open */}
             {sidebarOpen && (
               <div 
                 className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" 
-                onClick={() => setSidebarOpen(false)}
+                onClick={() => {
+                  console.log('Mobile overlay clicked - closing sidebar');
+                  setSidebarOpen(false);
+                }}
               />
             )}
             
-            <div className={cn(
-              "fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] transform transition-all duration-300 ease-in-out mobile-sidebar",
-              sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            )}>
-              <div className="furnili-sidebar h-full shadow-xl border-r border-border/50">
+            {/* Mobile sidebar - full screen overlay when open */}
+            <div 
+              className={cn(
+                "fixed inset-0 z-50 transform transition-all duration-300 ease-in-out mobile-sidebar",
+                sidebarOpen ? "translate-x-0 pointer-events-auto" : "-translate-x-full pointer-events-none"
+              )}
+              data-testid="main-sidebar"
+              style={{
+                visibility: sidebarOpen ? 'visible' : 'hidden'
+              }}
+            >
+              <div className="w-64 max-w-[85vw] h-full bg-white shadow-xl border-r border-border/50">
                 <Sidebar 
                   onItemClick={() => {
                     console.log('Sidebar item clicked - closing mobile sidebar');
                     setSidebarOpen(false);
                   }} 
                   collapsed={false}
-                  onToggleCollapse={() => {}}
+                  onToggleCollapse={() => {
+                    console.log('Mobile sidebar collapse button clicked - closing sidebar');
+                    setSidebarOpen(false);
+                  }}
                 />
               </div>
             </div>
@@ -145,7 +168,10 @@ export default function FurniliLayout({
               title={title}
               subtitle={subtitle}
               showAddButton={showAddButton}
-              onMenuClick={isMobile ? () => setSidebarOpen(true) : undefined}
+              onMenuClick={isMobile ? () => {
+                console.log('Header menu toggle clicked, current state:', sidebarOpen);
+                setSidebarOpen(!sidebarOpen);
+              } : undefined}
               onAddClick={onAddClick}
               actions={actions}
             />

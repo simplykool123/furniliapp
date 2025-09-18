@@ -36,7 +36,7 @@ export default function Header({ title, subtitle, showAddButton = false, onAddCl
             <Button 
               variant="ghost" 
               size="sm" 
-              className="lg:hidden hover:bg-primary/10 dark:hover:bg-primary/20 p-3 min-w-[44px] min-h-[44px] touch-manipulation"
+              className="md:hidden hover:bg-primary/10 dark:hover:bg-primary/20 p-3 min-w-[44px] min-h-[44px] touch-manipulation"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

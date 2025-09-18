@@ -239,6 +239,14 @@ export default function Clients() {
     client.city.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Mobile focus fix handler - only affects mobile devices
+  const handleMobileInput = (e: React.FormEvent<HTMLInputElement>) => {
+    if (isMobile) {
+      // Prevent focus loss on mobile during typing
+      e.stopPropagation();
+    }
+  };
+
   // Compact form component
   const ClientForm = () => (
     <form onSubmit={clientForm.handleSubmit(onSubmitClient)} className="space-y-3">
@@ -258,6 +266,9 @@ export default function Clients() {
                 inputMode="text"
                 {...field}
                 autoComplete="off"
+                onInput={handleMobileInput}
+                onFocus={(e) => isMobile && e.target.select()}
+                data-testid="input-clientname"
               />
             </FormControl>
             <FormMessage />
@@ -281,6 +292,9 @@ export default function Clients() {
                   inputMode="email"
                   {...field}
                   autoComplete="off"
+                  onInput={handleMobileInput}
+                  onFocus={(e) => isMobile && e.target.select()}
+                  data-testid="input-email"
                 />
               </FormControl>
               <FormMessage />
@@ -302,6 +316,9 @@ export default function Clients() {
                   inputMode="tel"
                   {...field}
                   autoComplete="off"
+                  onInput={handleMobileInput}
+                  onFocus={(e) => isMobile && e.target.select()}
+                  data-testid="input-mobile"
                 />
               </FormControl>
               <FormMessage />
@@ -325,6 +342,9 @@ export default function Clients() {
                   inputMode="text"
                   {...field}
                   autoComplete="off"
+                  onInput={handleMobileInput}
+                  onFocus={(e) => isMobile && e.target.select()}
+                  data-testid="input-contact"
                 />
               </FormControl>
               <FormMessage />
@@ -344,6 +364,9 @@ export default function Clients() {
                   inputMode="tel"
                   {...field}
                   autoComplete="off"
+                  onInput={handleMobileInput}
+                  onFocus={(e) => isMobile && e.target.select()}
+                  data-testid="input-phone"
                 />
               </FormControl>
               <FormMessage />
@@ -367,6 +390,9 @@ export default function Clients() {
                   inputMode="text"
                   {...field}
                   autoComplete="off"
+                  onInput={handleMobileInput}
+                  onFocus={(e) => isMobile && e.target.select()}
+                  data-testid="input-address1"
                 />
               </FormControl>
               <FormMessage />
@@ -386,6 +412,9 @@ export default function Clients() {
                   inputMode="text"
                   {...field}
                   autoComplete="off"
+                  onInput={handleMobileInput}
+                  onFocus={(e) => isMobile && e.target.select()}
+                  data-testid="input-address2"
                 />
               </FormControl>
               <FormMessage />
@@ -466,6 +495,9 @@ export default function Clients() {
                   inputMode="numeric"
                   {...field}
                   autoComplete="off"
+                  onInput={handleMobileInput}
+                  onFocus={(e) => isMobile && e.target.select()}
+                  data-testid="input-pincode"
                 />
               </FormControl>
               <FormMessage />
@@ -488,6 +520,9 @@ export default function Clients() {
                 inputMode="text"
                 {...field}
                 autoComplete="off"
+                onInput={handleMobileInput}
+                onFocus={(e) => isMobile && e.target.select()}
+                data-testid="input-gst"
               />
             </FormControl>
             <FormMessage />
@@ -635,7 +670,12 @@ export default function Clients() {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent 
           className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto"
-          onOpenAutoFocus={(e) => e.preventDefault()}
+          onOpenAutoFocus={(e) => {
+            // Only prevent auto-focus on mobile to avoid keyboard conflicts
+            if (isMobile) {
+              e.preventDefault();
+            }
+          }}
         >
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg font-semibold">Add New Client</DialogTitle>
@@ -654,7 +694,12 @@ export default function Clients() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent 
           className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto"
-          onOpenAutoFocus={(e) => e.preventDefault()}
+          onOpenAutoFocus={(e) => {
+            // Only prevent auto-focus on mobile to avoid keyboard conflicts
+            if (isMobile) {
+              e.preventDefault();
+            }
+          }}
         >
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg font-semibold">Edit Client</DialogTitle>

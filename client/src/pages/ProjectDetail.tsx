@@ -1787,7 +1787,7 @@ export default function ProjectDetail() {
               </Button>
               <div>
                 <div className="flex items-center space-x-3">
-                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 line-clamp-2">
+                  <h1 className="text-sm sm:text-lg font-bold text-gray-900 line-clamp-2">
                     {project.name} - {project.code}
                   </h1>
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -1862,7 +1862,7 @@ export default function ProjectDetail() {
                 className="flex items-center space-x-1 px-0 py-2 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-sm">📂</span>
-                <span className="font-medium text-sm sm:text-xs">Files</span>
+                <span className="font-medium text-base sm:text-sm">Files</span>
               </TabsTrigger>
               <TabsTrigger
                 value="moodboard"
@@ -2024,7 +2024,7 @@ export default function ProjectDetail() {
                         setUploadContext(null); // Clear context for general upload
                         setIsUploadDialogOpen(true);
                       }}
-                      className="btn-primary btn-sm"
+                      className="btn-primary h-8 px-3 text-xs"
                     >
                       <Upload className="h-3 w-3 mr-1" />
                       Upload
@@ -2092,23 +2092,20 @@ export default function ProjectDetail() {
                   }, {});
 
                   return (
-                    <div key={category} className="space-y-3">
-                      {/* Category Header - More Compact */}
-                      <div className="border-b border-gray-200 pb-0.5">
-                        <h2 className="text-base font-medium text-gray-900 capitalize">
+                    <div key={category} className="space-y-2">
+                      {/* Category Header - Very Compact */}
+                      <div className="border-b border-gray-200 pb-1">
+                        <h2 className="text-sm font-medium text-gray-900 capitalize">
                           {category}
                         </h2>
-                        <p className="text-xs text-gray-500">
-                          {categoryFiles.length} files • {Object.keys(titleGroups).length} groups
-                        </p>
                       </div>
 
-                      {/* Title Groups Grid - Responsive Layout */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {/* Title Groups Grid - Compact Layout */}
+                      <div className="space-y-2">
                         {Object.entries(titleGroups).map(([title, files]: [string, any]) => (
                         <div key={`${category}-${title}`} className="bg-white rounded border border-gray-200 p-2">
-                          {/* Title Header - Compact with Edit Functionality */}
-                          <div className="flex items-center justify-between mb-2">
+                          {/* Title Header - Very Compact */}
+                          <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
                               {editingGroupTitle === `${category}-${title}` ? (
                                 <input
@@ -2141,7 +2138,7 @@ export default function ProjectDetail() {
                                 />
                               ) : (
                                 <h3 
-                                  className="text-base font-medium text-gray-900 cursor-pointer hover:text-blue-600"
+                                  className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
                                   onClick={() => setEditingGroupTitle(`${category}-${title}`)}
                                 >
                                   {groupTitles[`${category}-${title}`] || title}
@@ -2160,12 +2157,12 @@ export default function ProjectDetail() {
                               }}
                               className="text-blue-600 border-blue-200 hover:bg-blue-50 h-6 px-2 text-xs"
                             >
-                              Add
+                              +
                             </Button>
                           </div>
 
-                          {/* Image Grid - More Compact */}
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
+                          {/* Image Grid - Very Compact */}
+                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1">
                             {files.map((file: any) => (
                               <div key={file.id} className="group relative">
                                 {/* Image Thumbnail - Compact */}

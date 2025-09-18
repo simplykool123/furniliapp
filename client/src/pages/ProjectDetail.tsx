@@ -1788,23 +1788,20 @@ export default function ProjectDetail() {
               <div>
                 <div>
                   <h1 className="text-lg sm:text-xl font-bold text-gray-900 line-clamp-1">
-                    {project.name}
+                    {project.name} - {project.code}
                   </h1>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {project.code}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-                  <div className="flex items-center space-x-1">
-                    <User className="h-4 w-4" />
-                    <span>{project.client_name || client?.name || "No Client"}</span>
-                  </div>
-                  {canViewFinances && (
+                  <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
-                      <Phone className="h-4 w-4" />
-                      <span>{project.client_mobile || project.client_phone || client?.mobile || client?.phone || "No Contact"}</span>
+                      <User className="h-4 w-4" />
+                      <span>{project.client_name || client?.name || "No Client"}</span>
                     </div>
-                  )}
+                    {canViewFinances && (
+                      <div className="flex items-center space-x-1">
+                        <Phone className="h-4 w-4" />
+                        <span>{project.client_mobile || project.client_phone || client?.mobile || client?.phone || "No Contact"}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1860,14 +1857,14 @@ export default function ProjectDetail() {
                 className="flex items-center space-x-1 px-0 py-2 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-lg">📂</span>
-                <span className="font-medium text-base sm:text-sm">Files</span>
+                <span className="font-medium text-lg sm:text-base">Files</span>
               </TabsTrigger>
               <TabsTrigger
                 value="moodboard"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-xl">🎨</span>
-                <span className="font-medium text-base sm:text-sm">Moodboard</span>
+                <span className="font-medium text-lg sm:text-base">Moodboard</span>
               </TabsTrigger>
               {canViewFinances && (
                 <TabsTrigger
@@ -1875,7 +1872,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
                   <span className="text-xl">🗒️</span>
-                  <span className="font-medium text-base sm:text-sm">Notes</span>
+                  <span className="font-medium text-lg sm:text-base">Notes</span>
                 </TabsTrigger>
               )}
               <TabsTrigger
@@ -1883,7 +1880,7 @@ export default function ProjectDetail() {
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-xl">✅</span>
-                <span className="font-medium text-base sm:text-sm">Tasks</span>
+                <span className="font-medium text-lg sm:text-base">Tasks</span>
               </TabsTrigger>
               {canViewFinances && (
                 <TabsTrigger
@@ -1891,7 +1888,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
                   <span className="text-xl">💸</span>
-                  <span className="font-medium text-base sm:text-sm">Quotes</span>
+                  <span className="font-medium text-lg sm:text-base">Quotes</span>
                 </TabsTrigger>
               )}
               {canViewFinances && (
@@ -1900,7 +1897,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
                   <span className="text-xl">🏭</span>
-                  <span className="font-medium text-base sm:text-sm">Production</span>
+                  <span className="font-medium text-lg sm:text-base">Production</span>
                 </TabsTrigger>
               )}
               <TabsTrigger
@@ -1908,21 +1905,21 @@ export default function ProjectDetail() {
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-xl">📦</span>
-                <span className="font-medium text-base sm:text-sm">Orders</span>
+                <span className="font-medium text-lg sm:text-base">Orders</span>
               </TabsTrigger>
               <TabsTrigger
                 value="activities"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-xl">📅</span>
-                <span className="font-medium text-base sm:text-sm">Activities</span>
+                <span className="font-medium text-lg sm:text-base">Activities</span>
               </TabsTrigger>
               <TabsTrigger
                 value="progress"
                 className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
               >
                 <span className="text-xl">📊</span>
-                <span className="font-medium text-base sm:text-sm">Progress</span>
+                <span className="font-medium text-lg sm:text-base">Progress</span>
               </TabsTrigger>
 
               {canViewFinances && (
@@ -1931,7 +1928,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-gray-50 text-gray-600 data-[state=active]:text-blue-600 rounded-none transition-all duration-200"
                 >
                   <span className="text-xl">💰</span>
-                  <span className="font-medium text-base sm:text-sm">Finances</span>
+                  <span className="font-medium text-lg sm:text-base">Finances</span>
                 </TabsTrigger>
               )}
               {canViewFinances && (
@@ -1940,7 +1937,7 @@ export default function ProjectDetail() {
                   className="flex items-center space-x-2 px-0 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent bg-transparent hover:bg-transparent text-gray-600 data-[state=active]:text-blue-600 rounded-none"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  <span className="font-medium text-base sm:text-sm">Details</span>
+                  <span className="font-medium text-lg sm:text-base">Details</span>
                 </TabsTrigger>
               )}
             </TabsList>
@@ -3752,17 +3749,14 @@ export default function ProjectDetail() {
 
       {/* Note Dialog */}
       <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
-        <DialogContent className="max-w-[90vw] sm:max-w-[500px]">
+        <DialogContent className="max-w-[90vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Project Note</DialogTitle>
-            <DialogDescription>
-              Add a note or log entry for this project
-            </DialogDescription>
+            <DialogTitle className="text-base">Add New Note</DialogTitle>
           </DialogHeader>
           <Form {...noteForm}>
             <form
               onSubmit={noteForm.handleSubmit(handleNoteCreate)}
-              className="space-y-3"
+              className="space-y-2"
             >
               <FormField
                 control={noteForm.control}
@@ -3784,7 +3778,7 @@ export default function ProjectDetail() {
                   <FormItem>
                     <FormLabel className="text-xs">Note *</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Enter your note..." className="min-h-[60px]" {...field} />
+                      <Textarea placeholder="Enter your note..." className="min-h-[50px] text-sm" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -3813,15 +3807,16 @@ export default function ProjectDetail() {
                   </FormItem>
                 )}
               />
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end space-x-2 pt-2">
                 <Button
                   type="button"
                   variant="outline"
+                  size="sm"
                   onClick={() => setIsNoteDialogOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="btn-primary">
+                <Button type="submit" size="sm" className="btn-primary">
                   Add Note
                 </Button>
               </div>

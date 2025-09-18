@@ -102,43 +102,42 @@ export default function FurniliLayout({
           </div>
         )}
 
-        {/* Mobile Sidebar */}
-        {isMobile && (
-          <>
-            {/* Mobile overlay - only show when sidebar is open */}
-            {sidebarOpen && (
-              <div 
-                className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" 
-                onClick={() => {
-                  console.log('Mobile overlay clicked - closing sidebar');
-                  setSidebarOpen(false);
-                }}
-              />
-            )}
-            
-            {/* Mobile sidebar - slide in from left */}
+        {/* Mobile Sidebar - Full Screen Overlay */}
+        {isMobile && sidebarOpen && (
+          <div 
+            className="fixed inset-0 z-50 bg-black bg-opacity-50 transition-all duration-300 ease-in-out"
+            data-testid="mobile-overlay"
+          >
+            {/* Sidebar Panel */}
             <div 
               className={cn(
-                "fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] transform transition-all duration-300 ease-in-out mobile-sidebar",
+                "h-full w-64 max-w-[85vw] bg-white shadow-xl transform transition-transform duration-300 ease-in-out",
                 sidebarOpen ? "translate-x-0" : "-translate-x-full"
               )}
               data-testid="main-sidebar"
             >
-              <div className="h-full bg-white shadow-xl">
-                <Sidebar 
-                  onItemClick={() => {
-                    console.log('Sidebar item clicked - closing mobile sidebar');
-                    setSidebarOpen(false);
-                  }} 
-                  collapsed={false}
-                  onToggleCollapse={() => {
-                    console.log('Mobile sidebar collapse button clicked - closing sidebar');
-                    setSidebarOpen(false);
-                  }}
-                />
-              </div>
+              <Sidebar 
+                onItemClick={() => {
+                  console.log('Sidebar item clicked - closing mobile sidebar');
+                  setSidebarOpen(false);
+                }} 
+                collapsed={false}
+                onToggleCollapse={() => {
+                  console.log('Mobile sidebar collapse button clicked - closing sidebar');
+                  setSidebarOpen(false);
+                }}
+              />
             </div>
-          </>
+            
+            {/* Click area to close sidebar - covers remaining screen */}
+            <div 
+              className="absolute top-0 left-64 right-0 bottom-0"
+              onClick={() => {
+                console.log('Mobile overlay area clicked - closing sidebar');
+                setSidebarOpen(false);
+              }}
+            />
+          </div>
         )}
 
         {/* Desktop Expand Button */}

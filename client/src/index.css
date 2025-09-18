@@ -240,47 +240,148 @@
     font-size: 1.25rem !important;
   }
   
-  /* Dashboard specific mobile optimizations */
+  /* Dashboard specific mobile optimizations - Ultra compact for 5 cards in one row */
   .dashboard-card {
-    padding: 0.75rem !important;
-    margin-bottom: 0.75rem !important;
+    padding: 0.25rem !important;
+    margin-bottom: 0.5rem !important;
+    min-height: auto !important;
   }
   
   .dashboard-card .card-header {
-    padding: 0.5rem 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+    min-height: auto !important;
   }
   
   .dashboard-card .card-content {
-    padding: 0.75rem !important;
+    padding: 0.5rem !important;
+    min-height: auto !important;
   }
   
   .dashboard-card .text-3xl {
-    font-size: 1.5rem !important;
+    font-size: 1rem !important;
   }
   
   .dashboard-card .text-2xl {
-    font-size: 1.25rem !important;
+    font-size: 0.875rem !important;
   }
   
   .dashboard-card .text-xl {
-    font-size: 1.125rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .dashboard-card .text-lg {
+    font-size: 0.75rem !important;
+  }
+  
+  .dashboard-card .text-base {
+    font-size: 0.625rem !important;
+  }
+  
+  .dashboard-card .text-sm {
+    font-size: 0.5rem !important;
+  }
+  
+  .dashboard-card .text-xs {
+    font-size: 0.5rem !important;
   }
   
   /* Progress bars */
   .progress {
-    height: 0.375rem !important;
+    height: 0.25rem !important;
   }
   
   /* Button spacing */
   .dashboard-card button {
-    padding: 0.375rem 0.75rem !important;
-    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.625rem !important;
     height: auto !important;
+    min-height: 1.5rem !important;
   }
   
-  /* Grid spacing */
+  /* Ultra compact grid for 5 columns */
   .dashboard-grid {
-    gap: 0.75rem !important;
+    gap: 0.25rem !important;
+  }
+  
+  .dashboard-grid-5 {
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Target ALL cards in dashboard grids for ultra compact styling */
+  .dashboard-grid-5 .card,
+  .dashboard-grid-5 [data-radix-collection-item],
+  .grid.grid-cols-5 .card,
+  .grid.grid-cols-5 [role="button"] {
+    padding: 0.25rem !important;
+    margin-bottom: 0.5rem !important;
+    min-height: auto !important;
+  }
+  
+  .dashboard-grid-5 .card-header,
+  .grid.grid-cols-5 .card-header {
+    padding: 0.25rem 0.5rem !important;
+    min-height: auto !important;
+  }
+  
+  .dashboard-grid-5 .card-content,
+  .grid.grid-cols-5 .card-content {
+    padding: 0.5rem !important;
+    min-height: auto !important;
+  }
+  
+  .dashboard-grid-5 .text-3xl,
+  .grid.grid-cols-5 .text-3xl {
+    font-size: 1rem !important;
+  }
+  
+  .dashboard-grid-5 .text-2xl,
+  .grid.grid-cols-5 .text-2xl {
+    font-size: 0.875rem !important;
+  }
+  
+  .dashboard-grid-5 .text-xl,
+  .grid.grid-cols-5 .text-xl {
+    font-size: 0.875rem !important;
+  }
+  
+  .dashboard-grid-5 .text-lg,
+  .grid.grid-cols-5 .text-lg {
+    font-size: 0.75rem !important;
+  }
+  
+  .dashboard-grid-5 .text-sm,
+  .grid.grid-cols-5 .text-sm {
+    font-size: 0.5rem !important;
+  }
+  
+  .dashboard-grid-5 .text-xs,
+  .grid.grid-cols-5 .text-xs {
+    font-size: 0.5rem !important;
+  }
+  
+  .dashboard-grid-5 .lucide,
+  .grid.grid-cols-5 .lucide {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+  }
+  
+  /* Compact icons */
+  .dashboard-card .lucide {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+  }
+  
+  /* Compact card titles */
+  .dashboard-card h3,
+  .dashboard-card .font-semibold {
+    font-size: 0.625rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* Compact numbers/values */
+  .dashboard-card .font-bold {
+    font-size: 0.75rem !important;
   }
 }
 

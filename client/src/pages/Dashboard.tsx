@@ -523,11 +523,11 @@ export default function Dashboard() {
         </>
       ) : (
         /* ADMIN/MANAGER DASHBOARD - Keep existing layout */
-        <div className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-4">
-          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 bg-gradient-to-br from-card to-blue-50/20 cursor-pointer" onClick={() => setLocation('/products')}>
+        <div className="grid gap-2 sm:gap-3 grid-cols-5 sm:grid-cols-3 lg:grid-cols-5 mb-4 dashboard-grid-5">
+          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 bg-gradient-to-br from-card to-blue-50/20 cursor-pointer dashboard-card" onClick={() => setLocation('/products')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
               <CardTitle className="text-xs font-semibold text-card-foreground">Products</CardTitle>
-              <Package className="h-5 w-5 text-blue-600" />
+              <Package className="h-3 w-3 text-blue-600" />
             </CardHeader>
             <CardContent className="pb-2 pt-1">
               <div className="text-xl font-bold text-foreground">{stats?.totalProducts || 0}</div>
@@ -535,11 +535,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-l-4 border-l-red-500 bg-gradient-to-br from-red-50 to-red-100 border-red-200 cursor-pointer group" onClick={() => setLocation('/products?filter=low-stock')}>
+          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-l-4 border-l-red-500 bg-gradient-to-br from-red-50 to-red-100 border-red-200 cursor-pointer group dashboard-card" onClick={() => setLocation('/products?filter=low-stock')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-bold text-red-900 group-hover:text-red-700">Low Stock Alert</CardTitle>
               <div className="p-2 bg-red-500 rounded-full group-hover:bg-red-600 transition-colors">
-                <AlertTriangle className="h-5 w-5 text-white animate-pulse" />
+                <AlertTriangle className="h-3 w-3 text-white animate-pulse" />
               </div>
             </CardHeader>
             <CardContent className="pb-3 pt-1">

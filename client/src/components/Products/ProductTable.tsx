@@ -74,7 +74,7 @@ export default function ProductTable() {
 
   // Load all products once (no search parameter to API)
   const { data: allProducts, isLoading } = useQuery({
-    queryKey: ['/api/products'],
+    queryKey: ['api', 'products'],
     queryFn: async () => {
       return await authenticatedApiRequest('GET', '/api/products');
     },
@@ -122,7 +122,7 @@ export default function ProductTable() {
 
     // Apply sorting
     if (sortConfig.key) {
-      result.sort((a, b) => {
+      result.sort((a: Product, b: Product) => {
         const aValue = a[sortConfig.key!];
         const bValue = b[sortConfig.key!];
         
@@ -153,7 +153,7 @@ export default function ProductTable() {
 
   // Fetch categories for filter dropdown
   const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
+    queryKey: ['api', 'categories'],
   });
 
   const deleteProductMutation = useMutation({
@@ -161,7 +161,7 @@ export default function ProductTable() {
       return await authenticatedApiRequest('DELETE', `/api/products/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'products'] });
       setProductToDelete(null);
       toast({
         title: "Product deleted",
@@ -196,8 +196,8 @@ export default function ProductTable() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/inventory/movements'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'products'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'inventory', 'movements'] });
       setStockAdjustProduct(null);
       setNewStockValue("");
       setReference("");
@@ -682,13 +682,7 @@ export default function ProductTable() {
 
   return (
     <div className="space-y-4">
-      {/* Mobile Filters */}
-      {false && ( // Mobile filters removed - using responsive design
-        <div
-          filters={mobileFilters}
-          onClearAll={() => setFilters({ search: '', category: '', stockStatus: '' })}
-        />
-      )}
+      {/* Mobile Filters - removed, using responsive design */}
 
       {/* Desktop Filters & Controls */}
       {true && ( // Always show responsive filters
@@ -734,16 +728,8 @@ export default function ProductTable() {
         </div>
       )}
 
-      {/* Mobile Products Table */}
-      {false ? ( // MobileTable removed - using responsive design
-        <div
-          data={filteredProducts}
-          columns={mobileColumns}
-          emptyMessage="No products found"
-        />
-      ) : (
-        /* Desktop Products Display */
-        <Card>
+      {/* Products Display */}
+      <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Products ({filteredProducts?.length || 0})</CardTitle>
@@ -808,7 +794,6 @@ export default function ProductTable() {
             {viewMode === 'grid' ? <GridView /> : <ListView />}
           </CardContent>
         </Card>
-      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!productToDelete} onOpenChange={() => setProductToDelete(null)}>

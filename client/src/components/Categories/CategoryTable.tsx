@@ -50,8 +50,8 @@ export function CategoryTable({ categories, isLoading }: CategoryTableProps) {
       return apiRequest(`/api/categories/${categoryId}`, { method: "DELETE" });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'categories'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'products'] });
       toast({
         title: "Success",
         description: "Category deleted successfully",

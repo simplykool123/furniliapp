@@ -55,8 +55,8 @@ export function CategoryForm({ category, onSuccess }: CategoryFormProps) {
     },
     onSuccess: () => {
       // Invalidate and refetch to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      queryClient.refetchQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'categories'] });
+      queryClient.refetchQueries({ queryKey: ['api', 'categories'] });
       
       toast({
         title: "Success",
@@ -82,11 +82,11 @@ export function CategoryForm({ category, onSuccess }: CategoryFormProps) {
     },
     onSuccess: () => {
       // Invalidate all related queries
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'categories'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'products'] });
       
       // Also refetch immediately to ensure fresh data
-      queryClient.refetchQueries({ queryKey: ["/api/categories"] });
+      queryClient.refetchQueries({ queryKey: ['api', 'categories'] });
       
       toast({
         title: "Success",

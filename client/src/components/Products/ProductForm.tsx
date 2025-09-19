@@ -155,8 +155,8 @@ export default function ProductForm({ product, onClose, isMobile = false }: Prod
       
       const response = await authenticatedApiRequest(method, url, productData);
       
-      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'products'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'dashboard', 'stats'] });
       toast({
         title: product ? "Product updated" : "Product created",
         description: product ? "Product has been successfully updated." : "Product has been successfully created.",
@@ -295,12 +295,12 @@ export default function ProductForm({ product, onClose, isMobile = false }: Prod
 
   // Fetch categories from API
   const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
+    queryKey: ['api', 'categories'],
   });
 
   // Search for products based on debounced query
   const { data: searchResults = [], isLoading: isSearchLoading } = useQuery({
-    queryKey: ["/api/products/search", debouncedSearchQuery],
+    queryKey: ['api', 'products', 'search', debouncedSearchQuery],
     queryFn: () => authenticatedApiRequest("GET", `/api/products/search?query=${encodeURIComponent(debouncedSearchQuery)}`),
     enabled: debouncedSearchQuery.length > 0,
   });

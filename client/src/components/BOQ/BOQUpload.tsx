@@ -49,7 +49,7 @@ export default function BOQUpload() {
 
   // Fetch products for matching
   const { data: products } = useQuery({
-    queryKey: ['/api/products'],
+    queryKey: ['api', 'products'],
     queryFn: async () => {
       const response = await authenticatedApiRequest('GET', '/api/products');
       return response.json();
@@ -58,7 +58,7 @@ export default function BOQUpload() {
 
   // Fetch BOQ uploads
   const { data: boqUploads, isLoading: isLoadingUploads } = useQuery({
-    queryKey: ['/api/boq'],
+    queryKey: ['api', 'boq'],
     queryFn: async () => {
       const response = await authenticatedApiRequest('GET', '/api/boq');
       return response.json();
@@ -86,7 +86,7 @@ export default function BOQUpload() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/boq'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'boq'] });
       toast({
         title: "BOQ uploaded successfully",
         description: "File has been uploaded and is being processed.",
@@ -107,7 +107,7 @@ export default function BOQUpload() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/requests'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'requests'] });
       toast({
         title: "Material request created",
         description: "Request has been created from BOQ data.",

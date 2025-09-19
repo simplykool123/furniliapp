@@ -165,14 +165,14 @@ export default function Dashboard() {
 
   // Optimized queries with caching for better performance
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ["/api/dashboard/stats"],
+    queryKey: ['api', 'dashboard', 'stats'],
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Fetch personal expense stats for staff users
   const { data: personalExpenseStats } = useQuery({
-    queryKey: ["/api/petty-cash/my-stats"],
+    queryKey: ['api', 'petty-cash', 'my-stats'],
     enabled: currentUser?.role === 'staff',
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -184,21 +184,21 @@ export default function Dashboard() {
     presentDays: number;
     attendancePercentage: number;
   }>({
-    queryKey: ["/api/attendance/stats"],
+    queryKey: ['api', 'attendance', 'stats'],
     enabled: authService.hasRole(['staff', 'store_incharge']),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: recentActivity } = useQuery({
-    queryKey: ["/api/dashboard/activity"],
+    queryKey: ['api', 'dashboard', 'activity'],
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 3 * 60 * 1000, // 3 minutes
   });
 
   // Fetch ongoing projects (not completed)
   const { data: ongoingProjects = [] } = useQuery({
-    queryKey: ["/api/projects"],
+    queryKey: ['api', 'projects'],
     queryFn: () => authenticatedApiRequest('GET', "/api/projects"),
     staleTime: 2 * 60 * 1000, // 2 minutes
     select: (data: any[]) => data.filter(project => project.stage !== 'Completed'), // Filter out completed projects
@@ -206,7 +206,7 @@ export default function Dashboard() {
 
   // Fetch pending tasks for dashboard display
   const { data: pendingTasks = [] } = useQuery<DashboardTask[]>({
-    queryKey: ["/api/dashboard/tasks"],
+    queryKey: ['api', 'dashboard', 'tasks'],
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 2 * 60 * 1000, // 2 minutes
   });
@@ -215,7 +215,7 @@ export default function Dashboard() {
 
   // Attendance queries for staff check-in functionality
   const { data: todayAttendance = [] } = useQuery({
-    queryKey: ["/api/attendance/today"],
+    queryKey: ['api', 'attendance', 'today'],
     queryFn: () => authenticatedApiRequest('GET', "/api/attendance/today"),
     enabled: authService.hasRole(['staff', 'store_incharge']),
   });
@@ -226,8 +226,8 @@ export default function Dashboard() {
       return authenticatedApiRequest("PATCH", `/api/tasks/${taskId}/status`, { status: "done" });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'dashboard', 'tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'tasks', 'notifications'] });
       toast({
         title: "Task completed",
         description: "Task has been marked as done",
@@ -248,8 +248,8 @@ export default function Dashboard() {
       return authenticatedApiRequest("POST", "/api/attendance/checkin", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance/today"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'attendance', 'today'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'dashboard', 'stats'] });
       toast({ title: "Checked in successfully" });
     },
     onError: (error) => {
@@ -262,8 +262,8 @@ export default function Dashboard() {
       return authenticatedApiRequest("POST", "/api/attendance/checkout", {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance/today"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'attendance', 'today'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'dashboard', 'stats'] });
       toast({ title: "Checked out successfully" });
     },
     onError: (error) => {

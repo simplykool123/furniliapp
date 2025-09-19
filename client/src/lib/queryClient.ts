@@ -2,10 +2,23 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { debugToken, cleanToken } from "../utils/tokenDebug";
 import { setupGlobalErrorHandlers } from "./globalErrorHandler";
 
+// Structured error class for proper retry classification
+class ApiError extends Error {
+  status: number;
+  statusText: string;
+  
+  constructor(status: number, message: string, statusText: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.statusText = statusText;
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    throw new ApiError(res.status, `${res.status}: ${text}`, res.statusText);
   }
 }
 
@@ -95,11 +108,14 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       // Smart retry with exponential backoff
       retry: (failureCount, error: any) => {
-        // Don't retry on client errors
-        if (error?.status === 404 || error?.status === 401 || error?.status === 403) {
-          return false;
+        // Don't retry on client errors (4xx status codes)
+        if (error?.status >= 400 && error?.status < 500) {
+          // Specifically don't retry on auth errors, not found, and bad requests
+          if ([400, 401, 403, 404, 422, 429].includes(error.status)) {
+            return false;
+          }
         }
-        // Retry up to 2 times for server errors
+        // Retry up to 2 times for server errors (5xx) and network errors
         return failureCount < 2;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -147,19 +163,19 @@ export const performanceUtils = {
   preloadData: () => {
     // Use longer stale times for VPS deployment to reduce server load
     queryClient.prefetchQuery({
-      queryKey: ['/api/dashboard/stats'],
+      queryKey: ['api', 'dashboard', 'stats'],
       staleTime: 1000 * 60 * 5, // 5 minutes
     });
     queryClient.prefetchQuery({
-      queryKey: ['/api/projects'],
+      queryKey: ['api', 'projects'],
       staleTime: 1000 * 60 * 10, // 10 minutes
     });
     queryClient.prefetchQuery({
-      queryKey: ['/api/quotes'],
+      queryKey: ['api', 'quotes'],
       staleTime: 1000 * 60 * 10, // 10 minutes
     });
     queryClient.prefetchQuery({
-      queryKey: ['/api/categories'],
+      queryKey: ['api', 'categories'],
       staleTime: 1000 * 60 * 30, // 30 minutes - categories rarely change
     });
   }

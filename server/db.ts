@@ -2,8 +2,8 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-// Use Supabase connection directly
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:YjVBMdJTwQf59BPP@db.rflznwwqcqkjkfdospsw.supabase.co:5432/postgres';
+// Use Supabase connection directly - your original database
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres.qopynbelowyghyciuofo:Furnili%40123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
 
 const poolConfig: any = {
   connectionString,

@@ -42,8 +42,7 @@ export class FurniliTelegramBot {
     // Projects command
     this.bot.onText(/\/projects/, (msg) => this.handleProjects(msg));
     
-    // Select project command
-    this.bot.onText(/\/select (.+)/, (msg, match) => this.handleSelectProject(msg, match));
+    // Select project command (removed - now handled in text messages)
     
     // Category selection commands
     this.bot.onText(/\/recce/, (msg) => this.handleCategorySelection(msg, 'recce'));
@@ -124,13 +123,86 @@ Stage: ${project.stage}
       });
 
       projectMessage += `Reply with the Number to choose the project
-Example: /select 1`;
+Example: 1`;
 
       await this.bot.sendMessage(chatId, projectMessage);
+
+      // Set session state to project selection mode
+      const userId = msg.from?.id.toString();
+      if (userId) {
+        await this.createOrUpdateSession(userId, msg.from?.username, msg.from?.first_name);
+        await db
+          .update(telegramUserSessions)
+          .set({
+            sessionState: 'project_selection',
+            lastInteraction: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(telegramUserSessions.telegramUserId, userId));
+      }
 
     } catch (error) {
       console.error('Error fetching projects:', error);
       await this.bot.sendMessage(chatId, "Sorry, I couldn't fetch the projects. Please try again later.");
+    }
+  }
+
+  private async selectProjectByNumber(msg: TelegramBot.Message, projectNumber: number) {
+    const chatId = msg.chat.id;
+    const userId = msg.from?.id.toString();
+    
+    if (!userId) return;
+
+    try {
+      // Get all active projects
+      const projectList = await db
+        .select({
+          id: projects.id,
+          code: projects.code,
+          name: projects.name,
+          clientId: projects.clientId,
+          clientName: clients.name
+        })
+        .from(projects)
+        .leftJoin(clients, eq(projects.clientId, clients.id))
+        .where(eq(projects.isActive, true))
+        .orderBy(projects.createdAt);
+
+      if (projectNumber < 1 || projectNumber > projectList.length) {
+        await this.bot.sendMessage(chatId, `Invalid project number. Please select between 1 and ${projectList.length}.`);
+        return;
+      }
+
+      const selectedProject = projectList[projectNumber - 1];
+
+      // Update user session with selected project
+      await db
+        .update(telegramUserSessions)
+        .set({
+          activeProjectId: selectedProject.id,
+          activeClientId: selectedProject.clientId,
+          sessionState: 'project_selected',
+          lastInteraction: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(telegramUserSessions.telegramUserId, userId));
+
+      const successMessage = `✅ Project Selected: ${selectedProject.code}
+Client: ${selectedProject.clientName || 'Unknown'}
+
+Choose upload category:
+• /recce - Site photos with measurements
+• /design - Design files
+• /drawings - Technical drawings
+• /6s - Delivery challan photos
+
+Send the command and start uploading!`;
+
+      await this.bot.sendMessage(chatId, successMessage);
+
+    } catch (error) {
+      console.error('Error selecting project:', error);
+      await this.bot.sendMessage(chatId, "Sorry, I couldn't select the project. Please try again.");
     }
   }
 
@@ -423,13 +495,23 @@ Send delivery challan photos.`
         .where(eq(telegramUserSessions.telegramUserId, userId))
         .limit(1);
 
-      if (session.length === 0 || !session[0].activeProjectId) {
-        return; // Don't respond to random text if no project selected
+      if (session.length === 0) {
+        return; // Don't respond if no session
       }
 
       const userSession = session[0];
 
-      if (userSession.sessionState === 'uploading' && userSession.currentStep === 'notes') {
+      // Handle project selection by number
+      if (userSession.sessionState === 'project_selection') {
+        const projectNumber = parseInt(msg.text);
+        if (!isNaN(projectNumber)) {
+          await this.selectProjectByNumber(msg, projectNumber);
+          return;
+        }
+      }
+
+      // Handle notes upload
+      if (userSession.sessionState === 'uploading' && userSession.currentStep === 'notes' && userSession.activeProjectId) {
         // Save text as a note
         const fileName = `note_${crypto.randomBytes(4).toString('hex')}.txt`;
         const filePath = `uploads/telegram/${fileName}`;

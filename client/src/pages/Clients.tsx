@@ -239,10 +239,6 @@ export default function Clients() {
     client.city.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Prevent input focus loss on mobile
-  const handleMobileInput = (e: React.FormEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-  };
 
   // Compact form component
   const ClientForm = () => (

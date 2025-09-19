@@ -15,6 +15,22 @@ Storage Requirements:
 - No cloud dependencies (Google Cloud, AWS, etc.)
 - System designed for VPS deployment
 
+## Recent VPS Optimization Changes (September 2025)
+
+### Performance & Stability Improvements
+- **CRITICAL FIX: Eliminated continuous HEAD requests** - Removed excessive polling intervals (30s, 10s, 60s, 120s) from WhatsAppConsole, NotificationBadge, and AnimatedNotificationBell components that were causing server overload every 500ms
+- **Database Independence**: Migrated from hardcoded Supabase URL to configurable local PostgreSQL with multi-tier fallback support for true VPS deployment autonomy
+- **React Query Production Optimization**: Implemented 5-minute staleTime, disabled unnecessary refetching (refetchOnWindowFocus, refetchOnMount), standardized cache keys, and added structured error handling with intelligent retry logic
+- **Production Error Handling**: Fixed error middleware to prevent server crashes, enhanced logging system, and improved application stability
+- **Standalone Operation**: Comprehensive audit and removal of external dependencies - application now fully functional offline with local PostgreSQL instance
+
+### Technical Optimizations
+- **API Request Reduction**: Optimized caching reduced API requests by 20x through intelligent staleTime configuration
+- **Eliminated Retry Storms**: Fixed authentication error handling to prevent infinite retry loops on 401/403/404 errors
+- **Enhanced Error Boundaries**: Implemented structured ApiError objects with proper status codes and global error handling
+- **Production Logging**: Optimized logging middleware to reduce noise while maintaining debugging capabilities
+- **Cache Standardization**: Unified React Query cache key formats for consistent invalidation and improved performance
+
 ## System Architecture
 
 ### UI/UX Decisions

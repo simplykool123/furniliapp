@@ -266,7 +266,7 @@ export default function Clients() {
                 inputMode="text"
                 {...field}
                 autoComplete="off"
-                onInput={handleMobileInput}
+
 
                 data-testid="input-clientname"
               />
@@ -292,7 +292,7 @@ export default function Clients() {
                   inputMode="email"
                   {...field}
                   autoComplete="off"
-                  onInput={handleMobileInput}
+  
   
                   data-testid="input-email"
                 />
@@ -316,7 +316,7 @@ export default function Clients() {
                   inputMode="tel"
                   {...field}
                   autoComplete="off"
-                  onInput={handleMobileInput}
+  
   
                   data-testid="input-mobile"
                 />
@@ -342,7 +342,7 @@ export default function Clients() {
                   inputMode="text"
                   {...field}
                   autoComplete="off"
-                  onInput={handleMobileInput}
+  
   
                   data-testid="input-contact"
                 />
@@ -364,7 +364,7 @@ export default function Clients() {
                   inputMode="tel"
                   {...field}
                   autoComplete="off"
-                  onInput={handleMobileInput}
+  
   
                   data-testid="input-phone"
                 />
@@ -390,7 +390,7 @@ export default function Clients() {
                   inputMode="text"
                   {...field}
                   autoComplete="off"
-                  onInput={handleMobileInput}
+  
   
                   data-testid="input-address1"
                 />
@@ -412,7 +412,7 @@ export default function Clients() {
                   inputMode="text"
                   {...field}
                   autoComplete="off"
-                  onInput={handleMobileInput}
+  
   
                   data-testid="input-address2"
                 />
@@ -495,7 +495,7 @@ export default function Clients() {
                   inputMode="numeric"
                   {...field}
                   autoComplete="off"
-                  onInput={handleMobileInput}
+  
   
                   data-testid="input-pincode"
                 />
@@ -520,7 +520,7 @@ export default function Clients() {
                 inputMode="text"
                 {...field}
                 autoComplete="off"
-                onInput={handleMobileInput}
+
 
                 data-testid="input-gst"
               />

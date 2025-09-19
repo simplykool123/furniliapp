@@ -2,11 +2,19 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-// Use Supabase connection directly - your original database
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres.qopynbelowyghyciuofo:Furnili@123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
+// FORCE Supabase connection - ignore all environment variables
+const SUPABASE_CONNECTION = 'postgresql://postgres.qopynbelowyghyciuofo:Furnili%40123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
+
+// Set DATABASE_URL to our Supabase connection and clear other interfering variables
+process.env.DATABASE_URL = SUPABASE_CONNECTION;
+delete process.env.PGHOST;
+delete process.env.PGPORT;
+delete process.env.PGUSER;
+delete process.env.PGPASSWORD;
+delete process.env.PGDATABASE;
 
 const poolConfig: any = {
-  connectionString,
+  connectionString: SUPABASE_CONNECTION,
   ssl: {
     rejectUnauthorized: false
   }

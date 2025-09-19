@@ -267,7 +267,7 @@ export default function Clients() {
                 {...field}
                 autoComplete="off"
                 onInput={handleMobileInput}
-                onFocus={(e) => isMobile && e.target.select()}
+
                 data-testid="input-clientname"
               />
             </FormControl>
@@ -293,7 +293,7 @@ export default function Clients() {
                   {...field}
                   autoComplete="off"
                   onInput={handleMobileInput}
-                  onFocus={(e) => isMobile && e.target.select()}
+  
                   data-testid="input-email"
                 />
               </FormControl>
@@ -317,7 +317,7 @@ export default function Clients() {
                   {...field}
                   autoComplete="off"
                   onInput={handleMobileInput}
-                  onFocus={(e) => isMobile && e.target.select()}
+  
                   data-testid="input-mobile"
                 />
               </FormControl>
@@ -343,7 +343,7 @@ export default function Clients() {
                   {...field}
                   autoComplete="off"
                   onInput={handleMobileInput}
-                  onFocus={(e) => isMobile && e.target.select()}
+  
                   data-testid="input-contact"
                 />
               </FormControl>
@@ -365,7 +365,7 @@ export default function Clients() {
                   {...field}
                   autoComplete="off"
                   onInput={handleMobileInput}
-                  onFocus={(e) => isMobile && e.target.select()}
+  
                   data-testid="input-phone"
                 />
               </FormControl>
@@ -391,7 +391,7 @@ export default function Clients() {
                   {...field}
                   autoComplete="off"
                   onInput={handleMobileInput}
-                  onFocus={(e) => isMobile && e.target.select()}
+  
                   data-testid="input-address1"
                 />
               </FormControl>
@@ -413,7 +413,7 @@ export default function Clients() {
                   {...field}
                   autoComplete="off"
                   onInput={handleMobileInput}
-                  onFocus={(e) => isMobile && e.target.select()}
+  
                   data-testid="input-address2"
                 />
               </FormControl>
@@ -496,7 +496,7 @@ export default function Clients() {
                   {...field}
                   autoComplete="off"
                   onInput={handleMobileInput}
-                  onFocus={(e) => isMobile && e.target.select()}
+  
                   data-testid="input-pincode"
                 />
               </FormControl>
@@ -521,7 +521,7 @@ export default function Clients() {
                 {...field}
                 autoComplete="off"
                 onInput={handleMobileInput}
-                onFocus={(e) => isMobile && e.target.select()}
+
                 data-testid="input-gst"
               />
             </FormControl>

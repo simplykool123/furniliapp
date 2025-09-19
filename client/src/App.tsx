@@ -41,6 +41,7 @@ import ProductionPlanning from "@/pages/ProductionPlanning";
 import WorkOrders from "@/pages/WorkOrders";
 import QualityControl from "@/pages/QualityControl";
 import WhatsAppConsole from "@/pages/WhatsAppConsole";
+import BotSettings from "@/pages/BotSettings";
 import CreateQuote from "@/pages/CreateQuote";
 import EditQuote from "@/pages/EditQuote";
 
@@ -247,7 +248,7 @@ function Router() {
       
       <Route path="/bot-settings">
         <ProtectedRoute>
-          <DisplaySettings />
+          <BotSettings />
         </ProtectedRoute>
       </Route>
       

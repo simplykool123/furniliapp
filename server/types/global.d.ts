@@ -6,4 +6,5 @@ declare global {
   var qrCodeData: string | null;
   var initializeWhatsAppBot: (() => Promise<void>) | undefined;
   var whatsappBot: any | undefined;
+  var telegramBot: any | undefined;
 }

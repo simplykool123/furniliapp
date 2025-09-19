@@ -7,10 +7,11 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
-// Force use exact same connection as main app
-const SUPABASE_DATABASE_URL = "postgresql://postgres.qopynbelowyghyciuofo:Furnili@123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres";
+// Import database configuration
+import { DATABASE_URL } from '../config.js';
+
 const botPool = new Pool({ 
-  connectionString: SUPABASE_DATABASE_URL,
+  connectionString: DATABASE_URL,
   ssl: { rejectUnauthorized: false },
   connectionTimeoutMillis: 15000,
   idleTimeoutMillis: 30000,

@@ -1459,8 +1459,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/whatsapp/reconnect", authenticateToken, async (req: AuthRequest, res) => {
+  app.post("/api/whatsapp/reconnect", authenticateToken, requireRole(["admin"]), async (req: AuthRequest, res) => {
     try {
+      // Check bot settings first
+      const botSettings = await storage.getBotSettings();
+      
+      if (!botSettings?.whatsappEnabled) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "WhatsApp bot is disabled. Please enable it in settings first." 
+        });
+      }
+      
+      if (!botSettings?.whatsappApiKey) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "WhatsApp API key not configured. Please set API key in settings first." 
+        });
+      }
+      
       const { FurniliWhatsAppBot } = await import('./services/whatsappBot.js');
       
       // Destroy existing bot if any
@@ -1493,9 +1510,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate QR Code endpoint (authenticated)
-  app.post("/api/whatsapp/generate-qr", authenticateToken, async (req: AuthRequest, res) => {
+  app.post("/api/whatsapp/generate-qr", authenticateToken, requireRole(["admin"]), async (req: AuthRequest, res) => {
     try {
       console.log('🔄 QR Generation requested by user:', req.user?.id);
+      
+      // Check bot settings first
+      const botSettings = await storage.getBotSettings();
+      
+      if (!botSettings?.whatsappEnabled) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "WhatsApp bot is disabled. Please enable it in settings first." 
+        });
+      }
+      
+      if (!botSettings?.whatsappApiKey) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "WhatsApp API key not configured. Please set API key in settings first." 
+        });
+      }
+      
       const { FurniliWhatsAppBot } = await import('./services/whatsappBot.js');
       
       // Clear any existing bot
@@ -1528,6 +1563,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: "Failed to generate QR code",
+        error: error?.message || "Unknown error" 
+      });
+    }
+  });
+
+  // Telegram Bot Management Endpoints
+  app.post("/api/telegram/start", authenticateToken, requireRole(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      console.log('🤖 Telegram bot start requested by user:', req.user?.id);
+      
+      // Check bot settings first
+      const botSettings = await storage.getBotSettings();
+      
+      if (!botSettings?.telegramEnabled) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Telegram bot is disabled. Please enable it in settings first." 
+        });
+      }
+      
+      if (!botSettings?.telegramToken) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Telegram bot token not configured. Please set token in settings first." 
+        });
+      }
+      
+      const { FurniliTelegramBot } = await import('./services/telegramBotSimple.js');
+      
+      // Stop existing bot if any
+      if (global.telegramBot) {
+        try {
+          global.telegramBot.stop();
+          global.telegramBot = undefined;
+          console.log('Previous Telegram bot instance stopped');
+        } catch (error) {
+          console.log('Error stopping previous bot (non-critical):', error);
+        }
+      }
+      
+      // Initialize new bot with token from database
+      global.telegramBot = new FurniliTelegramBot(botSettings.telegramToken);
+      console.log('✅ Telegram bot started successfully');
+      
+      res.json({ 
+        success: true, 
+        message: "Telegram bot started successfully. Users can now interact with it." 
+      });
+    } catch (error: any) {
+      console.error("Telegram start error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to start Telegram bot",
+        error: error?.message || "Unknown error" 
+      });
+    }
+  });
+
+  app.post("/api/telegram/stop", authenticateToken, requireRole(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      console.log('🤖 Telegram bot stop requested by user:', req.user?.id);
+      
+      if (global.telegramBot) {
+        global.telegramBot.stop();
+        global.telegramBot = undefined;
+        console.log('✅ Telegram bot stopped successfully');
+        
+        res.json({ 
+          success: true, 
+          message: "Telegram bot stopped successfully." 
+        });
+      } else {
+        res.json({ 
+          success: true, 
+          message: "Telegram bot was not running." 
+        });
+      }
+    } catch (error: any) {
+      console.error("Telegram stop error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to stop Telegram bot",
+        error: error?.message || "Unknown error" 
+      });
+    }
+  });
+
+  app.get("/api/telegram/status", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const isRunning = !!global.telegramBot;
+      const botSettings = await storage.getBotSettings();
+      
+      res.json({
+        isRunning,
+        enabled: botSettings?.telegramEnabled || false,
+        hasToken: !!botSettings?.telegramToken,
+        message: isRunning ? "Telegram bot is running" : "Telegram bot is not running"
+      });
+    } catch (error: any) {
+      console.error("Telegram status error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to get Telegram bot status",
         error: error?.message || "Unknown error" 
       });
     }

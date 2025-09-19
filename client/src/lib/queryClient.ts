@@ -72,7 +72,8 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const token = localStorage.getItem('authToken');
+    // Use consistent token retrieval method
+    const token = cleanToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -184,7 +185,8 @@ export const performanceUtils = {
 
 // Authenticated API request function for components
 export const authenticatedApiRequest = async (method: string, url: string, data?: any): Promise<Response> => {
-  const token = localStorage.getItem('authToken');
+  // Use consistent token retrieval method
+  const token = cleanToken();
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',

@@ -26,6 +26,7 @@ import { manufacturingStorage } from "./memStorage";
 import { calculateBOM, generateBOMNumber, convertDimensions, DEFAULT_RATES, calculateWardrobeBOM, calculateSheetOptimization } from "./utils/bomCalculations";
 import { optimizeSheetCutting, OptimizedPanel, SheetDimensions } from "./utils/advanced-nesting";
 import { getBotStatus } from "./services/whatsappBot.js";
+import { telegramBotManager } from "./services/telegramBot.js";
 import fileRoutes from "./fileRoutes";
 import multer from "multer";
 import path from "path";
@@ -7284,6 +7285,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const updatedSettings = await storage.updateBotSettings(updates);
+
+      // Reload Telegram bot with new settings
+      try {
+        await telegramBotManager.reload({
+          enabled: updatedSettings.telegramEnabled,
+          token: updatedSettings.telegramToken
+        });
+        console.log(`🔄 Telegram bot reloaded - enabled: ${updatedSettings.telegramEnabled}`);
+      } catch (error) {
+        console.error('⚠️ Failed to reload Telegram bot:', error);
+      }
 
       // Mask sensitive data in response
       const maskedSettings = {

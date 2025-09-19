@@ -2,6 +2,8 @@ import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { telegramBotManager } from "./services/telegramBot.js";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -156,5 +158,20 @@ app.use((req, res, next) => {
   }, async () => {
     log(`serving on port ${port}`);
     
+    // Initialize Telegram bot with database settings
+    try {
+      const botSettings = await storage.getBotSettings();
+      if (botSettings) {
+        console.log('🔄 Loading bot settings from database...');
+        await telegramBotManager.reload({
+          enabled: botSettings.telegramEnabled,
+          token: botSettings.telegramToken
+        });
+      } else {
+        console.log('📋 No bot settings found - bot disabled by default');
+      }
+    } catch (error) {
+      console.error('⚠️ Failed to load bot settings on startup:', error);
+    }
   });
 })();

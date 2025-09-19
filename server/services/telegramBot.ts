@@ -17,10 +17,17 @@ interface ProjectWithClient {
   clientMobile: string | null;
 }
 
+export interface TelegramBotSettings {
+  enabled: boolean;
+  token?: string;
+}
+
 export class FurniliTelegramBot {
   private bot: TelegramBot;
+  private token: string;
   
   constructor(token: string) {
+    this.token = token;
     this.bot = new TelegramBot(token, { polling: true });
     this.setupHandlers();
   }
@@ -97,6 +104,7 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
           code: projects.code,
           name: projects.name,
           stage: projects.stage,
+          clientId: projects.clientId,
           clientName: clients.name,
           clientMobile: clients.mobile
         })
@@ -111,7 +119,7 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
       }
 
       let projectMessage = "📋 *Active Projects:*\\n\\n";
-      projectList.forEach((project: ProjectWithClient, index: number) => {
+      projectList.forEach((project, index: number) => {
         projectMessage += `${index + 1}. *${project.code}* - ${project.name}\\n`;
         projectMessage += `   Client: ${project.clientName || 'Unknown'}\\n`;
         projectMessage += `   Stage: ${project.stage}\\n\\n`;
@@ -248,9 +256,9 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
       const photo = msg.photo[msg.photo.length - 1]; // Get highest resolution
       const caption = msg.caption || '';
 
-      // Download photo from Telegram
+      // Download photo from Telegram (using token from database settings, not env)
       const fileInfo = await this.bot.getFile(photo.file_id);
-      const downloadUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfo.file_path}`;
+      const downloadUrl = `https://api.telegram.org/file/bot${this.token}/${fileInfo.file_path}`;
       
       // Generate unique filename
       const uniqueName = crypto.randomBytes(8).toString('hex');
@@ -329,9 +337,9 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
       const document = msg.document;
       const caption = msg.caption || '';
 
-      // Download document from Telegram
+      // Download document from Telegram (using token from bot instance)
       const fileInfo = await this.bot.getFile(document.file_id);
-      const downloadUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfo.file_path}`;
+      const downloadUrl = `https://api.telegram.org/file/bot${this.token}/${fileInfo.file_path}`;
       
       // Generate filename preserving original name
       const uniqueName = crypto.randomBytes(8).toString('hex');
@@ -437,7 +445,7 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
           isPublic: false
         });
 
-        await this.bot.sendMessage(chatId, `✅ Note saved!\n\n"${msg.text.substring(0, 100)}${msg.text.length > 100 ? '...' : '"}"\n\nSend more notes or use /projects to switch projects.`);
+        await this.bot.sendMessage(chatId, `✅ Note saved!\n\n"${msg.text.substring(0, 100)}${msg.text.length > 100 ? '...' : ''}"\n\nSend more notes or use /projects to switch projects.`);
       }
 
     } catch (error) {
@@ -480,7 +488,7 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
   }
 
   private mapCategoryToFileCategory(category: string): string {
-    const mapping = {
+    const mapping: { [key: string]: string } = {
       'recce': 'photos',
       'design': 'design', 
       'drawings': 'drawings',
@@ -490,7 +498,7 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
   }
 
   private getCategoryDisplayName(category: string): string {
-    const names = {
+    const names: { [key: string]: string } = {
       'recce': 'Recce Photos',
       'design': 'Design Files',
       'drawings': 'Drawings',
@@ -503,3 +511,98 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
     this.bot.stopPolling();
   }
 }
+
+// Telegram Bot Manager - handles bot lifecycle
+class TelegramBotManager {
+  private bot: FurniliTelegramBot | null = null;
+  private isRunning = false;
+  private currentSettings: TelegramBotSettings = { enabled: false };
+
+  /**
+   * Start the Telegram bot with the provided token
+   */
+  async start(token: string): Promise<void> {
+    if (this.isRunning) {
+      console.log('🤖 Telegram bot is already running');
+      return;
+    }
+
+    if (!token || token.trim() === '' || token === '•••') {
+      console.warn('⚠️ Telegram bot start failed: No valid token provided');
+      return;
+    }
+
+    try {
+      console.log('🚀 Starting Telegram bot...');
+      this.bot = new FurniliTelegramBot(token);
+      this.isRunning = true;
+      console.log('✅ Telegram bot started successfully (polling mode)');
+      
+    } catch (error) {
+      console.error('❌ Telegram bot start failed:', error.message);
+      this.stop();
+    }
+  }
+
+  /**
+   * Stop the Telegram bot
+   */
+  stop(): void {
+    if (this.bot) {
+      try {
+        this.bot.stop();
+        this.bot = null;
+        this.isRunning = false;
+        console.log('🛑 Telegram bot stopped');
+      } catch (error) {
+        console.error('❌ Error stopping Telegram bot:', error.message);
+      }
+    }
+  }
+
+  /**
+   * Reload bot configuration
+   */
+  async reload(settings: TelegramBotSettings): Promise<void> {
+    console.log(`🔄 Telegram bot reload - enabled: ${settings.enabled}, token: ${settings.token ? 'provided' : 'none'}`);
+    
+    this.currentSettings = settings;
+
+    if (!settings.enabled) {
+      if (this.isRunning) {
+        console.log('🔄 Disabling Telegram bot...');
+        this.stop();
+      }
+      return;
+    }
+
+    // Bot should be enabled
+    if (!settings.token || settings.token === '•••') {
+      console.warn('⚠️ Telegram bot enabled but no valid token provided');
+      this.stop();
+      return;
+    }
+
+    // Restart if token changed or bot not running
+    if (this.isRunning) {
+      console.log('🔄 Restarting Telegram bot with new settings...');
+      this.stop();
+    }
+    
+    await this.start(settings.token);
+  }
+
+  /**
+   * Get bot status
+   */
+  getStatus(): { running: boolean; enabled: boolean } {
+    return {
+      running: this.isRunning,
+      enabled: this.currentSettings.enabled
+    };
+  }
+}
+
+// Export singleton instance
+export const telegramBotManager = new TelegramBotManager();
+export default telegramBotManager;

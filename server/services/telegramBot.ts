@@ -71,15 +71,12 @@ export class FurniliTelegramBot {
 
     if (!userId) return;
 
-    // Check if user is already verified
-    const existingSession = await db
-      .select()
-      .from(telegramUserSessions)
-      .where(eq(telegramUserSessions.telegramUserId, userId))
-      .limit(1);
-
-    if (existingSession.length > 0 && existingSession[0].isVerified) {
-      // User is already verified, show normal welcome
+    // Check if user is already authenticated (simple approach)
+    const isAuthenticated = await this.checkUserAuthentication(userId);
+    
+    if (isAuthenticated) {
+      await this.createOrUpdateSession(userId, username, firstName);
+      
       let welcomeMessage = "🏠 Welcome back to Furnili Assistant!";
       welcomeMessage += "\n\nI'll help you organize your project files efficiently.";
       welcomeMessage += "\n\n📋 Commands:";
@@ -93,25 +90,15 @@ export class FurniliTelegramBot {
       return;
     }
 
-    // User needs verification
+    // User needs verification - request phone number
     await this.createOrUpdateSession(userId, username, firstName);
     
-    let verificationMessage = "🔐 Furnili Bot Verification Required";
-    verificationMessage += "\n\nThis bot is restricted to authorized users only.";
-    verificationMessage += "\n\nPlease share your phone number to verify your access.";
-    verificationMessage += "\n\n📱 Use the 'Share Contact' button below or type your phone number (with country code):";
-    verificationMessage += "\n\nExample: +919876543210";
+    let verificationMessage = "🔐 Welcome to Furnili Assistant!";
+    verificationMessage += "\n\nFor security, I need to verify your phone number.";
+    verificationMessage += "\n\nPlease share your registered phone number (10 digits):";
+    verificationMessage += "\nExample: 9876543210";
 
-    const keyboard = {
-      keyboard: [[{
-        text: "📱 Share My Contact",
-        request_contact: true
-      }]],
-      resize_keyboard: true,
-      one_time_keyboard: true
-    };
-
-    await this.bot.sendMessage(chatId, verificationMessage, { reply_markup: keyboard });
+    await this.bot.sendMessage(chatId, verificationMessage);
   }
 
   // Handle contact sharing for phone verification
@@ -122,78 +109,62 @@ export class FurniliTelegramBot {
     if (!userId || !msg.contact?.phone_number) return;
 
     const phoneNumber = msg.contact.phone_number;
-    await this.verifyPhoneNumber(userId, phoneNumber, chatId);
+    await this.handlePhoneAuthentication(msg, phoneNumber);
   }
 
-  // Verify phone number against database
-  private async verifyPhoneNumber(userId: string, phoneNumber: string, chatId: number) {
+  // Check if user is authenticated (simple approach like old bot)
+  private async checkUserAuthentication(telegramUserId: string): Promise<boolean> {
     try {
-      // Clean phone number (remove + and spaces)
-      const cleanPhone = phoneNumber.replace(/[\+\s-]/g, '');
-      
-      // Check if phone exists in users table (staff/admin)
-      const staffUser = await db
+      // Check if telegram user is linked to a system user via phone
+      const session = await db
+        .select({
+          id: telegramUserSessions.id,
+          phoneNumber: telegramUserSessions.phoneNumber,
+          systemUserId: telegramUserSessions.systemUserId
+        })
+        .from(telegramUserSessions)
+        .leftJoin(users, eq(telegramUserSessions.phoneNumber, users.phone))
+        .where(eq(telegramUserSessions.telegramUserId, telegramUserId))
+        .limit(1);
+
+      return session.length > 0 && session[0].phoneNumber && session[0].systemUserId;
+    } catch (error) {
+      console.error('Error checking user authentication:', error);
+      return false;
+    }
+  }
+
+  // Authenticate user by phone (simple approach)
+  private async authenticateUserByPhone(telegramUserId: string, phoneNumber: string): Promise<boolean> {
+    try {
+      // Check if phone exists in users table
+      const user = await db
         .select()
         .from(users)
         .where(eq(users.phone, phoneNumber))
-        .or(eq(users.phone, cleanPhone))
         .limit(1);
 
-      // Check if phone exists in clients table  
-      const clientUser = await db
-        .select()
-        .from(clients)
-        .where(eq(clients.mobile, phoneNumber))
-        .or(eq(clients.mobile, cleanPhone))
-        .or(eq(clients.phone, phoneNumber))
-        .or(eq(clients.phone, cleanPhone))
-        .limit(1);
-
-      if (staffUser.length > 0 || clientUser.length > 0) {
-        // User verified - update session
-        await db
-          .update(telegramUserSessions)
-          .set({
-            isVerified: true,
-            phoneNumber: phoneNumber,
-            systemUserId: staffUser.length > 0 ? staffUser[0].id : null,
-            activeClientId: clientUser.length > 0 ? clientUser[0].id : null,
-            sessionState: 'idle',
-            lastInteraction: new Date(),
-            updatedAt: new Date()
-          })
-          .where(eq(telegramUserSessions.telegramUserId, userId));
-
-        const userName = staffUser.length > 0 ? staffUser[0].name : clientUser[0]?.name;
-        const userType = staffUser.length > 0 ? staffUser[0].role : 'client';
-
-        let welcomeMessage = "✅ Verification Successful!";
-        welcomeMessage += `\n\nWelcome ${userName} (${userType})`;
-        welcomeMessage += "\n\n🏠 Furnili Assistant is now active!";
-        welcomeMessage += "\n\n📋 Commands:";
-        welcomeMessage += "\n• /projects - View all active projects";
-        welcomeMessage += "\n\nQuick Start:";
-        welcomeMessage += "\n1. Type /projects";
-        welcomeMessage += "\n2. Reply with number (e.g., 1)";
-        welcomeMessage += "\n3. Choose category and upload!";
-
-        await this.bot.sendMessage(chatId, welcomeMessage, { 
-          reply_markup: { remove_keyboard: true } 
-        });
-      } else {
-        // Phone not found - access denied
-        let deniedMessage = "❌ Access Denied";
-        deniedMessage += "\n\nYour phone number is not authorized to use this bot.";
-        deniedMessage += "\n\n📞 Phone: " + phoneNumber;
-        deniedMessage += "\n\nPlease contact your administrator to get access.";
-        
-        await this.bot.sendMessage(chatId, deniedMessage, { 
-          reply_markup: { remove_keyboard: true } 
-        });
+      if (user.length === 0) {
+        return false; // Phone not found
       }
+
+      // Update telegram session with phone number and link to system user
+      await db
+        .update(telegramUserSessions)
+        .set({
+          phoneNumber: phoneNumber,
+          systemUserId: user[0].id,
+          sessionState: 'idle',
+          lastInteraction: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(telegramUserSessions.telegramUserId, telegramUserId));
+
+      console.log(`✅ User ${telegramUserId} authenticated with phone ${phoneNumber}, linked to system user ${user[0].id} (${user[0].name})`);
+      return true;
     } catch (error) {
-      console.error('Error verifying phone number:', error);
-      await this.bot.sendMessage(chatId, "❌ Verification failed. Please try again or contact support.");
+      console.error('Error authenticating user by phone:', error);
+      return false;
     }
   }
 
@@ -203,8 +174,10 @@ export class FurniliTelegramBot {
     
     if (!userId) return;
 
-    // Check if user is verified
-    if (!await this.isUserVerified(userId, chatId)) {
+    // Check if user is authenticated
+    const isAuthenticated = await this.checkUserAuthentication(userId);
+    if (!isAuthenticated) {
+      await this.bot.sendMessage(chatId, "🔐 Please authenticate first with /start command.");
       return;
     }
 
@@ -387,8 +360,10 @@ export class FurniliTelegramBot {
     
     if (!userId) return;
 
-    // Check if user is verified
-    if (!await this.isUserVerified(userId, chatId)) {
+    // Check if user is authenticated
+    const isAuthenticated = await this.checkUserAuthentication(userId);
+    if (!isAuthenticated) {
+      await this.bot.sendMessage(chatId, "🔐 Please authenticate first with /start command.");
       return;
     }
 
@@ -437,8 +412,10 @@ export class FurniliTelegramBot {
     
     if (!userId || !msg.photo) return;
 
-    // Check if user is verified
-    if (!await this.isUserVerified(userId, chatId)) {
+    // Check if user is authenticated
+    const isAuthenticated = await this.checkUserAuthentication(userId);
+    if (!isAuthenticated) {
+      await this.bot.sendMessage(chatId, "🔐 Please authenticate first with /start command.");
       return;
     }
 
@@ -523,8 +500,10 @@ export class FurniliTelegramBot {
     
     if (!userId || !msg.document) return;
 
-    // Check if user is verified
-    if (!await this.isUserVerified(userId, chatId)) {
+    // Check if user is authenticated
+    const isAuthenticated = await this.checkUserAuthentication(userId);
+    if (!isAuthenticated) {
+      await this.bot.sendMessage(chatId, "🔐 Please authenticate first with /start command.");
       return;
     }
 
@@ -609,6 +588,14 @@ export class FurniliTelegramBot {
     if (!userId || !msg.text || msg.text.startsWith('/')) return;
 
     try {
+      // Check if user needs phone authentication first
+      const isAuthenticated = await this.checkUserAuthentication(userId);
+      if (!isAuthenticated) {
+        // Handle phone authentication
+        await this.handlePhoneAuthentication(msg, msg.text);
+        return;
+      }
+
       // Get user session
       const session = await db
         .select()
@@ -811,6 +798,7 @@ class TelegramBotManager {
       }
     }
   }
+
 
   /**
    * Reload bot configuration

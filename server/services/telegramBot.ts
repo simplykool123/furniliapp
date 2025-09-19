@@ -373,7 +373,7 @@ export class FurniliTelegramBot {
         category: this.mapCategoryToFileCategory(userSession.currentStep || 'general'),
         description: `Uploaded via Telegram`,
         comment: caption,
-        uploadedBy: 1, // Default to admin user - you might want to create a mapping
+        uploadedBy: 5, // Use actual admin user ID from database
         isPublic: false
       });
 
@@ -453,7 +453,7 @@ export class FurniliTelegramBot {
         category: this.mapCategoryToFileCategory(userSession.currentStep || 'general'),
         description: `Uploaded via Telegram`,
         comment: caption,
-        uploadedBy: 1, // Default to admin user
+        uploadedBy: 5, // Use actual admin user ID from database
         isPublic: false
       });
 
@@ -522,7 +522,7 @@ export class FurniliTelegramBot {
           category: 'notes',
           description: `Text note via Telegram`,
           comment: msg.text.substring(0, 100) + (msg.text.length > 100 ? '...' : ''),
-          uploadedBy: 1,
+          uploadedBy: 5,
           isPublic: false
         });
 

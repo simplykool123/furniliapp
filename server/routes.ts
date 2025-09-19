@@ -66,6 +66,8 @@ import {
   insertQualityCheckSchema,
   insertProductionScheduleSchema,
   
+  // Bot Settings schema
+  insertBotSettingsSchema,
 } from "@shared/schema";
 
 // Helper function to get rate from products table or fallback to default
@@ -7099,6 +7101,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating custom default price:', error);
       res.status(500).json({ error: 'Failed to update custom default price' });
+    }
+  });
+
+  // ============================================================================
+  // SIMPLE BOT SETTINGS ROUTES
+  // ============================================================================
+
+  // Get bot settings
+  app.get("/api/settings/bot", authenticateToken, requireRole(["admin"]), async (req, res) => {
+    try {
+      const settings = await storage.getBotSettings();
+      
+      if (!settings) {
+        // Return default settings if none exist
+        return res.json({
+          telegramEnabled: false,
+          whatsappEnabled: false,
+          telegramToken: null,
+          whatsappApiKey: null
+        });
+      }
+
+      // Mask sensitive data in response
+      const maskedSettings = {
+        ...settings,
+        telegramToken: settings.telegramToken ? "***" : null,
+        whatsappApiKey: settings.whatsappApiKey ? "***" : null
+      };
+
+      res.json(maskedSettings);
+    } catch (error) {
+      console.error("Failed to fetch bot settings:", error);
+      res.status(500).json({ message: "Failed to fetch bot settings", error: String(error) });
+    }
+  });
+
+  // Update bot settings
+  app.put("/api/settings/bot", authenticateToken, requireRole(["admin"]), async (req: AuthRequest, res) => {
+    try {
+      const updates = insertBotSettingsSchema.partial().parse({
+        ...req.body,
+        updatedBy: req.user!.id,
+      });
+
+      const updatedSettings = await storage.updateBotSettings(updates);
+
+      // Mask sensitive data in response
+      const maskedSettings = {
+        ...updatedSettings,
+        telegramToken: updatedSettings.telegramToken ? "***" : null,
+        whatsappApiKey: updatedSettings.whatsappApiKey ? "***" : null
+      };
+
+      res.json(maskedSettings);
+    } catch (error) {
+      console.error("Failed to update bot settings:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation failed", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update bot settings", error: String(error) });
     }
   });
 

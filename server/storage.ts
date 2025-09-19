@@ -28,6 +28,7 @@ import {
   bomCalculations,
   bomItems,
   bomSettings,
+  botSettings,
   workOrders,
   productionSchedules,
   qualityChecks,
@@ -97,6 +98,8 @@ import type {
   InsertQualityCheck,
   ProductionTask,
   InsertProductionTask,
+  BotSettings,
+  InsertBotSettings,
   WorkOrderWithDetails,
   ProductionScheduleWithDetails,
   QualityCheckWithDetails,
@@ -332,6 +335,10 @@ export interface IStorage {
   deleteProductionTask(id: number): Promise<boolean>;
   getProductionTasksByWorkOrder(workOrderId: number): Promise<ProductionTask[]>;
   getLastProductionTaskNumber(): Promise<string | undefined>;
+
+  // Simple Bot Settings operations
+  getBotSettings(): Promise<BotSettings | undefined>;
+  updateBotSettings(updates: Partial<InsertBotSettings>): Promise<BotSettings>;
 
 }
 
@@ -3163,6 +3170,33 @@ class DatabaseStorage implements IStorage {
       .orderBy(desc(productionTasks.createdAt))
       .limit(1);
     return result[0]?.taskNumber;
+  }
+
+  // Simple Bot Settings operations
+  async getBotSettings(): Promise<BotSettings | undefined> {
+    const result = await db.select().from(botSettings).limit(1);
+    return result[0];
+  }
+
+  async updateBotSettings(updates: Partial<InsertBotSettings>): Promise<BotSettings> {
+    // Check if settings exist
+    const existing = await this.getBotSettings();
+    
+    if (existing) {
+      // Update existing record
+      const result = await db.update(botSettings)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(botSettings.id, existing.id))
+        .returning();
+      return result[0];
+    } else {
+      // Create new record
+      const result = await db.insert(botSettings).values({
+        ...updates,
+        updatedAt: new Date()
+      }).returning();
+      return result[0];
+    }
   }
 
 }

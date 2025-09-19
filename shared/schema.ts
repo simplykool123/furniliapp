@@ -1237,6 +1237,18 @@ export const machineDowntime = pgTable("machine_downtime", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Simple Bot Settings Table
+export const botSettings = pgTable("bot_settings", {
+  id: serial("id").primaryKey(),
+  telegramEnabled: boolean("telegram_enabled").notNull().default(false),
+  whatsappEnabled: boolean("whatsapp_enabled").notNull().default(false),
+  telegramToken: text("telegram_token"), // API token for Telegram bot
+  whatsappApiKey: text("whatsapp_api_key"), // API key for WhatsApp
+  updatedBy: integer("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Production Insert Schemas
 export const insertWorkOrderSchema = createInsertSchema(workOrders).omit({ 
   id: true, 
@@ -1266,6 +1278,12 @@ export const insertProductionTaskSchema = createInsertSchema(productionTasks).om
 });
 
 export const insertMachineDowntimeSchema = createInsertSchema(machineDowntime).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertBotSettingsSchema = createInsertSchema(botSettings).omit({ 
   id: true, 
   createdAt: true, 
   updatedAt: true 
@@ -1324,6 +1342,10 @@ export type ProductionTask = typeof productionTasks.$inferSelect;
 export type InsertProductionTask = z.infer<typeof insertProductionTaskSchema>;
 export type MachineDowntime = typeof machineDowntime.$inferSelect;
 export type InsertMachineDowntime = z.infer<typeof insertMachineDowntimeSchema>;
+
+// Bot Settings Types
+export type BotSettings = typeof botSettings.$inferSelect;
+export type InsertBotSettings = z.infer<typeof insertBotSettingsSchema>;
 
 // Extended Production types for API responses
 export type WorkOrderWithDetails = WorkOrder & {

@@ -245,6 +245,12 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
+      <Route path="/bot-settings">
+        <ProtectedRoute>
+          <DisplaySettings />
+        </ProtectedRoute>
+      </Route>
+      
       <Route path="/backups">
         <ProtectedRoute>
           <Backups />

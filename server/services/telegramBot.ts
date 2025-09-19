@@ -49,7 +49,7 @@ export class FurniliTelegramBot {
     this.bot.onText(/\/recce/, (msg) => this.handleCategorySelection(msg, 'recce'));
     this.bot.onText(/\/design/, (msg) => this.handleCategorySelection(msg, 'design'));
     this.bot.onText(/\/drawings/, (msg) => this.handleCategorySelection(msg, 'drawings'));
-    this.bot.onText(/\/notes/, (msg) => this.handleCategorySelection(msg, 'notes'));
+    this.bot.onText(/\/6s/, (msg) => this.handleCategorySelection(msg, '6s'));
     
     // Handle photo uploads
     this.bot.on('photo', (msg) => this.handlePhoto(msg));
@@ -72,26 +72,17 @@ export class FurniliTelegramBot {
     // Create or update user session
     await this.createOrUpdateSession(userId, username, firstName);
 
-    const welcomeMessage = `🏠 Welcome to Furnili Assistant!
+    const welcomeMessage = `🏠 Welcome back to Furnili Assistant!
 
-I'll help you organize your project files efficiently. Here's what I can do:
+I'll help you organize your project files efficiently.
 
-📋 *Commands:*
+📋 Commands:
 • /projects - View all active projects
-• /select [number] - Select a project to work with
 
-📁 *File Categories:*
-• /recce - Upload site recce photos with measurements
-• /design - Upload design files and concepts
-• /drawings - Upload technical drawings and plans  
-• /notes - Add text notes with attachments
-
-🚀 *Quick Start:*
-1. Type /projects to see available projects
-2. Select your project with /select [number]
-3. Choose a category and start uploading!
-
-All your uploads will be automatically organized in the Furnili dashboard by project and category.`;
+Quick Start:
+1. Type /projects
+2. Reply with /select [number]
+3. Choose category and upload!`;
 
     await this.bot.sendMessage(chatId, welcomeMessage, { parse_mode: 'Markdown' });
   }
@@ -121,15 +112,15 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
         return;
       }
 
-      let projectMessage = "📋 *Active Projects:*\\n\\n";
+      let projectMessage = "📋 Active Projects (ongoing):\\n\\n";
       projectList.forEach((project, index: number) => {
-        projectMessage += `${index + 1}. *${project.code}* - ${project.name}\\n`;
-        projectMessage += `   Client: ${project.clientName || 'Unknown'}\\n`;
-        projectMessage += `   Stage: ${project.stage}\\n\\n`;
+        projectMessage += `${index + 1}. ${project.code} - ${project.name}\\n`;
+        projectMessage += `Client: ${project.clientName || 'Unknown'}\\n`;
+        projectMessage += `Stage: ${project.stage}\\n\\n`;
       });
 
-      projectMessage += "💡 Reply with `/select [number]` to choose a project\\n";
-      projectMessage += "Example: `/select 1`";
+      projectMessage += "Reply with the Number to choose the project\\n";
+      projectMessage += "Example: /select 1";
 
       await this.bot.sendMessage(chatId, projectMessage, { parse_mode: 'Markdown' });
 
@@ -181,7 +172,7 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
         })
         .where(eq(telegramUserSessions.telegramUserId, userId));
 
-      const successMessage = `✅ Project Selected: *${selectedProject.code}* - ${selectedProject.name}\\nClient: ${selectedProject.clientName || 'Unknown'}\\n\\n📁 *Now choose what to upload:*\\n• /recce - Site recce photos with measurements\\n• /design - Design files and concepts\\n• /drawings - Technical drawings and plans\\n• /notes - Text notes with attachments\\n\\nJust send the command and start uploading files!`;
+      const successMessage = `✅ Project Selected: ${selectedProject.code}\\nClient: ${selectedProject.clientName || 'Unknown'}\\n\\nChoose upload category:\\n• /recce - Site photos with measurements\\n• /design - Design files\\n• /drawings - Technical drawings\\n• /6s - Delivery challan photos\\n\\nSend the command and start uploading!`;
 
       await this.bot.sendMessage(chatId, successMessage, { parse_mode: 'Markdown' });
 
@@ -222,10 +213,10 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
         .where(eq(telegramUserSessions.telegramUserId, userId));
 
       const categoryMessages: { [key: string]: string } = {
-        recce: "📷 *Recce Mode Active*\\n\\nSend photos of the site with measurements and descriptions. Each photo will be saved under the Recce category.",
-        design: "🎨 *Design Mode Active*\\n\\nSend design files, concepts, and inspiration images. All files will be organized under Design category.", 
-        drawings: "📐 *Drawings Mode Active*\\n\\nSend technical drawings, plans, and architectural files. Files will be saved under Drawings category.",
-        notes: "📝 *Notes Mode Active*\\n\\nSend text notes with any attachments. Everything will be saved under Notes category."
+        recce: "📷 → Recce Mode Active\\n\\nSend site photos with measurements.",
+        design: "🎨 → Design Mode Active\\n\\nSend design files and concepts.", 
+        drawings: "📐 → Drawings Mode Active\\n\\nSend technical drawings and plans.",
+        '6s': "📋 → Delivery Mode Active\\n\\nSend delivery challan photos."
       };
 
       await this.bot.sendMessage(chatId, categoryMessages[category], { parse_mode: 'Markdown' });
@@ -495,17 +486,17 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
       'recce': 'photos',
       'design': 'design', 
       'drawings': 'drawings',
-      'notes': 'notes'
+      '6s': 'delivery'
     };
     return mapping[category] || 'general';
   }
 
   private getCategoryDisplayName(category: string): string {
     const names: { [key: string]: string } = {
-      'recce': 'Recce Photos',
-      'design': 'Design Files',
+      'recce': 'Recce',
+      'design': 'Design', 
       'drawings': 'Drawings',
-      'notes': 'Notes'
+      '6s': 'Files'
     };
     return names[category] || 'General';
   }

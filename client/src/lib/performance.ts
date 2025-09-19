@@ -83,7 +83,8 @@ export class PerformanceOptimizer {
     }
 
     // Log slow operations (>1000ms)
-    if (duration > 1000) {
+    // Only log slow operations in development
+    if (duration > 1000 && import.meta.env.DEV) {
       console.warn(`Slow operation detected: ${operation} took ${duration.toFixed(2)}ms`);
     }
   }
@@ -112,63 +113,105 @@ export class PerformanceOptimizer {
   }
 }
 
-// Optimized query hooks with performance monitoring
+// VPS-optimized query configurations for different data types
 export const optimizedQueryHooks = {
-  // Dashboard data with aggressive caching
+  // Dashboard data - balanced caching for VPS
   useDashboardData: () => {
     return {
-      staleTime: 30000, // 30 seconds
-      cacheTime: 300000, // 5 minutes
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 15, // 15 minutes
       refetchOnWindowFocus: false,
-      retry: 1
+      refetchOnMount: false,
+      retry: false, // Use global retry logic
     };
   },
 
-  // Product data with moderate caching
+  // Product data - longer caching for VPS efficiency
   useProductData: () => {
     return {
-      staleTime: 60000, // 1 minute
-      cacheTime: 600000, // 10 minutes
+      staleTime: 1000 * 60 * 10, // 10 minutes
+      gcTime: 1000 * 60 * 20, // 20 minutes
       refetchOnWindowFocus: false,
-      retry: 2
+      refetchOnMount: false,
+      retry: false, // Use global retry logic
     };
   },
 
-  // Real-time data with minimal caching
+  // Static data - maximum caching for VPS
+  useStaticData: () => {
+    return {
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      gcTime: 1000 * 60 * 60, // 1 hour
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      retry: false,
+    };
+  },
+
+  // Real-time data - minimal but optimized caching
   useRealTimeData: () => {
     return {
-      staleTime: 0,
-      cacheTime: 30000, // 30 seconds
-      refetchOnWindowFocus: true,
-      retry: 3
+      staleTime: 1000 * 30, // 30 seconds
+      gcTime: 1000 * 60 * 2, // 2 minutes
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: true,
+      retry: false, // Use global retry logic
     };
   }
 };
 
-// Cache management utilities
+// VPS-optimized cache management utilities
 export const cacheManager = {
-  // Invalidate specific cache patterns
+  // Invalidate specific cache patterns with batching
   invalidatePattern: (pattern: string) => {
-    queryClient.invalidateQueries({ queryKey: [pattern] });
+    return queryClient.invalidateQueries({ queryKey: [pattern] });
   },
 
-  // Clear all cache
+  // Batch invalidate multiple patterns
+  batchInvalidate: (patterns: string[]) => {
+    return Promise.all(
+      patterns.map(pattern => 
+        queryClient.invalidateQueries({ queryKey: [pattern] })
+      )
+    );
+  },
+
+  // Clear all cache (use sparingly in production)
   clearAll: () => {
+    if (import.meta.env.DEV) {
+      console.warn('Clearing all cache - this should be rare in production');
+    }
     queryClient.clear();
   },
 
-  // Prefetch data
-  prefetch: async (queryKey: string[], fetcher: () => Promise<any>) => {
+  // VPS-optimized prefetch with longer stale times
+  prefetch: async (queryKey: string[], fetcher: () => Promise<any>, staleTime = 1000 * 60 * 5) => {
     await queryClient.prefetchQuery({ 
       queryKey, 
       queryFn: fetcher,
-      staleTime: 60000 
+      staleTime // Default 5 minutes for VPS
     });
   },
 
-  // Set cache data manually
-  setData: (queryKey: string[], data: any) => {
+  // Set cache data manually with optimized GC time
+  setData: (queryKey: string[], data: any, gcTime = 1000 * 60 * 15) => {
     queryClient.setQueryData(queryKey, data);
+    // Ensure the data persists with longer GC time
+    queryClient.setQueryDefaults(queryKey, { gcTime });
+  },
+
+  // Get cache statistics for monitoring
+  getCacheStats: () => {
+    const cache = queryClient.getQueryCache();
+    const queries = cache.getAll();
+    
+    return {
+      totalQueries: queries.length,
+      staleQueries: queries.filter(q => q.isStale()).length,
+      loadingQueries: queries.filter(q => q.state.fetchStatus === 'fetching').length,
+      errorQueries: queries.filter(q => q.state.status === 'error').length,
+    };
   }
 };
 

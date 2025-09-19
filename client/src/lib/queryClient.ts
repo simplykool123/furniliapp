@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { debugToken, cleanToken } from "../utils/tokenDebug";
+import { setupGlobalErrorHandlers } from "./globalErrorHandler";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -36,7 +37,10 @@ export async function apiRequest(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  console.log('API Request:', cleanMethod, url, 'Token exists:', !!token);
+  // Only log in development
+  if (import.meta.env.DEV) {
+    console.log('API Request:', cleanMethod, url, 'Token exists:', !!token);
+  }
 
   const res = await fetch(url, {
     method: cleanMethod,
@@ -81,19 +85,36 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
+      // Optimized for VPS deployment - reduce server load
+      staleTime: 1000 * 60 * 5, // 5 minutes - data stays fresh longer
+      gcTime: 1000 * 60 * 15, // 15 minutes - longer garbage collection
+      // Prevent unnecessary refetching
       refetchOnWindowFocus: false,
-      staleTime: 15000, // 15 seconds for fresh data
-      gcTime: 300000, // 5 minutes cache
-      retry: 1,
+      refetchOnMount: false,
+      refetchOnReconnect: true, // Only refetch on network reconnection
+      refetchInterval: false,
+      // Smart retry with exponential backoff
+      retry: (failureCount, error: any) => {
+        // Don't retry on client errors
+        if (error?.status === 404 || error?.status === 401 || error?.status === 403) {
+          return false;
+        }
+        // Retry up to 2 times for server errors
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       networkMode: 'online',
     },
     mutations: {
-      retry: 1,
+      // Don't retry mutations by default to avoid duplicate submissions
+      retry: false,
       networkMode: 'online',
     },
   },
 });
+
+// Setup global error handlers for production-ready error handling
+setupGlobalErrorHandlers(queryClient);
 
 // Enhanced performance utilities
 export const performanceUtils = {
@@ -114,24 +135,32 @@ export const performanceUtils = {
   },
 
   batchInvalidate: (patterns: string[]) => {
-    patterns.forEach(pattern => {
-      queryClient.invalidateQueries({ queryKey: [pattern] });
-    });
+    // Batch invalidations for better performance
+    Promise.all(
+      patterns.map(pattern => 
+        queryClient.invalidateQueries({ queryKey: [pattern] })
+      )
+    );
   },
 
-  // Preload critical data
+  // Preload critical data with VPS-optimized timing
   preloadData: () => {
+    // Use longer stale times for VPS deployment to reduce server load
     queryClient.prefetchQuery({
       queryKey: ['/api/dashboard/stats'],
-      staleTime: 10000, // 10 seconds
+      staleTime: 1000 * 60 * 5, // 5 minutes
     });
     queryClient.prefetchQuery({
       queryKey: ['/api/projects'],
-      staleTime: 30000, // 30 seconds
+      staleTime: 1000 * 60 * 10, // 10 minutes
     });
     queryClient.prefetchQuery({
       queryKey: ['/api/quotes'],
-      staleTime: 20000, // 20 seconds
+      staleTime: 1000 * 60 * 10, // 10 minutes
+    });
+    queryClient.prefetchQuery({
+      queryKey: ['/api/categories'],
+      staleTime: 1000 * 60 * 30, // 30 minutes - categories rarely change
     });
   }
 };

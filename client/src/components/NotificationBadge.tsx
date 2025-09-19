@@ -24,7 +24,6 @@ export default function NotificationBadge() {
   const { data: pendingTasks } = useQuery<Task[]>({
     queryKey: ["/api/tasks/notifications"],
     enabled: !!currentUser,
-    refetchInterval: 120000, // Refresh every 2 minutes (reduced from 30s)
   });
 
   const pendingCount = Array.isArray(pendingTasks) ? pendingTasks.length : 0;

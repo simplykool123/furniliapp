@@ -231,8 +231,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // ===== HEALTH CHECK ENDPOINT =====
-  // Lightweight endpoint to handle frequent HEAD requests for server health/connectivity checks
+  // ===== HEALTH CHECK ENDPOINT (OPTIMIZED FOR PRODUCTION) =====
+  // Lightweight endpoint for basic server health checks - minimal logging for production
   app.get("/api", (req, res) => {
     res.status(200).json({ status: "ok", timestamp: Date.now() });
   });

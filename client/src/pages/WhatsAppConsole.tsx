@@ -62,17 +62,14 @@ export default function WhatsAppConsole() {
 
   const { data: botStatus, isLoading: statusLoading } = useQuery<BotStatus>({
     queryKey: ['/api/whatsapp/status'],
-    refetchInterval: 30000, // Refresh every 30 seconds (reduced from 5s)
   });
 
   const { data: messages, isLoading: messagesLoading } = useQuery<WhatsAppMessage[]>({
     queryKey: ['/api/whatsapp/messages'],
-    refetchInterval: 10000, // Refresh every 10 seconds (reduced from 2s)
   });
 
   const { data: sessions, isLoading: sessionsLoading } = useQuery<WhatsAppSession[]>({
     queryKey: ['/api/whatsapp/sessions'],
-    refetchInterval: 60000, // Refresh every 60 seconds (reduced from 10s)
   });
 
   const sendMessageMutation = useMutation({

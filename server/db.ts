@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
 // Use Supabase connection directly - your original database
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres.qopynbelowyghyciuofo:Furnili%40123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres.qopynbelowyghyciuofo:Furnili@123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
 
 const poolConfig: any = {
   connectionString,

@@ -71,17 +71,14 @@ export class FurniliTelegramBot {
     // Create or update user session
     await this.createOrUpdateSession(userId, username, firstName);
 
-    const welcomeMessage = `🏠 Welcome back to Furnili Assistant!
-
-I'll help you organize your project files efficiently.
-
-📋 Commands:
-• /projects - View all active projects
-
-Quick Start:
-1. Type /projects
-2. Reply with /select [number]
-3. Choose category and upload!`;
+    let welcomeMessage = "🏠 Welcome back to Furnili Assistant!";
+    welcomeMessage += "\n\nI'll help you organize your project files efficiently.";
+    welcomeMessage += "\n\n📋 Commands:";
+    welcomeMessage += "\n• /projects - View all active projects";
+    welcomeMessage += "\n\nQuick Start:";
+    welcomeMessage += "\n1. Type /projects";
+    welcomeMessage += "\n2. Reply with number (e.g., 1)";
+    welcomeMessage += "\n3. Choose category and upload!";
 
     await this.bot.sendMessage(chatId, welcomeMessage);
   }
@@ -111,19 +108,18 @@ Quick Start:
         return;
       }
 
-      let projectMessage = `📋 Active Projects (ongoing):
-
-`;
+      let projectMessage = "📋 Active Projects (ongoing):";
+      projectMessage += "\n\n";
+      
       projectList.forEach((project, index: number) => {
-        projectMessage += `${index + 1}. ${project.code} - ${project.name}
-Client: ${project.clientName || 'Unknown'}
-Stage: ${project.stage}
-
-`;
+        projectMessage += `${index + 1}. ${project.code} - ${project.name}`;
+        projectMessage += `\nClient: ${project.clientName || 'Unknown'}`;
+        projectMessage += `\nStage: ${project.stage}`;
+        projectMessage += "\n\n";
       });
 
-      projectMessage += `Reply with the Number to choose the project
-Example: 1`;
+      projectMessage += "Reply with the Number to choose the project";
+      projectMessage += "\nExample: 1";
 
       await this.bot.sendMessage(chatId, projectMessage);
 
@@ -187,16 +183,14 @@ Example: 1`;
         })
         .where(eq(telegramUserSessions.telegramUserId, userId));
 
-      const successMessage = `✅ Project Selected: ${selectedProject.code}
-Client: ${selectedProject.clientName || 'Unknown'}
-
-Choose upload category:
-• /recce - Site photos with measurements
-• /design - Design files
-• /drawings - Technical drawings
-• /6s - Delivery challan photos
-
-Send the command and start uploading!`;
+      let successMessage = `✅ Project Selected: ${selectedProject.code}`;
+      successMessage += `\nClient: ${selectedProject.clientName || 'Unknown'}`;
+      successMessage += "\n\nChoose upload category:";
+      successMessage += "\n• /recce - Site photos with measurements";
+      successMessage += "\n• /design - Design files";
+      successMessage += "\n• /drawings - Technical drawings";
+      successMessage += "\n• /6s - Delivery challan photos";
+      successMessage += "\n\nSend the command and start uploading!";
 
       await this.bot.sendMessage(chatId, successMessage);
 
@@ -248,16 +242,14 @@ Send the command and start uploading!`;
         })
         .where(eq(telegramUserSessions.telegramUserId, userId));
 
-      const successMessage = `✅ Project Selected: ${selectedProject.code}
-Client: ${selectedProject.clientName || 'Unknown'}
-
-Choose upload category:
-• /recce - Site photos with measurements
-• /design - Design files
-• /drawings - Technical drawings
-• /6s - Delivery challan photos
-
-Send the command and start uploading!`;
+      let successMessage = `✅ Project Selected: ${selectedProject.code}`;
+      successMessage += `\nClient: ${selectedProject.clientName || 'Unknown'}`;
+      successMessage += "\n\nChoose upload category:";
+      successMessage += "\n• /recce - Site photos with measurements";
+      successMessage += "\n• /design - Design files";
+      successMessage += "\n• /drawings - Technical drawings";
+      successMessage += "\n• /6s - Delivery challan photos";
+      successMessage += "\n\nSend the command and start uploading!";
 
       await this.bot.sendMessage(chatId, successMessage);
 
@@ -298,18 +290,10 @@ Send the command and start uploading!`;
         .where(eq(telegramUserSessions.telegramUserId, userId));
 
       const categoryMessages: { [key: string]: string } = {
-        recce: `📷 → Recce Mode Active
-
-Send site photos with measurements.`,
-        design: `🎨 → Design Mode Active
-
-Send design files and concepts.`, 
-        drawings: `📐 → Drawings Mode Active
-
-Send technical drawings and plans.`,
-        '6s': `📋 → Delivery Mode Active
-
-Send delivery challan photos.`
+        recce: "📷 → Recce Mode Active\n\nSend site photos with measurements.",
+        design: "🎨 → Design Mode Active\n\nSend design files and concepts.", 
+        drawings: "📐 → Drawings Mode Active\n\nSend technical drawings and plans.",
+        '6s': "📋 → Delivery Mode Active\n\nSend delivery challan photos."
       };
 
       await this.bot.sendMessage(chatId, categoryMessages[category]);

@@ -25,11 +25,14 @@ export interface TelegramBotSettings {
 export class FurniliTelegramBot {
   private bot: TelegramBot;
   private token: string;
+  private consecutiveErrors = 0;
+  private maxConsecutiveErrors = 5;
   
   constructor(token: string) {
     this.token = token;
     this.bot = new TelegramBot(token, { polling: true });
     this.setupHandlers();
+    this.setupErrorHandling();
   }
 
   private setupHandlers() {
@@ -507,8 +510,42 @@ All your uploads will be automatically organized in the Furnili dashboard by pro
     return names[category] || 'General';
   }
 
+  private setupErrorHandling() {
+    this.bot.on('polling_error', (error) => {
+      console.error('🚨 Telegram polling error:', error.message);
+      
+      // Handle 401 Unauthorized errors (invalid token)
+      if (error.message.includes('401 Unauthorized')) {
+        this.consecutiveErrors++;
+        console.error(`❌ Telegram bot authentication failed (${this.consecutiveErrors}/${this.maxConsecutiveErrors})`);
+        
+        if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
+          console.error('🛑 Too many authentication failures - stopping bot to prevent spam');
+          console.error('💡 Please update your Telegram bot token in Bot Settings with a fresh token from @BotFather');
+          this.stop();
+          return;
+        }
+      } else {
+        // Reset counter for non-auth errors
+        this.consecutiveErrors = 0;
+      }
+    });
+
+    // Reset error counter on successful operations
+    this.bot.on('message', () => {
+      if (this.consecutiveErrors > 0) {
+        console.log('✅ Telegram bot communication restored');
+        this.consecutiveErrors = 0;
+      }
+    });
+  }
+
   public stop() {
-    this.bot.stopPolling();
+    try {
+      this.bot.stopPolling();
+    } catch (error) {
+      console.error('Error stopping bot polling:', error);
+    }
   }
 }
 

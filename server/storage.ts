@@ -28,7 +28,6 @@ import {
   bomCalculations,
   bomItems,
   bomSettings,
-  botSettings,
   workOrders,
   productionSchedules,
   qualityChecks,
@@ -90,8 +89,6 @@ import type {
   InsertBomItem,
   BomSettings,
   InsertBomSettings,
-  BotSettings,
-  InsertBotSettings,
   WorkOrder,
   InsertWorkOrder,
   ProductionSchedule,
@@ -336,13 +333,6 @@ export interface IStorage {
   getProductionTasksByWorkOrder(workOrderId: number): Promise<ProductionTask[]>;
   getLastProductionTaskNumber(): Promise<string | undefined>;
 
-  // Bot Settings operations
-  getAllBotSettings(environment?: string): Promise<BotSettings[]>;
-  getBotSettings(id: number): Promise<BotSettings | undefined>;
-  getBotSettingsByEnvironmentAndType(environment: string, botType: string): Promise<BotSettings | undefined>;
-  createBotSettings(botSettings: InsertBotSettings): Promise<BotSettings>;
-  updateBotSettings(id: number, updates: Partial<InsertBotSettings>): Promise<BotSettings | undefined>;
-  deleteBotSettings(id: number): Promise<boolean>;
 }
 
 class DatabaseStorage implements IStorage {
@@ -3175,48 +3165,6 @@ class DatabaseStorage implements IStorage {
     return result[0]?.taskNumber;
   }
 
-  // Bot Settings operations
-  async getAllBotSettings(environment?: string): Promise<BotSettings[]> {
-    const query = db.select().from(botSettings);
-    if (environment) {
-      return query.where(eq(botSettings.environment, environment))
-        .orderBy(asc(botSettings.botType), asc(botSettings.botName));
-    }
-    return query.orderBy(asc(botSettings.environment), asc(botSettings.botType));
-  }
-
-  async getBotSettings(id: number): Promise<BotSettings | undefined> {
-    const result = await db.select().from(botSettings).where(eq(botSettings.id, id)).limit(1);
-    return result[0];
-  }
-
-  async getBotSettingsByEnvironmentAndType(environment: string, botType: string): Promise<BotSettings | undefined> {
-    const result = await db.select().from(botSettings)
-      .where(and(eq(botSettings.environment, environment), eq(botSettings.botType, botType)))
-      .limit(1);
-    return result[0];
-  }
-
-  async createBotSettings(botSettingsData: InsertBotSettings): Promise<BotSettings> {
-    const result = await db.insert(botSettings).values({
-      ...botSettingsData,
-      updatedAt: new Date()
-    }).returning();
-    return result[0];
-  }
-
-  async updateBotSettings(id: number, updates: Partial<InsertBotSettings>): Promise<BotSettings | undefined> {
-    const result = await db.update(botSettings)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(botSettings.id, id))
-      .returning();
-    return result[0];
-  }
-
-  async deleteBotSettings(id: number): Promise<boolean> {
-    const result = await db.delete(botSettings).where(eq(botSettings.id, id)).returning();
-    return result.length > 0;
-  }
 }
 
 export const storage = new DatabaseStorage();

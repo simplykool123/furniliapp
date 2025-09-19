@@ -43,7 +43,6 @@ import QualityControl from "@/pages/QualityControl";
 import WhatsAppConsole from "@/pages/WhatsAppConsole";
 import CreateQuote from "@/pages/CreateQuote";
 import EditQuote from "@/pages/EditQuote";
-import BotSettings from "@/pages/BotSettings";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -324,11 +323,6 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
-      <Route path="/bot-settings">
-        <ProtectedRoute>
-          <BotSettings />
-        </ProtectedRoute>
-      </Route>
       
     </Switch>
   );

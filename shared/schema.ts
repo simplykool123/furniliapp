@@ -1064,26 +1064,6 @@ export const whatsappMessages = pgTable("whatsapp_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Bot Settings - Environment-specific bot configuration
-export const botSettings = pgTable("bot_settings", {
-  id: serial("id").primaryKey(),
-  environment: text("environment").notNull(), // development, testing, production
-  botType: text("bot_type").notNull(), // telegram, whatsapp, other
-  botName: text("bot_name").notNull(), // Display name for the bot
-  isEnabled: boolean("is_enabled").notNull().default(false),
-  apiKey: text("api_key"), // Bot API key/token
-  apiSecret: text("api_secret"), // Additional secret if needed
-  webhookUrl: text("webhook_url"), // Webhook endpoint
-  allowedUsers: text("allowed_users").array().default([]), // User IDs allowed to use this bot
-  settings: jsonb("settings").default({}), // Additional bot-specific configuration
-  lastActivity: timestamp("last_activity"), // Last time bot was active
-  status: text("status").default("inactive"), // active, inactive, error
-  statusMessage: text("status_message"), // Status description
-  createdBy: integer("created_by").references(() => users.id),
-  updatedBy: integer("updated_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
 // Insert schemas for PO system and brand management
 export const insertSupplierSchema = createInsertSchema(suppliers).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1111,7 +1091,6 @@ export const insertBomHardwareRate = createInsertSchema(bomHardwareRates).omit({
 export const insertBomBoardRate = createInsertSchema(bomBoardRates).omit({ id: true, lastUpdated: true });
 export const insertTelegramUserSessionSchema = createInsertSchema(telegramUserSessions).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertWhatsappMessageSchema = createInsertSchema(whatsappMessages).omit({ id: true, createdAt: true });
-export const insertBotSettingsSchema = createInsertSchema(botSettings).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Production Planning & Manufacturing Tables
 export const workOrders = pgTable("work_orders", {
@@ -1333,8 +1312,6 @@ export type TelegramUserSession = typeof telegramUserSessions.$inferSelect;
 export type InsertTelegramUserSession = z.infer<typeof insertTelegramUserSessionSchema>;
 export type WhatsappMessage = typeof whatsappMessages.$inferSelect;
 export type InsertWhatsappMessage = z.infer<typeof insertWhatsappMessageSchema>;
-export type BotSettings = typeof botSettings.$inferSelect;
-export type InsertBotSettings = z.infer<typeof insertBotSettingsSchema>;
 
 // Production Planning & Manufacturing Types
 export type WorkOrder = typeof workOrders.$inferSelect;

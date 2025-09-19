@@ -2,7 +2,6 @@ import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { botManager } from "./services/botManager.js";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -137,17 +136,5 @@ app.use((req, res, next) => {
   }, async () => {
     log(`serving on port ${port}`);
     
-    // Initialize Bot Manager - Database-driven bot initialization
-    try {
-      await botManager.initializeBots();
-      log("🤖 Bot Manager initialized - bots started based on database configuration");
-    } catch (error) {
-      console.error("❌ Failed to initialize Bot Manager:", error);
-      
-      // Initialize global WhatsApp references as disabled on failure
-      global.whatsappClient = undefined;
-      global.qrCodeData = null;
-      global.initializeWhatsAppBot = undefined;
-    }
   });
 })();

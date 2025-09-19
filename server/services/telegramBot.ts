@@ -112,14 +112,14 @@ Quick Start:
         return;
       }
 
-      let projectMessage = "📋 Active Projects (ongoing):\\n\\n";
+      let projectMessage = "📋 Active Projects (ongoing):\n\n";
       projectList.forEach((project, index: number) => {
-        projectMessage += `${index + 1}. ${project.code} - ${project.name}\\n`;
-        projectMessage += `Client: ${project.clientName || 'Unknown'}\\n`;
-        projectMessage += `Stage: ${project.stage}\\n\\n`;
+        projectMessage += `${index + 1}. ${project.code} - ${project.name}\n`;
+        projectMessage += `Client: ${project.clientName || 'Unknown'}\n`;
+        projectMessage += `Stage: ${project.stage}\n\n`;
       });
 
-      projectMessage += "Reply with the Number to choose the project\\n";
+      projectMessage += "Reply with the Number to choose the project\n";
       projectMessage += "Example: /select 1";
 
       await this.bot.sendMessage(chatId, projectMessage, { parse_mode: 'Markdown' });
@@ -172,7 +172,7 @@ Quick Start:
         })
         .where(eq(telegramUserSessions.telegramUserId, userId));
 
-      const successMessage = `✅ Project Selected: ${selectedProject.code}\\nClient: ${selectedProject.clientName || 'Unknown'}\\n\\nChoose upload category:\\n• /recce - Site photos with measurements\\n• /design - Design files\\n• /drawings - Technical drawings\\n• /6s - Delivery challan photos\\n\\nSend the command and start uploading!`;
+      const successMessage = `✅ Project Selected: ${selectedProject.code}\nClient: ${selectedProject.clientName || 'Unknown'}\n\nChoose upload category:\n• /recce - Site photos with measurements\n• /design - Design files\n• /drawings - Technical drawings\n• /6s - Delivery challan photos\n\nSend the command and start uploading!`;
 
       await this.bot.sendMessage(chatId, successMessage, { parse_mode: 'Markdown' });
 
@@ -213,10 +213,10 @@ Quick Start:
         .where(eq(telegramUserSessions.telegramUserId, userId));
 
       const categoryMessages: { [key: string]: string } = {
-        recce: "📷 → Recce Mode Active\\n\\nSend site photos with measurements.",
-        design: "🎨 → Design Mode Active\\n\\nSend design files and concepts.", 
-        drawings: "📐 → Drawings Mode Active\\n\\nSend technical drawings and plans.",
-        '6s': "📋 → Delivery Mode Active\\n\\nSend delivery challan photos."
+        recce: "📷 → Recce Mode Active\n\nSend site photos with measurements.",
+        design: "🎨 → Design Mode Active\n\nSend design files and concepts.", 
+        drawings: "📐 → Drawings Mode Active\n\nSend technical drawings and plans.",
+        '6s': "📋 → Delivery Mode Active\n\nSend delivery challan photos."
       };
 
       await this.bot.sendMessage(chatId, categoryMessages[category], { parse_mode: 'Markdown' });

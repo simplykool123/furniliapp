@@ -48,7 +48,10 @@ export class FurniliTelegramBot {
     this.bot.onText(/\/recce/, (msg) => this.handleCategorySelection(msg, 'recce'));
     this.bot.onText(/\/design/, (msg) => this.handleCategorySelection(msg, 'design'));
     this.bot.onText(/\/drawings/, (msg) => this.handleCategorySelection(msg, 'drawings'));
-    this.bot.onText(/\/6s/, (msg) => this.handleCategorySelection(msg, '6s'));
+    this.bot.onText(/\/dc/, (msg) => this.handleCategorySelection(msg, 'dc'));
+    
+    // Handle contact sharing for verification
+    this.bot.on('contact', (msg) => this.handleContact(msg));
     
     // Handle photo uploads
     this.bot.on('photo', (msg) => this.handlePhoto(msg));
@@ -56,7 +59,7 @@ export class FurniliTelegramBot {
     // Handle document uploads
     this.bot.on('document', (msg) => this.handleDocument(msg));
     
-    // Handle text messages (for notes and comments)
+    // Handle text messages (for notes, comments, and phone verification)
     this.bot.on('message', (msg) => this.handleTextMessage(msg));
   }
 
@@ -68,23 +71,142 @@ export class FurniliTelegramBot {
 
     if (!userId) return;
 
-    // Create or update user session
+    // Check if user is already verified
+    const existingSession = await db
+      .select()
+      .from(telegramUserSessions)
+      .where(eq(telegramUserSessions.telegramUserId, userId))
+      .limit(1);
+
+    if (existingSession.length > 0 && existingSession[0].isVerified) {
+      // User is already verified, show normal welcome
+      let welcomeMessage = "🏠 Welcome back to Furnili Assistant!";
+      welcomeMessage += "\n\nI'll help you organize your project files efficiently.";
+      welcomeMessage += "\n\n📋 Commands:";
+      welcomeMessage += "\n• /projects - View all active projects";
+      welcomeMessage += "\n\nQuick Start:";
+      welcomeMessage += "\n1. Type /projects";
+      welcomeMessage += "\n2. Reply with number (e.g., 1)";
+      welcomeMessage += "\n3. Choose category and upload!";
+
+      await this.bot.sendMessage(chatId, welcomeMessage);
+      return;
+    }
+
+    // User needs verification
     await this.createOrUpdateSession(userId, username, firstName);
+    
+    let verificationMessage = "🔐 Furnili Bot Verification Required";
+    verificationMessage += "\n\nThis bot is restricted to authorized users only.";
+    verificationMessage += "\n\nPlease share your phone number to verify your access.";
+    verificationMessage += "\n\n📱 Use the 'Share Contact' button below or type your phone number (with country code):";
+    verificationMessage += "\n\nExample: +919876543210";
 
-    let welcomeMessage = "🏠 Welcome back to Furnili Assistant!";
-    welcomeMessage += "\n\nI'll help you organize your project files efficiently.";
-    welcomeMessage += "\n\n📋 Commands:";
-    welcomeMessage += "\n• /projects - View all active projects";
-    welcomeMessage += "\n\nQuick Start:";
-    welcomeMessage += "\n1. Type /projects";
-    welcomeMessage += "\n2. Reply with number (e.g., 1)";
-    welcomeMessage += "\n3. Choose category and upload!";
+    const keyboard = {
+      keyboard: [[{
+        text: "📱 Share My Contact",
+        request_contact: true
+      }]],
+      resize_keyboard: true,
+      one_time_keyboard: true
+    };
 
-    await this.bot.sendMessage(chatId, welcomeMessage);
+    await this.bot.sendMessage(chatId, verificationMessage, { reply_markup: keyboard });
+  }
+
+  // Handle contact sharing for phone verification
+  private async handleContact(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
+    const userId = msg.from?.id.toString();
+    
+    if (!userId || !msg.contact?.phone_number) return;
+
+    const phoneNumber = msg.contact.phone_number;
+    await this.verifyPhoneNumber(userId, phoneNumber, chatId);
+  }
+
+  // Verify phone number against database
+  private async verifyPhoneNumber(userId: string, phoneNumber: string, chatId: number) {
+    try {
+      // Clean phone number (remove + and spaces)
+      const cleanPhone = phoneNumber.replace(/[\+\s-]/g, '');
+      
+      // Check if phone exists in users table (staff/admin)
+      const staffUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.phone, phoneNumber))
+        .or(eq(users.phone, cleanPhone))
+        .limit(1);
+
+      // Check if phone exists in clients table  
+      const clientUser = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.mobile, phoneNumber))
+        .or(eq(clients.mobile, cleanPhone))
+        .or(eq(clients.phone, phoneNumber))
+        .or(eq(clients.phone, cleanPhone))
+        .limit(1);
+
+      if (staffUser.length > 0 || clientUser.length > 0) {
+        // User verified - update session
+        await db
+          .update(telegramUserSessions)
+          .set({
+            isVerified: true,
+            phoneNumber: phoneNumber,
+            systemUserId: staffUser.length > 0 ? staffUser[0].id : null,
+            activeClientId: clientUser.length > 0 ? clientUser[0].id : null,
+            sessionState: 'idle',
+            lastInteraction: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(telegramUserSessions.telegramUserId, userId));
+
+        const userName = staffUser.length > 0 ? staffUser[0].name : clientUser[0]?.name;
+        const userType = staffUser.length > 0 ? staffUser[0].role : 'client';
+
+        let welcomeMessage = "✅ Verification Successful!";
+        welcomeMessage += `\n\nWelcome ${userName} (${userType})`;
+        welcomeMessage += "\n\n🏠 Furnili Assistant is now active!";
+        welcomeMessage += "\n\n📋 Commands:";
+        welcomeMessage += "\n• /projects - View all active projects";
+        welcomeMessage += "\n\nQuick Start:";
+        welcomeMessage += "\n1. Type /projects";
+        welcomeMessage += "\n2. Reply with number (e.g., 1)";
+        welcomeMessage += "\n3. Choose category and upload!";
+
+        await this.bot.sendMessage(chatId, welcomeMessage, { 
+          reply_markup: { remove_keyboard: true } 
+        });
+      } else {
+        // Phone not found - access denied
+        let deniedMessage = "❌ Access Denied";
+        deniedMessage += "\n\nYour phone number is not authorized to use this bot.";
+        deniedMessage += "\n\n📞 Phone: " + phoneNumber;
+        deniedMessage += "\n\nPlease contact your administrator to get access.";
+        
+        await this.bot.sendMessage(chatId, deniedMessage, { 
+          reply_markup: { remove_keyboard: true } 
+        });
+      }
+    } catch (error) {
+      console.error('Error verifying phone number:', error);
+      await this.bot.sendMessage(chatId, "❌ Verification failed. Please try again or contact support.");
+    }
   }
 
   private async handleProjects(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
+    const userId = msg.from?.id.toString();
+    
+    if (!userId) return;
+
+    // Check if user is verified
+    if (!await this.isUserVerified(userId, chatId)) {
+      return;
+    }
 
     try {
       // Get all active projects with client info
@@ -189,7 +311,7 @@ export class FurniliTelegramBot {
       successMessage += "\n• /recce - Site photos with measurements";
       successMessage += "\n• /design - Design files";
       successMessage += "\n• /drawings - Technical drawings";
-      successMessage += "\n• /6s - Delivery challan photos";
+      successMessage += "\n• /dc - Delivery challan photos";
       successMessage += "\n\nSend the command and start uploading!";
 
       await this.bot.sendMessage(chatId, successMessage);
@@ -248,7 +370,7 @@ export class FurniliTelegramBot {
       successMessage += "\n• /recce - Site photos with measurements";
       successMessage += "\n• /design - Design files";
       successMessage += "\n• /drawings - Technical drawings";
-      successMessage += "\n• /6s - Delivery challan photos";
+      successMessage += "\n• /dc - Delivery challan photos";
       successMessage += "\n\nSend the command and start uploading!";
 
       await this.bot.sendMessage(chatId, successMessage);
@@ -264,6 +386,11 @@ export class FurniliTelegramBot {
     const userId = msg.from?.id.toString();
     
     if (!userId) return;
+
+    // Check if user is verified
+    if (!await this.isUserVerified(userId, chatId)) {
+      return;
+    }
 
     try {
       // Check if user has selected a project
@@ -293,7 +420,7 @@ export class FurniliTelegramBot {
         recce: "📷 → Recce Mode Active\n\nSend site photos with measurements.",
         design: "🎨 → Design Mode Active\n\nSend design files and concepts.", 
         drawings: "📐 → Drawings Mode Active\n\nSend technical drawings and plans.",
-        '6s': "📋 → Delivery Mode Active\n\nSend delivery challan photos."
+        'dc': "📋 → Delivery Mode Active\n\nSend delivery challan photos."
       };
 
       await this.bot.sendMessage(chatId, categoryMessages[category]);
@@ -309,6 +436,11 @@ export class FurniliTelegramBot {
     const userId = msg.from?.id.toString();
     
     if (!userId || !msg.photo) return;
+
+    // Check if user is verified
+    if (!await this.isUserVerified(userId, chatId)) {
+      return;
+    }
 
     try {
       // Get user session
@@ -390,6 +522,11 @@ export class FurniliTelegramBot {
     const userId = msg.from?.id.toString();
     
     if (!userId || !msg.document) return;
+
+    // Check if user is verified
+    if (!await this.isUserVerified(userId, chatId)) {
+      return;
+    }
 
     try {
       // Get user session
@@ -573,7 +710,7 @@ export class FurniliTelegramBot {
       'recce': 'photos',
       'design': 'design', 
       'drawings': 'drawings',
-      '6s': 'delivery'
+      'dc': 'delivery'
     };
     return mapping[category] || 'general';
   }
@@ -583,7 +720,7 @@ export class FurniliTelegramBot {
       'recce': 'Recce',
       'design': 'Design', 
       'drawings': 'Drawings',
-      '6s': 'Files'
+      'dc': 'Files'
     };
     return names[category] || 'General';
   }

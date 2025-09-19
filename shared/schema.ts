@@ -1037,6 +1037,7 @@ export const telegramUserSessions = pgTable("telegram_user_sessions", {
   whatsappName: text("whatsapp_name"), // User's WhatsApp name
   phoneNumber: text("phone_number"), // Phone number for authentication
   systemUserId: integer("system_user_id").references(() => users.id), // Link to actual system user
+  isVerified: boolean("is_verified").default(false), // User verification status
   activeProjectId: integer("active_project_id").references(() => projects.id), // Currently selected project
   activeClientId: integer("active_client_id").references(() => clients.id), // Currently selected client
   lastInteraction: timestamp("last_interaction").defaultNow(),

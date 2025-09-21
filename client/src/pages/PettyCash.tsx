@@ -1409,19 +1409,24 @@ export default function PettyCash() {
     const netTotal = totalIncome - totalExpenses;
 
     const csvContent = [
-      'Date,Type,Amount,Paid To/Source,Paid By,Purpose,Category,Project ID,Description,Receipt Image,Bill Image,Material Image',
+      'Date,Type,Dr.,Cr.,Paid To/Source,Paid By,Purpose,Category,Project ID,Description,Receipt Image,Bill Image,Material Image',
       ...filteredExpenses.map((expense: PettyCashExpense) => {
         const receiptImage = (expense as any).receiptImageUrl ? `"${window.location.origin}/${(expense as any).receiptImageUrl}"` : '""';
         const billImage = (expense as any).billImageUrl ? `"${window.location.origin}/${(expense as any).billImageUrl}"` : '""';
         const materialImage = (expense as any).materialImageUrl ? `"${window.location.origin}/${(expense as any).materialImageUrl}"` : '""';
         
-        return `${format(new Date(expense.expenseDate), 'dd MMM yyyy')},"${expense.status === 'income' ? 'Credit' : 'Debit'}","${expense.status === 'income' ? '+' : '-'}₹${expense.amount.toLocaleString()}","${expense.vendor}","${expense.user?.name || expense.user?.username || 'N/A'}","${expense.description || ''}","${expense.category}","${expense.projectId || '-'}","${expense.description || ''}",${receiptImage},${billImage},${materialImage}`;
+        // For expenses (debits): amount goes in Dr. column, Cr. column is empty
+        // For income (credits): amount goes in Cr. column, Dr. column is empty
+        const drAmount = expense.status === 'expense' ? expense.amount.toLocaleString() : '';
+        const crAmount = expense.status === 'income' ? expense.amount.toLocaleString() : '';
+        
+        return `${format(new Date(expense.expenseDate), 'dd MMM yyyy')},"${expense.status === 'income' ? 'Credit' : 'Debit'}","${drAmount}","${crAmount}","${expense.vendor}","${expense.user?.name || expense.user?.username || 'N/A'}","${expense.description || ''}","${expense.category}","${expense.projectId || '-'}","${expense.description || ''}",${receiptImage},${billImage},${materialImage}`;
       }),
       '',
       'TOTALS:',
-      `Total Income,+₹${totalIncome.toLocaleString()}`,
-      `Total Expenses,-₹${totalExpenses.toLocaleString()}`,
-      `Net Total,${netTotal >= 0 ? '+' : ''}₹${netTotal.toLocaleString()}`
+      `Total Income,,${totalIncome.toLocaleString()}`,
+      `Total Expenses,${totalExpenses.toLocaleString()},,`,
+      `Net Total,${netTotal < 0 ? Math.abs(netTotal).toLocaleString() : ''},${netTotal >= 0 ? netTotal.toLocaleString() : ''}`
     ].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv' });

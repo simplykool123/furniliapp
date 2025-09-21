@@ -1325,11 +1325,6 @@ export default function PettyCash() {
       return;
     }
     
-    if (!formData.projectId || formData.projectId.trim() === '') {
-      toast({ title: "Validation Error", description: "Please select a project", variant: "destructive" });
-      return;
-    }
-    
     // Validate amount is a valid number
     const amountValue = parseFloat(formData.amount);
     if (isNaN(amountValue) || amountValue <= 0) {

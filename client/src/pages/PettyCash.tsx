@@ -1299,6 +1299,44 @@ export default function PettyCash() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Client-side validation with specific error messages
+    if (!formData.amount || formData.amount.trim() === '') {
+      toast({ title: "Validation Error", description: "Please enter an amount", variant: "destructive" });
+      return;
+    }
+    
+    if (!formData.paidTo || formData.paidTo.trim() === '') {
+      toast({ title: "Validation Error", description: "Please enter the vendor/person paid to", variant: "destructive" });
+      return;
+    }
+    
+    if (!formData.paidBy || formData.paidBy.trim() === '') {
+      toast({ title: "Validation Error", description: "Please select who paid", variant: "destructive" });
+      return;
+    }
+    
+    if (!formData.purpose || formData.purpose.trim() === '') {
+      toast({ title: "Validation Error", description: "Please enter a description/purpose", variant: "destructive" });
+      return;
+    }
+    
+    if (!formData.category || formData.category.trim() === '') {
+      toast({ title: "Validation Error", description: "Please select a category", variant: "destructive" });
+      return;
+    }
+    
+    if (!formData.projectId || formData.projectId.trim() === '') {
+      toast({ title: "Validation Error", description: "Please select a project", variant: "destructive" });
+      return;
+    }
+    
+    // Validate amount is a valid number
+    const amountValue = parseFloat(formData.amount);
+    if (isNaN(amountValue) || amountValue <= 0) {
+      toast({ title: "Validation Error", description: "Please enter a valid positive amount", variant: "destructive" });
+      return;
+    }
+    
     const formDataToSend = new FormData();
     formDataToSend.append('expenseDate', formData.date);
     formDataToSend.append('vendor', formData.paidTo); // Changed from paidTo to vendor

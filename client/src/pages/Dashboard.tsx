@@ -201,7 +201,10 @@ export default function Dashboard() {
     queryKey: ['api', 'projects'],
     queryFn: () => authenticatedApiRequest('GET', "/api/projects"),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    select: (data: any[]) => data.filter(project => project.stage !== 'Completed'), // Filter out completed projects
+    select: (data: any[]) => data.filter(project => 
+      project.isActive !== false && 
+      !['completed', 'handover', 'lost', 'archive'].includes(project.stage?.toLowerCase())
+    ), // Filter out completed, archived, and terminal stage projects
   });
 
   // Fetch pending tasks for dashboard display
@@ -691,10 +694,7 @@ export default function Dashboard() {
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
-                          {project.code}
-                        </p>
-                        <p className="text-xs text-gray-600 truncate">
-                          {project.name}
+                          {project.code} • {project.name}
                         </p>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded ml-2 flex-shrink-0 ${

@@ -747,10 +747,7 @@ export default function Dashboard() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-gray-900 truncate">
-                            {product.name}
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            Stock: {product.currentStock}
+                            {product.name} • Stock: {product.currentStock}
                           </p>
                         </div>
                       </div>
@@ -798,10 +795,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
-                          {activity.description}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {activity.timestamp || '2 mins ago'}
+                          {activity.description} • {activity.timestamp || '2 mins ago'}
                         </p>
                       </div>
                     </div>
@@ -886,10 +880,7 @@ export default function Dashboard() {
                         </Badge>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-medium text-gray-900 truncate">
-                            {product.name}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {product.category}
+                            {product.name} • {product.category}
                           </p>
                         </div>
                       </div>

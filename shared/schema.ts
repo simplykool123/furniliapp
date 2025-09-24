@@ -1043,6 +1043,8 @@ export const telegramUserSessions = pgTable("telegram_user_sessions", {
   lastInteraction: timestamp("last_interaction").defaultNow(),
   sessionState: text("session_state").default("idle"), // idle, selecting_client, selecting_project, selecting_category, uploading
   currentStep: text("current_step"), // Additional context for multi-step flows
+  lastPhotoUploadTime: timestamp("last_photo_upload_time"), // Track when last photo was uploaded
+  awaitingCommentForFileId: integer("awaiting_comment_for_file_id"), // Project file ID we're waiting for comments on
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

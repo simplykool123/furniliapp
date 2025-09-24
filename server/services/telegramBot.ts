@@ -435,7 +435,9 @@ export class FurniliTelegramBot {
           activeClientId: telegramUserSessions.activeClientId,
           sessionState: telegramUserSessions.sessionState,
           systemUserId: telegramUserSessions.systemUserId,
-          currentStep: telegramUserSessions.currentStep
+          currentStep: telegramUserSessions.currentStep,
+          lastPhotoUploadTime: telegramUserSessions.lastPhotoUploadTime,
+          awaitingCommentForFileId: telegramUserSessions.awaitingCommentForFileId
         })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
@@ -485,7 +487,7 @@ export class FurniliTelegramBot {
       const stats = fs.statSync(filePath);
 
       // Save to project files database
-      await db.insert(projectFiles).values({
+      const insertResult = await db.insert(projectFiles).values({
         projectId: userSession.activeProjectId!,
         clientId: userSession.activeClientId,
         fileName,
@@ -498,9 +500,22 @@ export class FurniliTelegramBot {
         comment: caption,
         uploadedBy: userSession.systemUserId || 5, // Use authenticated user's system ID
         isPublic: false
-      });
+      }).returning({ id: projectFiles.id });
 
-      await this.bot.sendMessage(chatId, `✅ Photo saved to ${this.getCategoryDisplayName(userSession.currentStep || 'general')} category!\n\n${caption ? `Comment: ${caption}` : ''}\n\nSend more files or use /projects to switch projects.`);
+      const photoFileId = insertResult[0].id;
+
+      // Set up 2-minute comment timeout window
+      await db
+        .update(telegramUserSessions)
+        .set({
+          lastPhotoUploadTime: new Date(),
+          awaitingCommentForFileId: photoFileId,
+          lastInteraction: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(telegramUserSessions.telegramUserId, userId));
+
+      await this.bot.sendMessage(chatId, `✅ Photo saved to ${this.getCategoryDisplayName(userSession.currentStep || 'general')} category!\n\n${caption ? `Comment: ${caption}` : ''}\n\n💬 Send a text message within 2 minutes to add it as a comment to this photo.\n\nOr send more files or use /projects to switch projects.`);
 
     } catch (error) {
       console.error('Error handling photo:', error);
@@ -531,7 +546,9 @@ export class FurniliTelegramBot {
           activeClientId: telegramUserSessions.activeClientId,
           sessionState: telegramUserSessions.sessionState,
           systemUserId: telegramUserSessions.systemUserId,
-          currentStep: telegramUserSessions.currentStep
+          currentStep: telegramUserSessions.currentStep,
+          lastPhotoUploadTime: telegramUserSessions.lastPhotoUploadTime,
+          awaitingCommentForFileId: telegramUserSessions.awaitingCommentForFileId
         })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
@@ -627,7 +644,9 @@ export class FurniliTelegramBot {
           activeClientId: telegramUserSessions.activeClientId,
           sessionState: telegramUserSessions.sessionState,
           systemUserId: telegramUserSessions.systemUserId,
-          currentStep: telegramUserSessions.currentStep
+          currentStep: telegramUserSessions.currentStep,
+          lastPhotoUploadTime: telegramUserSessions.lastPhotoUploadTime,
+          awaitingCommentForFileId: telegramUserSessions.awaitingCommentForFileId
         })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
@@ -638,6 +657,47 @@ export class FurniliTelegramBot {
       }
 
       const userSession = session[0];
+
+      // Handle 2-minute comment timeout for photos
+      if (userSession.awaitingCommentForFileId && userSession.lastPhotoUploadTime) {
+        const timeSinceUpload = new Date().getTime() - new Date(userSession.lastPhotoUploadTime).getTime();
+        const twoMinutesInMs = 2 * 60 * 1000; // 2 minutes
+
+        if (timeSinceUpload <= twoMinutesInMs) {
+          // Update the photo's comment
+          await db
+            .update(projectFiles)
+            .set({
+              comment: msg.text
+            })
+            .where(eq(projectFiles.id, userSession.awaitingCommentForFileId));
+
+          // Clear the awaiting comment state
+          await db
+            .update(telegramUserSessions)
+            .set({
+              awaitingCommentForFileId: null,
+              lastPhotoUploadTime: null,
+              lastInteraction: new Date(),
+              updatedAt: new Date()
+            })
+            .where(eq(telegramUserSessions.telegramUserId, userId));
+
+          await this.bot.sendMessage(chatId, `💬 Comment added to photo!\n\n"${msg.text}"\n\nSend more files or use /projects to switch projects.`);
+          return;
+        } else {
+          // Clear expired awaiting state
+          await db
+            .update(telegramUserSessions)
+            .set({
+              awaitingCommentForFileId: null,
+              lastPhotoUploadTime: null,
+              lastInteraction: new Date(),
+              updatedAt: new Date()
+            })
+            .where(eq(telegramUserSessions.telegramUserId, userId));
+        }
+      }
 
       // Handle project selection by number
       if (userSession.sessionState === 'project_selection') {

@@ -370,7 +370,13 @@ export class FurniliTelegramBot {
     try {
       // Check if user has selected a project
       const session = await db
-        .select()
+        .select({
+          id: telegramUserSessions.id,
+          telegramUserId: telegramUserSessions.telegramUserId,
+          activeProjectId: telegramUserSessions.activeProjectId,
+          activeClientId: telegramUserSessions.activeClientId,
+          sessionState: telegramUserSessions.sessionState
+        })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
         .limit(1);
@@ -422,7 +428,13 @@ export class FurniliTelegramBot {
     try {
       // Get user session
       const session = await db
-        .select()
+        .select({
+          id: telegramUserSessions.id,
+          telegramUserId: telegramUserSessions.telegramUserId,
+          activeProjectId: telegramUserSessions.activeProjectId,
+          activeClientId: telegramUserSessions.activeClientId,
+          sessionState: telegramUserSessions.sessionState
+        })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
         .limit(1);
@@ -510,7 +522,13 @@ export class FurniliTelegramBot {
     try {
       // Get user session
       const session = await db
-        .select()
+        .select({
+          id: telegramUserSessions.id,
+          telegramUserId: telegramUserSessions.telegramUserId,
+          activeProjectId: telegramUserSessions.activeProjectId,
+          activeClientId: telegramUserSessions.activeClientId,
+          sessionState: telegramUserSessions.sessionState
+        })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
         .limit(1);
@@ -598,7 +616,13 @@ export class FurniliTelegramBot {
 
       // Get user session
       const session = await db
-        .select()
+        .select({
+          id: telegramUserSessions.id,
+          telegramUserId: telegramUserSessions.telegramUserId,
+          activeProjectId: telegramUserSessions.activeProjectId,
+          activeClientId: telegramUserSessions.activeClientId,
+          sessionState: telegramUserSessions.sessionState
+        })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
         .limit(1);
@@ -662,7 +686,12 @@ export class FurniliTelegramBot {
     try {
       // Check if session exists
       const existingSession = await db
-        .select()
+        .select({
+          id: telegramUserSessions.id,
+          telegramUserId: telegramUserSessions.telegramUserId,
+          telegramUsername: telegramUserSessions.telegramUsername,
+          telegramFirstName: telegramUserSessions.telegramFirstName
+        })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
         .limit(1);

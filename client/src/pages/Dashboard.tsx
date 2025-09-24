@@ -525,8 +525,8 @@ export default function Dashboard() {
 
         </>
       ) : (
-        /* ADMIN/MANAGER DASHBOARD - Clean 2x2 Grid */
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        /* ADMIN/MANAGER DASHBOARD - Horizontal Stats Line */
+        <div className="grid grid-cols-3 gap-3 mb-4">
 
           {/* Low Stock Alert */}
           <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-red-500 bg-gradient-to-br from-red-50 to-red-100 border-red-200 cursor-pointer" onClick={() => setLocation('/products?filter=low-stock')}>

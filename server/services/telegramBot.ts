@@ -433,7 +433,9 @@ export class FurniliTelegramBot {
           telegramUserId: telegramUserSessions.telegramUserId,
           activeProjectId: telegramUserSessions.activeProjectId,
           activeClientId: telegramUserSessions.activeClientId,
-          sessionState: telegramUserSessions.sessionState
+          sessionState: telegramUserSessions.sessionState,
+          systemUserId: telegramUserSessions.systemUserId,
+          currentStep: telegramUserSessions.currentStep
         })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
@@ -494,7 +496,7 @@ export class FurniliTelegramBot {
         category: this.mapCategoryToFileCategory(userSession.currentStep || 'general'),
         description: `Uploaded via Telegram`,
         comment: caption,
-        uploadedBy: 5, // Use actual admin user ID from database
+        uploadedBy: userSession.systemUserId || 5, // Use authenticated user's system ID
         isPublic: false
       });
 
@@ -527,7 +529,9 @@ export class FurniliTelegramBot {
           telegramUserId: telegramUserSessions.telegramUserId,
           activeProjectId: telegramUserSessions.activeProjectId,
           activeClientId: telegramUserSessions.activeClientId,
-          sessionState: telegramUserSessions.sessionState
+          sessionState: telegramUserSessions.sessionState,
+          systemUserId: telegramUserSessions.systemUserId,
+          currentStep: telegramUserSessions.currentStep
         })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
@@ -587,7 +591,7 @@ export class FurniliTelegramBot {
         category: this.mapCategoryToFileCategory(userSession.currentStep || 'general'),
         description: `Uploaded via Telegram`,
         comment: caption,
-        uploadedBy: 5, // Use actual admin user ID from database
+        uploadedBy: userSession.systemUserId || 5, // Use authenticated user's system ID
         isPublic: false
       });
 
@@ -621,7 +625,9 @@ export class FurniliTelegramBot {
           telegramUserId: telegramUserSessions.telegramUserId,
           activeProjectId: telegramUserSessions.activeProjectId,
           activeClientId: telegramUserSessions.activeClientId,
-          sessionState: telegramUserSessions.sessionState
+          sessionState: telegramUserSessions.sessionState,
+          systemUserId: telegramUserSessions.systemUserId,
+          currentStep: telegramUserSessions.currentStep
         })
         .from(telegramUserSessions)
         .where(eq(telegramUserSessions.telegramUserId, userId))
@@ -723,7 +729,7 @@ export class FurniliTelegramBot {
 
   private mapCategoryToFileCategory(category: string): string {
     const mapping: { [key: string]: string } = {
-      'recce': 'photos',
+      'recce': 'recce',
       'design': 'design', 
       'drawings': 'drawings',
       'dc': 'delivery'

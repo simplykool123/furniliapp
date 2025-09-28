@@ -123,7 +123,7 @@ export function AnimatedNotificationBell() {
               <Bell 
                 className={cn(
                   "h-7 w-7 transition-all duration-300 drop-shadow-sm",
-                  hasUrgentNotifications ? "text-red-600" : "text-amber-700 dark:text-amber-500"
+                  hasUrgentNotifications ? "text-red-600" : "text-gray-700 dark:text-gray-300"
                 )} 
               />
               

@@ -492,19 +492,19 @@ export default function TaskManagement() {
             <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-2 sm:gap-8 w-full">
               <TabsTrigger 
                 value="active" 
-                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-2 text-xs sm:text-sm font-medium flex-1 sm:flex-none"
+                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-2 text-sm sm:text-sm font-medium flex-1 sm:flex-none"
               >
                 Active ({Array.isArray(tasks) ? tasks.filter((t: any) => t.status !== "done").length : 0})
               </TabsTrigger>
               <TabsTrigger 
                 value="completed"
-                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-2 text-xs sm:text-sm font-medium flex-1 sm:flex-none"
+                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-2 text-sm sm:text-sm font-medium flex-1 sm:flex-none"
               >
                 Done ({taskStats.completed})
               </TabsTrigger>
               <TabsTrigger 
                 value="all"
-                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-2 text-xs sm:text-sm font-medium flex-1 sm:flex-none"
+                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-2 text-sm sm:text-sm font-medium flex-1 sm:flex-none"
               >
                 All ({taskStats.total})
               </TabsTrigger>

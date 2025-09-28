@@ -485,81 +485,88 @@ export default function TaskManagement() {
     >
       {/* Professional Task Layout */}
       <div className="space-y-6">
-        {/* Integrated Header with Tabs, Search, and Add Button */}
-        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
-          <Tabs value={activeTaskTab} onValueChange={setActiveTaskTab} className="flex-1">
-            <TabsList className="bg-transparent h-auto p-0 space-x-8">
+        {/* Mobile-Optimized Header Layout */}
+        <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+          {/* Tabs Section */}
+          <Tabs value={activeTaskTab} onValueChange={setActiveTaskTab}>
+            <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-2 sm:gap-8 w-full">
               <TabsTrigger 
                 value="active" 
-                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-3 text-sm font-medium"
+                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-2 text-xs sm:text-sm font-medium flex-1 sm:flex-none"
               >
-                Active Tasks ({Array.isArray(tasks) ? tasks.filter((t: any) => t.status !== "done").length : 0})
+                Active ({Array.isArray(tasks) ? tasks.filter((t: any) => t.status !== "done").length : 0})
               </TabsTrigger>
               <TabsTrigger 
                 value="completed"
-                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-3 text-sm font-medium"
+                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-2 text-xs sm:text-sm font-medium flex-1 sm:flex-none"
               >
-                Completed ({taskStats.completed})
+                Done ({taskStats.completed})
               </TabsTrigger>
               <TabsTrigger 
                 value="all"
-                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-3 text-sm font-medium"
+                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent rounded-none px-0 pb-2 text-xs sm:text-sm font-medium flex-1 sm:flex-none"
               >
                 All ({taskStats.total})
               </TabsTrigger>
             </TabsList>
           </Tabs>
           
-          {/* Search and Add Task - Mobile Responsive */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-            <div className="relative flex-1 sm:flex-none">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          {/* Search and Controls Section - Mobile Optimized */}
+          <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 sm:items-center">
+            {/* Search Bar */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search tasks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-full sm:w-64"
+                className="pl-10 w-full h-9"
                 data-testid="input-search-tasks"
               />
             </div>
             
-            <div className="flex gap-2 sm:gap-4">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-32" data-testid="select-status-filter">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {isAdmin && (
-                <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
-                  <SelectTrigger className="w-full sm:w-32" data-testid="select-assigned-filter">
-                    <SelectValue placeholder="All Staff" />
+            {/* Filters and Add Button - Mobile Stack */}
+            <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+              {/* Filters Row */}
+              <div className="flex space-x-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="flex-1 sm:w-28 h-9 text-xs" data-testid="select-status-filter">
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Staff</SelectItem>
-                  {staffUsers.map((user: any) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
-                      {user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            
-            {isAdmin && (
-              <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
-                <DialogTrigger asChild>
-                  <Button className="bg-amber-600 hover:bg-amber-700" data-testid="button-create-task">
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Task
-                  </Button>
-                </DialogTrigger>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="done">Done</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {isAdmin && (
+                  <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                    <SelectTrigger className="flex-1 sm:w-28 h-9 text-xs" data-testid="select-assigned-filter">
+                      <SelectValue placeholder="Staff" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Staff</SelectItem>
+                    {staffUsers.map((user: any) => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              </div>
+              
+              {/* Add Task Button */}
+              {isAdmin && (
+                <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-amber-600 hover:bg-amber-700 h-9 text-xs sm:text-sm whitespace-nowrap" data-testid="button-create-task">
+                      <Plus className="mr-1 h-4 w-4" />
+                      New Task
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
                     <DialogTitle>Create New Task</DialogTitle>

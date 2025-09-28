@@ -510,38 +510,39 @@ export default function TaskManagement() {
             </TabsList>
           </Tabs>
           
-          {/* Search and Add Task on Same Line */}
-          <div className="flex items-center gap-4">
-            <div className="relative">
+          {/* Search and Add Task - Mobile Responsive */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+            <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search tasks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-64"
+                className="pl-10 w-full sm:w-64"
                 data-testid="input-search-tasks"
               />
             </div>
             
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32" data-testid="select-status-filter">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="done">Done</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {isAdmin && (
-              <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
-                <SelectTrigger className="w-32" data-testid="select-assigned-filter">
-                  <SelectValue placeholder="All Staff" />
+            <div className="flex gap-2 sm:gap-4">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-32" data-testid="select-status-filter">
+                  <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Staff</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {isAdmin && (
+                <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                  <SelectTrigger className="w-full sm:w-32" data-testid="select-assigned-filter">
+                    <SelectValue placeholder="All Staff" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Staff</SelectItem>
                   {staffUsers.map((user: any) => (
                     <SelectItem key={user.id} value={user.id.toString()}>
                       {user.name}
@@ -679,6 +680,7 @@ export default function TaskManagement() {
                 </DialogContent>
               </Dialog>
             )}
+            </div>
           </div>
         </div>
 
@@ -690,7 +692,9 @@ export default function TaskManagement() {
                 <CardTitle className="text-lg font-semibold">Tasks ({filteredTasks.length})</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <Table>
+                {/* Desktop Table View */}
+                <div className="hidden md:block">
+                  <Table>
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 dark:border-gray-700">
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Task Title</TableHead>
@@ -794,6 +798,145 @@ export default function TaskManagement() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3 p-4">
+                  {filteredTasks.map((task: any) => (
+                    <Card key={task.id} className="border border-gray-200 dark:border-gray-700 shadow-sm" data-testid={`card-task-${task.id}`}>
+                      <CardContent className="p-4 space-y-3">
+                        {/* Task Title and Description */}
+                        <div>
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto font-semibold text-left justify-start text-amber-800 dark:text-amber-700 hover:text-amber-900 dark:hover:text-amber-600 text-base"
+                            onClick={() => handleTaskTitleClick(task)}
+                            data-testid={`text-task-title-${task.id}`}
+                          >
+                            {task.title}
+                          </Button>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {task.description || "No description"}
+                          </div>
+                        </div>
+
+                        {/* Task Details Grid */}
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          {/* Project */}
+                          <div>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Project:</span>
+                            <div className="mt-1">
+                              {task.project ? (
+                                <Badge variant="outline" className="text-xs">
+                                  {task.project.code}
+                                </Badge>
+                              ) : (
+                                <span className="text-gray-500 dark:text-gray-400">No project</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Assigned To */}
+                          <div>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Assigned:</span>
+                            <div className="mt-1">
+                              {task.assignedTo ? (
+                                <Badge variant="secondary" className="text-xs">
+                                  {task.assignedTo.name}
+                                </Badge>
+                              ) : (
+                                <span className="text-gray-500 dark:text-gray-400">Unassigned</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Priority */}
+                          <div>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Priority:</span>
+                            <div className="mt-1">
+                              <Badge 
+                                variant={task.priority === "high" ? "destructive" : task.priority === "medium" ? "default" : "secondary"}
+                                className="text-xs"
+                              >
+                                {task.priority}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Due Date */}
+                          <div>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Due Date:</span>
+                            <div className="mt-1 text-gray-600 dark:text-gray-400">
+                              {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Status and Actions */}
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                          {/* Status */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
+                            <Badge 
+                              variant={
+                                task.status === "done" ? "default" : 
+                                task.status === "in_progress" ? "secondary" : 
+                                "outline"
+                              }
+                              className="text-xs"
+                            >
+                              {task.status === "done" ? "Completed" : 
+                               task.status === "in_progress" ? "In Progress" : 
+                               "Pending"}
+                            </Badge>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2">
+                            {(task.status === "pending" || task.status === "in_progress") && (
+                              <Select
+                                value={task.status}
+                                onValueChange={(value) => handleStatusChange(task.id, value)}
+                              >
+                                <SelectTrigger className="h-8 w-28 text-xs" data-testid={`select-task-status-${task.id}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="in_progress">In Progress</SelectItem>
+                                  <SelectItem value="done">Done</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                            {task.status === "done" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleStatusChange(task.id, "in_progress")}
+                                data-testid={`button-reopen-task-${task.id}`}
+                                className="h-8 text-xs"
+                              >
+                                Reopen
+                              </Button>
+                            )}
+                            {isAdmin && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteTask(task.id)}
+                                disabled={deleteTaskMutation.isPending}
+                                data-testid={`button-delete-task-${task.id}`}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
                 
                 {filteredTasks.length === 0 && (
                   <div className="text-center py-8 text-gray-500">

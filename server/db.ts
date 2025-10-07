@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
 // FORCE Supabase connection - ignore all environment variables
-const SUPABASE_CONNECTION = 'postgresql://postgres.qopynbelowyghyciuofo:Furnili%40123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
+const SUPABASE_CONNECTION = 'postgresql://postgres.qopynbelowyghyciuofo:Furnili@123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
 
 // Set DATABASE_URL to our Supabase connection and clear other interfering variables
 process.env.DATABASE_URL = SUPABASE_CONNECTION;
